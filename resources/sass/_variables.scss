@@ -16,36 +16,82 @@ $red: #e3342f;
 $orange: #f6993f;
 $yellow: #ffed4a;
 $green: #38c172;
-$teal: #4dc0b5;
+$teal: #08a4a7;
 $cyan: #6cb2eb;
 
+// create text color
 .text-blue{
-    color: $blue;
+    color: $blue !important;
 }
 .text-indigo{
-    color: $indigo;
+    color: $indigo !important;
 }
 .text-purple{
-    color: $purple;
+    color: $purple !important;
 }
 .text-pink{
-    color: $pink;
+    color: $pink !important;
 }
 .text-red{
-    color: $red;
+    color: $red !important;
 }
 .text-orange{
-    color: $orange;
+    color: $orange !important;
 }
 .text-yellow{
-    color: $yellow;
+    color: $yellow !important;
 }
 .text-green{
-    color: $green;
+    color: $green !important;
 }
 .text-teal{
-    color: $teal;
+    color: $teal !important;
 }
 .text-cyan{
-    color: $cyan;
+    color: $cyan !important;
+}
+.text-white{
+    color: #fff !important;
+}
+.text-black{
+    color: #000000 !important;
+}
+
+
+// create background-color
+.bgc-blue{
+    background-color: $blue !important;
+}
+.bgc-indigo{
+    background-color: $indigo !important;
+}
+.bgc-purple{
+    background-color: $purple !important;
+}
+.bgc-pink{
+    background-color: $pink !important;
+}
+.bgc-red{
+    background-color: $red !important;
+}
+.bgc-orange{
+    background-color: $orange !important;
+}
+.bgc-yellow{
+    background-color: $yellow !important;
+}
+.bgc-green{
+    background-color: $green !important;
+}
+.bgc-teal{
+    background-color: $teal !important;
+}
+.bgc-cyan{
+    background-color: $cyan !important;
+}
+.bgc-white{
+    background-color: #fff !important;
+}
+.bgc-black{
+    background-color: #000000 !important;
 }

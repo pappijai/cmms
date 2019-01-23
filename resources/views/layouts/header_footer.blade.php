@@ -23,18 +23,13 @@ scratch. This page gets rid of all links and provides the needed markup only.
   <nav class="main-header navbar navbar-expand bg-white navbar-light border-bottom">
       <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link" data-widget="pushmenu" href="#"><i class="fa fa-bars"></i></a>
+            <a class="nav-link text-teal" data-widget="pushmenu" href="#"><i class="fa fa-bars"></i></a>
           </li>
       </ul>
     <!-- SEARCH FORM -->
     <div class="form-inline ml-3">
       <div class="input-group input-group-sm">
-        <input class="form-control form-control-navbar" type="search" placeholder="Search" aria-label="Search">
-        <div class="input-group-append">
-          <button class="btn btn-navbar">
-            <i class="fa fa-search"></i>
-          </button>
-        </div>
+          <h4 class="text-teal">Classroom Management and Mapping System</h4>
       </div>
     </div>
 
@@ -70,7 +65,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
           <li class="nav-item">
             <router-link to="/dashboard" class="nav-link">
-              <i class="nav-icon fas fa-tachometer-alt text-blue"></i>
+              <i class="nav-icon fas fa-tachometer-alt text-white"></i>
               <p>
                 Dashboard
               </p>

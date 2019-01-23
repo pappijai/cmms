@@ -9,10 +9,14 @@
 @import '~bootstrap/scss/bootstrap';
 @import '~admin-lte/dist/css/adminlte.css';
 
-
+// Fontawesome
 @import "~@fortawesome/fontawesome-free/scss/fontawesome.scss";
 @import "~@fortawesome/fontawesome-free/scss/solid.scss";
 @import "~@fortawesome/fontawesome-free/scss/brands.scss";
+
+// Datatables
+@import "~datatables.net-bs4/css/dataTables.bootstrap4.css";
+@import "~datatables.net-bs4/css/dataTables.bootstrap4.min.css";
 
 .navbar-laravel {
   background-color: #fff;
@@ -20,7 +24,7 @@
 }
 
 .router-link-exact-active{
-  background-color: #3f51b5;
+  background-color: #08a4a7;
   color: #fff !important;
 
 }

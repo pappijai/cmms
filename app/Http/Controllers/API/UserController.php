@@ -4,6 +4,10 @@ namespace App\Http\Controllers\API;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+Use Image;
 
 class UserController extends Controller
 {
@@ -20,6 +24,9 @@ class UserController extends Controller
     public function index()
     {
         //
+        if(\Gate::allows('isAdmin')){
+            return DB::select('SELECT * FROM users ORDER BY name ASC');
+        }
     }
 
     /**
