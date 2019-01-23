@@ -31,6 +31,10 @@ Vue.use(VueRouter);
 let routes = [
     { path: '/dashboard', component: require('./components/Dashboard.vue') },
     { path: '/developer', component: require('./components/Developer.vue') },
+    { path: '/users', component: require('./components/Users.vue') },
+    { path: '/building', component: require('./components/classroom/building.vue') },
+    { path: '/floor', component: require('./components/classroom/floor.vue') },
+    { path: '/room', component: require('./components/classroom/room.vue') },
     //return this component if invalid url
     { path: '*', component: require('./components/NotFound.vue') },
 ]
@@ -44,7 +48,7 @@ const router = new VueRouter({
 // moment
 import moment from 'moment';
 Vue.filter('myDate', function(created){
-    return moment(created).format('MMMM Do YYYY, h:mm:ss a');
+    return moment(created).format('MMMM Do YYYY');
 });
 
 // Vue progressbar 
@@ -105,8 +109,6 @@ Vue.component(
     'passport-personal-access-tokens',
     require('./components/passport/PersonalAccessTokens.vue').default
 );
-
-Vue.component('/home', require('./components/ExampleComponent.vue').default);
 
 // invalid links
 Vue.component(

@@ -31494,3 +31494,7 @@ readers do not read off random characters that represent icons */
   color: #fff !important;
 }
 
+.router-link-exact-active i::before {
+  color: #fff !important;
+}
+

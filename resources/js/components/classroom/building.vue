@@ -3,10 +3,10 @@
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card card-default">
-                    <div class="card-header">Dashboard</div>
+                    <div class="card-header">Building</div>
 
                     <div class="card-body">
-                        Dashboard
+                        Building
                     </div>
                 </div>
             </div>
