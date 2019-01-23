@@ -78,4 +78,5 @@ Hey yoww groupmates! quick guide mga erp
 - Run php artisan key:generate to generate the app key
 - Run npm install
 - Run php artisan migrate
+- Run php artisan passport:install
 - Done !!!
