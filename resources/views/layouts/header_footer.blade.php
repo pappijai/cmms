@@ -14,6 +14,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
   <title>CMMS</title>
     <link rel="stylesheet" href="/css/app.css">
+    <link rel="shortcut icon" href="./img/favicon.png">
 
 </head>
 <body class="hold-transition sidebar-mini">
@@ -50,12 +51,12 @@ scratch. This page gets rid of all links and provides the needed markup only.
       <!-- Sidebar user panel (optional) -->
       <div class="user-panel mt-3 pb-3 mb-3 d-flex">
         <div class="image">
-          <img src="./img/people.png" class="img-circle elevation-2" alt="User Image">
+          <img src="./img/people.png" class="img-circle elevation-3" alt="User Image">
         </div>
         <div class="info">
           <a href="#" class="d-block">
-            {{ Auth::user()->name }}
-            <small> | {{ Auth::user()->type }}</small>
+            {{ Auth::user()->name }}<br/>
+            <small> <i class="fas fa-circle fa-sm text-green"></i> {{ Auth::user()->type}}</small>
           </a>
         </div>
       </div>
@@ -117,7 +118,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 <router-link to="/building" class="nav-link">
                   <i class="nav-icon fas fa-angle-right text-green"></i>
                   <p>
-                    Building Management
+                    Buildings
                   </p>
                 </router-link>
               </li>
@@ -126,16 +127,25 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 <router-link to="/floor" class="nav-link">
                   <i class="nav-icon fas fa-angle-right text-green"></i>
                   <p>
-                    Floor Management
+                    Floors
                   </p>
                 </router-link>
               </li>
 
-              <li class="nav-item ml-2">
-                  <router-link to="/room" class="nav-link">
+                <li class="nav-item ml-2">
+                  <router-link to="/classroom" class="nav-link">
                     <i class="nav-icon fas fa-angle-right text-green"></i>
                     <p>
-                      Room Management
+                      Classrooms
+                    </p>
+                  </router-link>
+                </li>
+
+                <li class="nav-item ml-2">
+                  <router-link to="/classroomtype" class="nav-link">
+                    <i class="nav-icon fas fa-angle-right text-green"></i>
+                    <p>
+                      Classroom Types
                     </p>
                   </router-link>
                 </li>

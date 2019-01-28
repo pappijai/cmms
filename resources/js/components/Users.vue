@@ -5,7 +5,7 @@
             <div class="col-md-12">
                 <div class="card card-default">
                     <div class="card-header bgc-teal">
-                        <h3 class="card-title text-white">Users Table</h3>
+                        <h3 class="card-title text-white"><i class="fas fa-users"></i> Users Table</h3>
                         <div class="card-tools">
                             <!-- call a function on click to the button -->
                             <button class="btn btn-light text-teal" @click="newModal">Add New <span class="fas fa-user-plus fa-fw"></span></button>
@@ -160,12 +160,13 @@
                             title: 'User Created successfully'
                         })
                         this.$Progress.finish()
-                        })
+                    })
                     .catch(() =>{
                         this.$Progress.fail()
                     })
                }               
            },
+           // delete user information
            deleteUser(id){
                 swal({
                     title: 'Are you sure?',
@@ -195,12 +196,14 @@
                     }
                 })   
            },
+           // show the update modal
            editModal(user){
                 this.editmode = true;
                 this.form.reset();
                 $('#addusermodal').modal('show');
                 this.form.fill(user);               
            },
+           // updating the user information
            updateUser(){
                if(this.$gate.isAdmin()){
                     this.$Progress.start()

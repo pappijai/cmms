@@ -19,3 +19,12 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 // to name the all the user route list
 Route::apiResources(['user' => 'API\UserController']);
+Route::apiResources(['building' => 'API\BuildingController']);
+Route::apiResources(['floor' => 'API\FloorController']);
+Route::apiResources(['classroom' => 'API\ClassroomController']);
+Route::apiResources(['classroomType' => 'API\ClassroomTypeController']);
+
+
+Route::get('buildingInfo', 'API\FloorController@buildinginfo');
+Route::get('classroomTypeInfo', 'API\ClassroomController@classroomTypeInfo');
+Route::get('floorsInfo/{id}', 'API\ClassroomController@floorsInfo');

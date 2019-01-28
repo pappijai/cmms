@@ -144,6 +144,12 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'BldgName' => 'Building Name',
+        'BldgID' => 'Building',
+        'BFName' => 'Floor Name',
+        'CTName' => 'Classroom Type Name',
+
+    ],
 
 ];

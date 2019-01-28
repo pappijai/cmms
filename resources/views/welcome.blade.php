@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>Laravel</title>
+        <title>CMMS</title>
         <link rel="shortcut icon" href="/img/favicon.png">
         <!-- Fonts -->
         <link href="https://fonts.googleapis.com/css?family=Nunito:200,600" rel="stylesheet" type="text/css">
@@ -12,7 +12,7 @@
         <!-- Styles -->
         <style>
             html, body {
-                background-color: #fff;
+                background-image: linear-gradient(180deg, #08a4a7, #0388e6);
                 color: #636b6f;
                 font-family: 'Nunito', sans-serif;
                 font-weight: 200;
@@ -61,6 +61,9 @@
             .m-b-md {
                 margin-bottom: 30px;
             }
+            .text-white{
+                color: #fff !important;
+            }
         </style>
     </head>
     <body>
@@ -68,19 +71,19 @@
             @if (Route::has('login'))
                 <div class="top-right links">
                     @auth
-                        <a href="{{ url('/dashboard') }}">Home</a>
+                        <a class="text-white" href="{{ url('/dashboard') }}">Home</a>
                     @else
-                        <a href="{{ route('login') }}">Login</a>
+                        <a class="text-white" href="{{ route('login') }}">Login</a>
 
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}">Register</a>
-                        @endif
+                        {{-- @if (Route::has('register'))
+                            <a class="text-white" href="{{ route('register') }}">Register</a>
+                        @endif --}}
                     @endauth
                 </div>
             @endif
 
             <div class="content">
-                <div class="title m-b-md">
+                <div class="title m-b-md text-white">
                     {{ config('app.name')}}
                 </div>
             </div>

@@ -34,7 +34,8 @@ let routes = [
     { path: '/users', component: require('./components/Users.vue') },
     { path: '/building', component: require('./components/classroom/building.vue') },
     { path: '/floor', component: require('./components/classroom/floor.vue') },
-    { path: '/room', component: require('./components/classroom/room.vue') },
+    { path: '/classroom', component: require('./components/classroom/classroom.vue') },
+    { path: '/classroomType', component: require('./components/classroom/classroomType.vue') },
     //return this component if invalid url
     { path: '*', component: require('./components/NotFound.vue') },
 ]

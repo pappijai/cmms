@@ -1,0 +1,71 @@
+.card,.login-form
+{
+  background-color: #0cc6ca !important;
+  color: #fff !important;
+}
+
+.form-control
+{
+  /* background-color: #17b4b7 !important ; */
+  color: #0cc6ca !important;
+}
+
+::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+  color: #0cc6ca !important;
+}
+#inlineFormCustomSelect
+{
+  background-color: #17b4b7 !important ;
+  color: #fff;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    color: #000;
+    background-color: #17b4b7 !important ;
+}
+
+.bg-blue
+{
+  background-image: linear-gradient(180deg, #08a4a7, #0388e6);
+}
+
+
+.login-content
+{
+  padding-top: 120px;
+
+}
+
+.bg-blue img
+{
+  width: 80%;
+}
+
+.login-form
+{
+  padding: 35px 25px;
+  border-radius: 5px;
+  -webkit-box-shadow: -23px 70px 5px 0px rgba(0,0,0,0.46);
+  -moz-box-shadow: -23px 70px 5px 0px rgba(0,0,0,0.46);
+  box-shadow: -23px 70px 5px 0px rgba(0,0,0,0.46);
+}
+
+.login-form label
+{ 
+  color: #fff !important;
+}
+
+.login-form label
+{
+  font-size: 1.1rem;
+}
+
+.but
+{
+  margin-top: 20px;
+  background-color: #f1b62a;
+  color: #fff;
+  border-bottom: 10px solid #daa119 !important;
+  width: 100%;
+  padding: 15px !important;
+}

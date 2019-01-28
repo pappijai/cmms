@@ -4,35 +4,35 @@
             <div class="col-md-10">
                 <div class="card card-default">
                     <div class="card-header bgc-teal">
-                        <h3 class="card-title text-white"><i class="fas fa-building"></i> Buildings Table</h3>
+                        <h3 class="card-title text-white"><i class="fas fa-building"></i> Classroom Types Table</h3>
                         <div class="card-tools">
                             <!-- call a function on click to the button -->
-                            <button class="btn btn-light text-teal" @click="newBuilding">Add New <span class="fas fa-building fa-fw"></span></button>
+                            <button class="btn btn-light text-teal" @click="newClassroomType">Add New <span class="fas fa-building fa-fw"></span></button>
                         </div>
                     </div>
 
                     <div class="card-body table-responsive">
-                        <table id="building_table" class="display table table-stripped table-hover">
+                        <table id="classroom_type_table" class="display table table-stripped table-hover">
                             <thead>
                                 <tr>
                                     <th>No.</th>
-                                    <th>Name</th>
+                                    <th>Classroom Type Name</th>
                                     <th>Created At</th>
                                     <th>Modify</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <div hidden>{{id = 1}}</div>
-                                <tr v-for="building in buildings" :key="building.id">
+                                <tr v-for="classroomType in classroomTypes" :key="classroomType.id">
                                     <td>{{id++}}</td>
-                                    <td>{{building.BldgName}}</td>
-                                    <td>{{building.created_at | myDate}}</td>
+                                    <td>{{classroomType.CTName}}</td>
+                                    <td>{{classroomType.created_at | myDate}}</td>
                                     <td>
-                                        <a href="#" @click="editModal(building)">
+                                        <a href="#" @click="editModal(classroomType)">
                                             <i class="fas fa-edit text-blue"></i>    
                                         </a>
                                         / 
-                                        <a href="#" @click="deleteUser(building.BldgID)">
+                                        <a href="#" @click="deleteClassroomType(classroomType.CTID)">
                                             <i class="fas fa-trash text-red"></i>    
                                         </a> 
                                     </td>
@@ -44,23 +44,23 @@
             </div>
         </div>
 
-        <div class="modal fade" id="addbuildingmodal" tabindex="-1" role="dialog" aria-labelledby="addbuildingmodalLabel" aria-hidden="true">
+        <div class="modal fade" id="addclassroomtypemodal" tabindex="-1" role="dialog" aria-labelledby="addclassroomtypemodalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header bgc-teal">
-                        <h5 class="modal-title text-white" id="addbuildingmodalLabel">{{editmode ? 'Update Building':'Add New Building'}}</h5>
+                        <h5 class="modal-title text-white" id="addclassroomtypemodalLabel">{{editmode ? 'Update Classroom Type':'Add New Classroom Type'}}</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <!-- Identify if update or create function -->
-                    <form @submit.prevent="editmode ? updatedBuilding() : createBuilding()">
+                    <form @submit.prevent="editmode ? updatedClassroomType() : createClassroomType()">
                     <div class="modal-body">
-                        
+
                         <div class="form-group">
-                            <input v-model="form.BldgName" type="text" name="BldgName" placeholder="Building Name"
-                                class="form-control" :class="{ 'is-invalid': form.errors.has('BldgName') }">
-                            <has-error :form="form" field="BldgName"></has-error>
+                            <input v-model="form.CTName" type="text" name="CTName" placeholder="Classroom Type Name"
+                                class="form-control" :class="{ 'is-invalid': form.errors.has('CTName') }">
+                            <has-error :form="form" field="CTName"></has-error>
                         </div>
 
                         <div class="modal-footer">
@@ -80,63 +80,41 @@
     export default {
         data(){
             return {
-                buildings: {},
+                classroomTypes: {},
                 editmode: false,
                 form: new Form({
-                    BldgID: '',
-                    BldgName: ''
+                    CTID: '',
+                    CTName: ''
                 })
             }
         },
         methods:{
-            loadbuilding(){
-                axios.get('api/building').then(({ data }) => (this.buildings = data));
-            },
-            newBuilding(){
-                this.editmode = false;
-                this.form.reset();
-                $('#addbuildingmodal').modal('show');                   
-            },
-            createBuilding(){
-                this.$Progress.start()
-                this.form.post('api/building')
-                .then(() =>{
-                    Fire.$emit('AfterCreate');
-                    $('#addbuildingmodal').modal('hide');
-                    toast({
-                        type: 'success',
-                        title: 'Building Created successfully'
-                    })                    
-                    this.$Progress.finish()
-                })
-                .catch(() =>{
-                    this.$Progress.fail()
-                })
+            loadclassroom(){
+                axios.get('api/classroomType').then(({ data }) => (this.classroomTypes = data));
 
             },
-            editModal(building){
-                this.editmode = true;
-                this.form.reset();
-                $('#addbuildingmodal').modal('show');      
-                this.form.fill(building);                  
+            newClassroomType(){
+                this.form.reset()
+                this.editmode = false;
+                $('#addclassroomtypemodal').modal('show');
             },
-            updatedBuilding(){
+            createClassroomType(){
                 this.$Progress.start()
-                this.form.put('api/building/'+this.form.BldgID)
-                .then(() => {
-                    Fire.$emit('AfterUpdate');
-                    $('#addbuildingmodal').modal('hide');                    
+                this.form.post('api/classroomType')
+                .then(() =>{
+                    Fire.$emit('AfterCreate');
+                    $('#addclassroomtypemodal').modal('hide'); 
                     toast({
                         type: 'success',
-                        title: 'Building Updated successfully'
-                    })                       
+                        title: 'Floor Created successfully'
+                    })                     
                     this.$Progress.finish();
                 })
                 .catch(() => {
                     this.$Progress.fail();
                 })
             },
-            deleteUser(id){
+            deleteClassroomType(id){
                 swal({
                     title: 'Are you sure?',
                     text: "You won't be able to revert this!",
@@ -148,13 +126,13 @@
                 }).then((result) => {
                     // Send ajax request to server
                     if(result.value){
-                        this.form.delete('api/building/'+id).then(() => {
+                        this.form.delete('api/classroomType/'+id).then(() => {
                             toast({
                                 type: 'success',
-                                title: 'Building Deleted successfully'
+                                title: 'Classroom Type Deleted successfully'
                             })
                             Fire.$emit('AfterDelete');
-                                
+                            
                         }).catch(() =>{
                             swal(
                                 'Error',
@@ -163,34 +141,57 @@
                             )
                         })
                     }
-                })                 
+                })                  
+            },
+            editModal(classroomTypes){
+                this.editmode = true
+                this.form.reset();
+                $('#addclassroomtypemodal').modal('show');  
+                this.form.fill(classroomTypes)   
+            },
+            updatedClassroomType(id){
+                this.$Progress.start()
+                this.form.put('api/classroomType/'+this.form.CTID)
+                .then(() => {
+                    Fire.$emit('AfterUpdate');
+                    $('#addclassroomtypemodal').modal('hide');                    
+                    toast({
+                        type: 'success',
+                        title: 'Classroom Type Updated successfully'
+                    })                    
+                    this.$Progress.finish()
+                })
+                .catch(() => {
+                    this.$Progress.fail()
+                })
             }
         },
         created(){
-            this.loadbuilding();
-            Fire.$on('AfterCreate',() =>{
-                this.loadbuilding()
-            });
+            this.loadclassroom();
 
-            Fire.$on('AfterUpdate',() =>{
-                this.loadbuilding()
-            });
+            Fire.$on('AfterCreate', () => {
+                this.loadclassroom();
+            })
 
-            Fire.$on('AfterDelete',() =>{
-                this.loadbuilding()
-            });
+            Fire.$on('AfterDelete', () => {
+                this.loadclassroom();
+            })
+
+            Fire.$on('AfterUpdate', () => {
+                this.loadclassroom();
+            })
         },
         mounted() {
             // loading the datatables when going to this page
-            this.dt = $('#building_table').DataTable();
-            this.loadbuilding();
+            this.dt = $('#classroom_type_table').DataTable();
+            this.loadclassroom();
         },
         watch: {
             // detect all the changes in the table
-            buildings(val) {
+            classroomTypes(val) {
                 this.dt.destroy();
                 this.$nextTick(() => {
-                this.dt = $('#building_table').DataTable()
+                this.dt = $('#classroom_type_table').DataTable()
                 });
             }
         },
