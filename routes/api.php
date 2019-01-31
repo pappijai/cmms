@@ -23,6 +23,7 @@ Route::apiResources(['building' => 'API\BuildingController']);
 Route::apiResources(['floor' => 'API\FloorController']);
 Route::apiResources(['classroom' => 'API\ClassroomController']);
 Route::apiResources(['classroomType' => 'API\ClassroomTypeController']);
+Route::apiResources(['subject' => 'API\SubjectController']);
 
 
 Route::get('buildingInfo', 'API\FloorController@buildinginfo');

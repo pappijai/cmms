@@ -36,6 +36,7 @@ let routes = [
     { path: '/floor', component: require('./components/classroom/floor.vue') },
     { path: '/classroom', component: require('./components/classroom/classroom.vue') },
     { path: '/classroomType', component: require('./components/classroom/classroomType.vue') },
+    { path: '/subject', component: require('./components/subject/subject.vue') },
     //return this component if invalid url
     { path: '*', component: require('./components/NotFound.vue') },
 ]

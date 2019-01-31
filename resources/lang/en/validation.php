@@ -149,6 +149,8 @@ return [
         'BldgID' => 'Building',
         'BFName' => 'Floor Name',
         'CTName' => 'Classroom Type Name',
+        'CTID' => 'Classroom Type Name',
+        'BFID' => 'Floor Name',
 
     ],
 

@@ -12,35 +12,35 @@
                     </div>
 
                     <div class="card-body table-responsive">
-                        <table id="classroom_table" class="display table table-stripped table-hover">
+                        <table id="classroom_table" class="display table table-striped table-hover">
                             <thead>
                                 <tr>
                                     <th>No.</th>
                                     <th>Classroom Code</th>
                                     <th>Classroom Name</th>
-                                    <th>Building</th>
-                                    <th>Floor</th>
                                     <th>Classroom Type</th>
+                                    <th>Building</th>
+                                    <th>Floor</th>                                   
                                     <th>Created AT</th>
                                     <th>Modify</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <div hidden>{{id = 1}}</div>
-                                <tr>
+                                <tr v-for="classroom in classrooms" :key="classroom.id">
                                     <td>{{id++}}</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>{{classroom.ClassroomCode}}</td>
+                                    <td>{{classroom.ClassroomName}}</td>
+                                    <td>{{classroom.CTName}}</td>
+                                    <td>{{classroom.BldgName}}</td>
+                                    <td>{{classroom.BFName}}</td>
+                                    <td>{{classroom.created_at | myDate}}</td>
                                     <td>
-                                        <a href="#" @click="editModal()">
+                                        <a href="#" @click="editModal(classroom)">
                                             <i class="fas fa-edit text-blue"></i>    
                                         </a>
                                         / 
-                                        <a href="#" @click="deleteClassroom()">
+                                        <a href="#" @click="deleteClassroom(classroom.ClassroomID)">
                                             <i class="fas fa-trash text-red"></i>    
                                         </a> 
                                     </td>
@@ -77,36 +77,36 @@
                         </div>
 
                         <div class="form-group">
-                            <select v-model="form.ClassroomType" name="ClassroomType" id="ClassroomType"
-                                class="form-control" :class="{ 'is-invalid': form.errors.has('ClassroomType') }">
+                            <select v-model="form.CTID" name="CTID" id="CTID"
+                                class="form-control" :class="{ 'is-invalid': form.errors.has('CTID') }">
                                 <option value="">Select Classroom Type</option>
                                 <option v-for="CType_option in CType_options" :key="CType_option.id" v-bind:value="CType_option.CTID">
                                     {{ CType_option.CTName }}
                                 </option>
                             </select>
-                            <has-error :form="form" field="ClassroomType"></has-error>
+                            <has-error :form="form" field="CTID"></has-error>
                         </div>
 
                         <div class="form-group">
-                            <select @change="getFloors()" v-model="form.ClassroomBldg" name="ClassroomBldg" id="ClassroomBldg"
-                                class="form-control" :class="{ 'is-invalid': form.errors.has('ClassroomBldg') }">
+                            <select @change="getFloors()" v-model="form.BldgID" name="BldgID" id="BldgID"
+                                class="form-control" :class="{ 'is-invalid': form.errors.has('BldgID') }">
                                 <option value="">Select Building</option>
                                 <option v-for="building in buildings" :key="building.id" v-bind:value="building.BldgID">
                                     {{ building.BldgName }}
                                 </option>
                             </select>
-                            <has-error :form="form" field="ClassroomBldg"></has-error>
+                            <has-error :form="form" field="BldgID"></has-error>
                         </div>
 
                         <div class="form-group">
-                            <select v-model="form.ClassroomFloor" name="ClassroomFloor" id="ClassroomFloor"
-                                class="form-control" :class="{ 'is-invalid': form.errors.has('ClassroomFloor') }">
+                            <select v-model="form.BFID" name="BFID" id="BFID"
+                                class="form-control" :class="{ 'is-invalid': form.errors.has('BFID') }">
                                 <option value="">Select Floor</option>
                                 <option v-for="floor in floors" :key="floor.id" v-bind:value="floor.BFID">
                                     {{ floor.BFName }}
                                 </option>
                             </select>
-                            <has-error :form="form" field="ClassroomFloor"></has-error>
+                            <has-error :form="form" field="BFID"></has-error>
                         </div>
 
                         <label for="">Schedule</label>
@@ -123,9 +123,9 @@
                                 <div class="col-md-6 col-xs-12 col-sm-12 mb-3">
                                     <div class="form-inline">
                                         <label for="inlineFor" class="mr-2">To : </label>
-                                        <input v-model="form.ClassroomIn" type="time" name="ClassroomIn" placeholder="Classroom Name"
-                                            class="form-control" :class="{ 'is-invalid': form.errors.has('ClassroomIn') }">
-                                        <has-error :form="form" field="ClassroomIn"></has-error>
+                                        <input v-model="form.ClassroomOut" type="time" name="ClassroomOut" placeholder="Classroom Name"
+                                            class="form-control" :class="{ 'is-invalid': form.errors.has('ClassroomOut') }">
+                                        <has-error :form="form" field="ClassroomOut"></has-error>
                                     </div>
                                 </div>
                         </div>
@@ -165,20 +165,20 @@
                 floors: {},
                 editmode: false,
                 form: new Form({
-                    ClassrooID: '',
+                    ClassroomID: '',
                     ClassroomCode: '',
                     ClassroomName: '',
-                    ClassroomType: '',
+                    CTID: '',
                     ClassroomIn: '',
                     ClassroomOut: '',
-                    ClassroomBldg: '',
-                    ClassroomFloor: '',
+                    BldgID: '',
+                    BFID: '',
                 })
             }
         },
         methods:{
             loadclassroom(){
-                //axios.get('api/floor').then(({ data }) => (this.floors = data));
+                axios.get('api/classroom').then(({ data }) => (this.classrooms = data));
                 axios.get('api/classroomTypeInfo').then(({ data }) => (this.CType_options = data));
                 axios.get('api/buildingInfo').then(({ data }) => (this.buildings = data));
 
@@ -189,7 +189,77 @@
                 $('#addclassroommodal').modal('show');
             },
             getFloors(){
-               axios.get('api/floorsInfo/'+ this.form.ClassroomBldg).then(({ data }) => (this.floors = data)); 
+               axios.get('api/floorsInfo/'+ this.form.BldgID).then(({ data }) => (this.floors = data)); 
+            },
+            createClassroom(){
+                this.$Progress.start()
+                this.form.post('api/classroom')
+                .then(() => {
+                    Fire.$emit('AfterCreate');
+                    $('#addclassroommodal').modal('hide'); 
+                    toast({
+                        type: 'success',
+                        title: 'Classroom Created successfully'
+                    }) 
+                    this.$Progress.finish()
+                })
+                .catch(() => {
+                    this.$Progress.fail()
+                })
+            },
+            editModal(classroom){
+                this.editmode = true;
+                this.form.reset();
+                $('#addclassroommodal').modal('show');                 
+                this.form.fill(classroom);    
+                axios.get('api/floorsInfo/'+ this.form.BldgID).then(({ data }) => (this.floors = data));
+  
+                           
+            },
+            deleteClassroom(id){
+                swal({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this!",
+                    type: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    // Send ajax request to server
+                    if(result.value){
+                        this.form.delete('api/classroom/'+id).then(() => {
+                            toast({
+                                type: 'success',
+                                title: 'Classroom Deleted successfully'
+                            })
+                            Fire.$emit('AfterDelete');
+                            
+                        }).catch(() =>{
+                            swal(
+                                'Error',
+                                'There was something wrong.',
+                                'error'
+                            )
+                        })
+                    }
+                })   
+            },
+            updatedClassroom(){
+                this.$Progress.start()
+                this.form.put('api/classroom/'+this.form.ClassroomID)
+                .then(() => {
+                    $('#addclassroommodal').modal('hide');  
+                    toast({
+                        type: 'success',
+                        title: 'Classroom Updated successfully'
+                    })
+                    Fire.$emit('AfterUpdate')
+                    this.$Progress.finish()                 
+                })
+                .catch(() => {
+                    this.$Progress.fail()
+                })
             }
         },
         created(){
@@ -209,15 +279,21 @@
         },
         mounted() {
             // loading the datatables when going to this page
-            this.dt = $('#classroom_table').DataTable();
+            this.dt = $('#classroom_table').DataTable({
+                "aLengthMenu": [[5, 10, 25, 50, 75, -1], [5, 10, 25, 50, 75, "All"]],
+                "iDisplayLength": 5                
+            });
             this.loadclassroom();
         },
         watch: {
             // detect all the changes in the table
-            floors(val) {
+            classrooms(val) {
                 this.dt.destroy();
                 this.$nextTick(() => {
-                this.dt = $('#classroom_table').DataTable()
+                this.dt = $('#classroom_table').DataTable({
+                    "aLengthMenu": [[5, 10, 25, 50, 75, -1], [5, 10, 25, 50, 75, "All"]],
+                    "iDisplayLength": 5                
+                })
                 });
             }
         },
