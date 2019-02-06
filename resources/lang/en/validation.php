@@ -151,6 +151,9 @@ return [
         'CTName' => 'Classroom Type Name',
         'CTID' => 'Classroom Type Name',
         'BFID' => 'Floor Name',
+        'CTID1' => 'Classroom Type Name',
+        'SubjectHours1' => 'Total Hours',
+        'SubjectHours' => 'Total Hours',
 
     ],
 

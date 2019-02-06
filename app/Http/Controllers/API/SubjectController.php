@@ -21,7 +21,7 @@ class SubjectController extends Controller
         //
 
         return DB::select('SELECT concat(md5(SubjectID)) SubjectID,SubjectDescription,SubjectCode,
-                        SubjectMeetings,created_at FROM subjects ORDER BY SubjectCode ASC');
+                        SubjectMeetings,created_at FROM subjects ORDER BY created_at DESC');
     }
 
     /**
@@ -50,16 +50,14 @@ class SubjectController extends Controller
 
         for($i = 1;$i <= $request->SubjectMeetings;$i++){
             DB::insert('
-                INSERT INTO subject_meetings (SubjectID,created_at,updated_at) VALUES ("'.$subject_id.'",now(),now())
+                INSERT INTO subject_meetings (SubjectID,CTID,created_at,updated_at) VALUES ("'.$subject_id.'","",now(),now())
             ');
         }
-        
-        if ($subjects){
-            return 'good';
-        }
-        else{
-            return 'failed';
-        }        
+        $data = [
+            'subject_id' => md5($subject_id)
+        ];
+
+        return $data;       
     }
 
     /**
@@ -105,7 +103,7 @@ class SubjectController extends Controller
         $count_sub_meetings = count(DB::select('SELECT * FROM subject_meetings WHERE SubjectID = '.$subjects_id.''));
         if($request->SubjectMeetings > $count_sub_meetings){
             DB::insert('
-                INSERT INTO subject_meetings (SubjectID,created_at,updated_at) VALUES ("'.$subjects_id.'",now(),now())
+                INSERT INTO subject_meetings (SubjectID,CTID,created_at,updated_at) VALUES ("'.$subjects_id.'","",now(),now())
             ');
         }
         elseif($request->SubjectMeetings < $count_sub_meetings){
@@ -115,12 +113,11 @@ class SubjectController extends Controller
             //none
         }
 
-        if($subjects){
-            return ["message" => "Updated Successfully"];
-        }
-        else{
-            return ["message" => "Error"];
-        }          
+        $data = [
+            'subject_id' => md5($subjects_id)
+        ];
+
+        return $data;         
     }
 
     /**
@@ -142,5 +139,42 @@ class SubjectController extends Controller
         else{
             return ["message" => "Error"];
         }              
+    }
+
+    public function getsubjectmeetings($id){
+        return DB::select('SELECT md5(concat(SMID)) SMID, SubjectID, CTID, SubjectHours FROM subject_meetings WHERE md5(concat(SubjectID)) = "'.$id.'"');
+    }
+
+    public function updatesubjectmeetings1(Request $request, $id){
+        $this->validate($request, [            
+            'CTID' => 'required|integer',
+            'SubjectHours' => 'required|integer',
+        ]);       
+
+        $subject_meetings = DB::update('
+        UPDATE subject_meetings SET
+            CTID = "'.$request->CTID.'",
+            SubjectHours = "'.$request->SubjectHours.'",
+            updated_at = now()
+            WHERE md5(concat(SMID)) = "'.$id.'"
+            
+        ');
+        
+    }
+
+    public function updatesubjectmeetings2(Request $request, $id){
+        $this->validate($request, [            
+            'CTID' => 'required|integer',
+            'SubjectHours' => 'required|integer',
+        ]); 
+
+        $subject_meetings = DB::update('
+        UPDATE subject_meetings SET
+            CTID = "'.$request->CTID.'",
+            SubjectHours = "'.$request->SubjectHours.'",
+            updated_at = now()
+            WHERE md5(concat(SMID)) = "'.$id.'"
+            
+        ');        
     }
 }

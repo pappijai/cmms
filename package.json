@@ -30,6 +30,7 @@
         "laravel-mix": "^2.0.0",
         "laravel-vue-pagination": "^2.2.0",
         "moment": "^2.23.0",
+        "number-to-words": "^1.2.4",
         "sweetalert2": "^7.33.1",
         "vform": "^1.0.0",
         "vue-progressbar": "^0.7.5",

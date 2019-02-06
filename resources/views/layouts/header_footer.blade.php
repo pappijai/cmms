@@ -172,7 +172,37 @@ scratch. This page gets rid of all links and provides the needed markup only.
               </li>
             </ul>
           </li> 
-        
+
+          <li class="nav-item has-treeview menu-close">
+            <a href="#" class="nav-link">
+              <i class="nav-icon fas fa-graduation-cap text-yellow"></i>
+              <p>
+                Course Management
+                <i class="right fa fa-angle-left"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+
+              <li class="nav-item ml-2">
+                <router-link to="/course" class="nav-link">
+                  <i class="nav-icon fas fa-angle-right text-yellow"></i>
+                  <p>
+                    Courses
+                  </p>
+                </router-link>
+              </li>
+
+              <li class="nav-item ml-2">
+                <router-link to="/section" class="nav-link">
+                  <i class="nav-icon fas fa-angle-right text-yellow"></i>
+                  <p>
+                    Sections
+                  </p>
+                </router-link>
+              </li>
+            </ul>
+          </li> 
+          
           <li class="nav-item">
               <router-link to="/profile" class="nav-link">
                 <i class="nav-icon fas fa-user text-orange"></i>

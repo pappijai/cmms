@@ -16,7 +16,12 @@ Vue.prototype.$gate = new Gate(window.user);
 
 // v_form 
 import { Form, HasError, AlertError } from 'vform'
+
+//different name of forms object
 window.Form = Form; 
+window.SM_Form1 = Form;
+window.SM_Form2 = Form;
+
 Vue.component(HasError.name, HasError);
 Vue.component(AlertError.name, AlertError);
 
@@ -37,6 +42,7 @@ let routes = [
     { path: '/classroom', component: require('./components/classroom/classroom.vue') },
     { path: '/classroomType', component: require('./components/classroom/classroomType.vue') },
     { path: '/subject', component: require('./components/subject/subject.vue') },
+    { path: '/course', component: require('./components/course/course.vue') },
     //return this component if invalid url
     { path: '*', component: require('./components/NotFound.vue') },
 ]
@@ -83,6 +89,17 @@ Vue.filter('upText', function(text){
     return text.charAt(0).toUpperCase() + text.slice(1);
     
 });
+
+// Number to words 
+
+var converter = require('number-to-words');
+Vue.filter('convert', function(text) {
+    return converter.toOrdinal(text);
+});
+
+
+
+
 
 /**
  * The following block of code may be used to automatically register your

@@ -18,7 +18,7 @@
                                     <th>No.</th>
                                     <th>Subject Code</th>
                                     <th>Subject Description</th>
-                                    <th># of Meetings</th>
+                                    <th>Meetings</th>
                                     <th>Created At</th>
                                     <th>Modify</th>
                                 </tr>
@@ -29,7 +29,11 @@
                                     <td>{{id++}}</td>
                                     <td>{{subject.SubjectCode}}</td>
                                     <td>{{subject.SubjectDescription}}</td>
-                                    <td>{{subject.SubjectMeetings}}</td>
+                                    <td>
+                                        <button @click="editMeetings(subject.SubjectID)" class="btn btn-info text-white">
+                                            <i class="fas fa-edit text-white"></i> Modify Meetings Info
+                                        </button>                                        
+                                    </td>
                                     <td>{{subject.created_at | myDate}}</td>
                                     <td>
                                         <a href="#" @click="editModal(subject)">
@@ -122,6 +126,98 @@
                 </div>
             </div>
         </div>
+
+        <div class="modal fade" id="meetingsmodal" tabindex="-1" role="dialog" aria-labelledby="meetingsmodalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bgc-teal">
+                        <h5 class="modal-title text-white" id="meetingsmodalLabel">Update Meetings Info</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                   
+                    <div hidden>{{i = 1}}</div>
+                    <div v-for="subject_meeting in subject_meetings" :key="subject_meeting.id">
+
+                        <!-- To identify if 1 meetings or 2 meetings for the forms -->
+                        <form v-if="i == 1" @submit.prevent="updateMeetings(subject_meeting,subject_meeting.SMID)" method="POST">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <h5>Meeting no. {{i}}</h5>
+                            </div>
+
+                            <div class="form-group" hidden>
+                                <input type="text" v-model="subject_meeting.SMID" name="SMID" placeholder="Total Hours"
+                                    class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <input type="text" v-model="subject_meeting.SubjectHours" name="SubjectHours" placeholder="Total Hours"
+                                    class="form-control" :class="{ 'is-invalid': sm_form1.errors.has('SubjectHours') }">
+                                <has-error :form="sm_form1" field="SubjectHours"></has-error>
+                            </div>
+
+                            <div class="form-group">
+                                <select v-model="subject_meeting.CTID" name="CTID" id="CTID"
+                                    class="form-control" :class="{ 'is-invalid': sm_form1.errors.has('CTID') }">
+                                    <option value="">Select Classroom Type</option>
+                                    <option v-for="CType_option in CType_options" :key="CType_option.id" v-bind:value="CType_option.CTID">
+                                        {{ CType_option.CTName }}
+                                    </option>
+                                </select>
+                                <has-error :form="sm_form1" field="CTID"></has-error>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-success">Update</button>
+                            </div>
+                        </div> 
+                        </form>
+
+                        <form v-else @submit.prevent="updateMeetings1(subject_meeting,subject_meeting.SMID)" method="POST">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <h5>Meeting no. {{i}}</h5>
+                            </div>
+
+                            <div class="form-group" hidden>
+                                <input type="text" v-model="subject_meeting.SMID" name="SMID" placeholder="Total Hours"
+                                    class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <input type="text" v-model="subject_meeting.SubjectHours" name="SubjectHours" placeholder="Total Hours"
+                                    class="form-control" :class="{ 'is-invalid': sm_form2.errors.has('SubjectHours') }">
+                                <has-error :form="sm_form2" field="SubjectHours"></has-error>
+                            </div>
+
+                            <div class="form-group">
+                                <select v-model="subject_meeting.CTID" name="CTID" id="CTID"
+                                    class="form-control" :class="{ 'is-invalid': sm_form2.errors.has('CTID') }">
+                                    <option value="">Select Classroom Type</option>
+                                    <option v-for="CType_option in CType_options" :key="CType_option.id" v-bind:value="CType_option.CTID">
+                                        {{ CType_option.CTName }}
+                                    </option>
+                                </select>
+                                <has-error :form="sm_form2" field="CTID"></has-error>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-success">Update</button>
+                            </div>
+                        </div> 
+                        </form>
+
+                        <!-- End of - To identify if 1 meetings or 2 meetings for the forms -->
+
+
+                        <div hidden>{{i++}}</div>
+                    </div>
+          
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -129,18 +225,35 @@
     export default {
         data(){
             return {
+                subject_id: {},
                 subjects: {},
+                CType_options: {},
+                subject_meetings: {},
                 editmode: false,
                 form: new Form({
                     SubjectID: '',
                     SubjectCode: '',
                     SubjectDescription: '',
                     SubjectMeetings: ''
-                })
+                }),
+                sm_form1: new SM_Form1({
+                    SMID: '',
+                    SubjectID: '',
+                    SubjectHours: '',
+                    CTID: '',
+                }),
+                sm_form2: new SM_Form2({
+                    SMID: '',
+                    SubjectID: '',
+                    SubjectHours: '',
+                    CTID: '',
+                }),
+                
             }
         },
         methods:{
             loadsubject(){
+                axios.get('api/classroomTypeInfo').then(({ data }) => (this.CType_options = data));
                 axios.get('api/subject').then(({ data }) => (this.subjects = data));
             },
             newSubject(){
@@ -151,14 +264,17 @@
             createSubject(){
                 this.$Progress.start();
                 this.form.post('api/subject')
-                .then(() => {
+                .then((data) => {    
+                    this.subject_id = data     
                     Fire.$emit('AfterCreate')
-                    $('#addsubjectmodal').modal('hide');
+                    $('#addsubjectmodal').modal('hide')
+                    this.editMeetings(this.subject_id.data['subject_id'])
                     toast({
                         type: 'success',
                         title: 'Subject Created successfully'
                     })     
                     this.$Progress.finish()
+                    
                 })
                 .catch(() => {
                     this.$Progress.fail()
@@ -173,8 +289,10 @@
             updatedSubject(){
                 this.$Progress.start()
                 this.form.put('api/subject/'+this.form.SubjectID)
-                .then(() => {
+                .then((data) => {
+                    this.subject_id = data
                     $('#addsubjectmodal').modal('hide')
+                    this.editMeetings(this.subject_id.data['subject_id'])
                     Fire.$emit('AfterUpdate')
                     toast({
                         type: 'success',
@@ -215,7 +333,48 @@
                         })
                     }
                 })                   
-            }
+            },
+            editMeetings(id){
+                this.sm_form1.reset()
+                this.sm_form2.reset()
+                axios.get('api/getsubjectmeetings/'+id).then(({ data }) => (this.subject_meetings = data))
+                $('#meetingsmodal').modal('show')
+
+
+
+            },
+            updateMeetings(subject_meeting,id){
+                this.sm_form1.fill(subject_meeting)
+                this.sm_form1.put('api/updatesubjectmeetings1/'+id)
+                .then(() => {
+                    Fire.$emit('AfterUpdate')
+                    toast({
+                        type: 'success',
+                        title: 'Subject Meetings Updated successfully'
+                    })     
+                    this
+                    this.$Progress.finish()
+                })
+                .catch(() => {
+                    this.$Progress.fail()
+                })
+            },
+            updateMeetings1(subject_meeting,id){
+                this.sm_form2.fill(subject_meeting)
+                this.sm_form2.put('api/updatesubjectmeetings2/'+id)
+                .then(() => {
+                    Fire.$emit('AfterUpdate')
+                    toast({
+                        type: 'success',
+                        title: 'Subject Meetings Updated successfully'
+                    })     
+                    this
+                    this.$Progress.finish()
+                })
+                .catch(() => {
+                    this.$Progress.fail()
+                })
+            },
         },
         created(){
             this.loadsubject();
@@ -234,11 +393,11 @@
         },
         mounted() {
             // loading the datatables when going to this page
+            this.loadsubject();
             this.dt = $('#subject_table').DataTable({
                 "aLengthMenu": [[5, 10, 25, 50, 75, -1], [5, 10, 25, 50, 75, "All"]],
                 "iDisplayLength": 5                
             });
-            this.loadsubject();
         },
         watch: {
             // detect all the changes in the table
