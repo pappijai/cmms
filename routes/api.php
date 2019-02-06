@@ -33,4 +33,8 @@ Route::get('floorsInfo/{id}', 'API\ClassroomController@floorsInfo');
 Route::get('getsubjectmeetings/{id}', 'API\SubjectController@getsubjectmeetings');
 Route::put('updatesubjectmeetings1/{id}', 'API\SubjectController@updatesubjectmeetings1');
 Route::put('updatesubjectmeetings2/{id}', 'API\SubjectController@updatesubjectmeetings2');
+Route::get('subjectsforcourse', 'API\SubjectController@subjectsforcourse');
+Route::get('courses_subjects_per_year_sem/{course_id}/{year}/{sem}', 'API\CourseController@courses_subjects_per_year_sem');
+Route::post('create_course_subject_first', 'API\CourseController@create_course_subject_first');
+Route::delete('delete_course_subject/{id}', 'API\CourseController@delete_course_subject');
 

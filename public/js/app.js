@@ -31267,6 +31267,7 @@ Vue.prototype.$gate = new __WEBPACK_IMPORTED_MODULE_0__Gate_js__["a" /* default 
 window.Form = __WEBPACK_IMPORTED_MODULE_1_vform__["Form"];
 window.SM_Form1 = __WEBPACK_IMPORTED_MODULE_1_vform__["Form"];
 window.SM_Form2 = __WEBPACK_IMPORTED_MODULE_1_vform__["Form"];
+window.Subject_Course = __WEBPACK_IMPORTED_MODULE_1_vform__["Form"];
 
 Vue.component(__WEBPACK_IMPORTED_MODULE_1_vform__["HasError"].name, __WEBPACK_IMPORTED_MODULE_1_vform__["HasError"]);
 Vue.component(__WEBPACK_IMPORTED_MODULE_1_vform__["AlertError"].name, __WEBPACK_IMPORTED_MODULE_1_vform__["AlertError"]);
@@ -91146,25 +91147,75 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     data: function data() {
         return {
-            subject_first: '',
-            subject_first_term: [],
-            subject_first_inputs: [],
-            subject_second: '',
-            subject_second_term: [],
-            subject_second_inputs: [],
+            CourseID: '',
+            // data's for subject per semester
+            SubjectID_First: '',
+            SubjectID_Second: '',
+            SubjectID_Summer: '',
+
+            // subjects per year,courses and sem
+            Subjects_First: {},
+            Subjects_Second: {},
+            Subjects_Summer: {},
+
+            First_Semester: 'First Semester',
+            Second_Semester: 'Second Semester',
+            Summer_Semester: 'Summer Semester',
+
             subject_year: 0,
-            courses: {},
-            subjects: {},
+            courses: [],
+            subjects: [],
             editmode: false,
             form: new Form({
                 CourseID: '',
                 CourseCode: '',
                 CourseDescription: '',
                 CourseYears: ''
+            }),
+            subject_course_first: new Subject_Course({
+                SubjectID: '',
+                CourseID: '',
+                CSOYear: '',
+                CSOSem: ''
+            }),
+            subject_course_second: new Subject_Course({
+                SubjectID: '',
+                CourseID: '',
+                CSOYear: '',
+                CSOSem: ''
             })
 
         };
@@ -91178,11 +91229,23 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 var data = _ref.data;
                 return _this.courses = data;
             });
-            axios.get('api/subject').then(function (_ref2) {
+            axios.get('api/subjectsforcourse').then(function (_ref2) {
                 var data = _ref2.data;
                 return _this.subjects = data;
             });
             //axios.get('api/subject').then(({ data }) => (this.subject_first_inputs = data));
+        },
+        loadSubjectsPerCourse: function loadSubjectsPerCourse() {
+            var _this2 = this;
+
+            axios.get('api/courses_subjects_per_year_sem/' + this.CourseID + '/' + this.subject_year + '/' + this.First_Semester).then(function (_ref3) {
+                var data = _ref3.data;
+                return _this2.Subjects_First = data;
+            });
+            axios.get('api/courses_subjects_per_year_sem/' + this.CourseID + '/' + this.subject_year + '/' + this.Second_Semester).then(function (_ref4) {
+                var data = _ref4.data;
+                return _this2.Subjects_Second = data;
+            });
         },
         newCourse: function newCourse() {
             this.form.reset();
@@ -91190,7 +91253,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             $('#addcoursemodal').modal('show');
         },
         createCourse: function createCourse() {
-            var _this2 = this;
+            var _this3 = this;
 
             this.$Progress.start();
             this.form.post('api/course').then(function () {
@@ -91200,9 +91263,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                     type: 'success',
                     title: 'Course Created successfully'
                 });
-                _this2.$Progress.finish();
+                _this3.$Progress.finish();
             }).catch(function () {
-                _this2.$Progress.fail();
+                _this3.$Progress.fail();
             });
         },
         editModal: function editModal(course) {
@@ -91212,7 +91275,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             this.form.fill(course);
         },
         updatedCourse: function updatedCourse() {
-            var _this3 = this;
+            var _this4 = this;
 
             this.$Progress.start();
             this.form.put('api/course/' + this.form.CourseID).then(function () {
@@ -91222,13 +91285,13 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                     type: 'success',
                     title: 'Course Updated successfully'
                 });
-                _this3.$Progress.finish();
+                _this4.$Progress.finish();
             }).catch(function () {
-                _this3.$Progress.fail();
+                _this4.$Progress.fail();
             });
         },
         deleteCourse: function deleteCourse(id) {
-            var _this4 = this;
+            var _this5 = this;
 
             swal({
                 title: 'Are you sure?',
@@ -91241,7 +91304,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             }).then(function (result) {
                 // Send ajax request to server
                 if (result.value) {
-                    _this4.form.delete('api/course/' + id).then(function () {
+                    _this5.form.delete('api/course/' + id).then(function () {
                         toast({
                             type: 'success',
                             title: 'Course Deleted successfully'
@@ -91253,60 +91316,137 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 }
             });
         },
-        addsubjecttocoursemodal: function addsubjecttocoursemodal(year) {
+        addsubjecttocoursemodal: function addsubjecttocoursemodal(year, CourseID) {
+
+            //reseting input fields
+            this.subject_course_first.reset();
+            this.subject_course_second.reset();
+            //this.subject_course_summer.reset();
+
+            this.subject_year = '';
+            this.CourseID = '';
+
+            this.Subjects_First = {};
+            this.Subjects_Second = {};
+            this.Subjects_Summer = {};
+
+            //default value
             this.subject_year = year;
-            this.subject_first = '';
-            this.subject_first_term = [];
-            this.subject_first_inputs = [];
+            this.CourseID = CourseID;
+
+            // load all subjects in their respective data object
+            this.loadSubjectsPerCourse();
+
             $('#addsubjecttocoursemodal').modal('show');
         },
-        addSubjectFirst: function addSubjectFirst() {
-            if (this.subject_first != '') {
-                this.subject_first_inputs.push({
-                    SubjectDescription: this.subject_first
-                });
+        create_subject_first: function create_subject_first() {
+            var _this6 = this;
 
-                this.subject_first_term.push({
-                    SubjectDescription: this.subject_first
+            if (this.getsizeofarray(this.Subjects_First) == 9) {
+                alert('maximum of 9 subjects for First Semester!');
+            } else {
+                this.$Progress.start();
+                this.subject_course_first.fill({
+                    SubjectID: this.SubjectID_First,
+                    CourseID: this.CourseID,
+                    CSOYear: this.subject_year,
+                    CSOSem: 'First Semester'
+                });
+                this.subject_course_first.post('api/create_course_subject_first').then(function () {
+                    Fire.$emit('AfterCreateSubject');
+                    toast({
+                        type: 'success',
+                        title: 'Subject for First Semester Added successfully'
+                    });
+                    _this6.$Progress.finish();
+                }).catch(function () {
+                    _this6.$Progress.fail();
                 });
             }
         },
-        deleteRowFirst: function deleteRowFirst(index) {
-            this.subject_first_inputs.splice(index, 1);
-            this.subject_first_term.splice(index, 1);
-        },
-        addSubjectSecond: function addSubjectSecond() {
-            if (this.subject_second != '') {
-                this.subject_second_inputs.push({
-                    SubjectDescription: this.subject_second
-                });
+        deleteSubject: function deleteSubject(id) {
+            var _this7 = this;
 
-                this.subject_second_term.push({
-                    SubjectDescription: this.subject_second
+            swal({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                type: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then(function (result) {
+                // Send ajax request to server
+                if (result.value) {
+                    _this7.subject_course_first.delete('api/delete_course_subject/' + id).then(function () {
+                        toast({
+                            type: 'success',
+                            title: 'Course Subject Deleted successfully'
+                        });
+                        Fire.$emit('AfterDeleteSubject');
+                    }).catch(function () {
+                        swal('Error', 'There was something wrong.', 'error');
+                    });
+                }
+            });
+        },
+        create_subject_second: function create_subject_second() {
+            var _this8 = this;
+
+            if (this.getsizeofarray(this.Subjects_Second) == 9) {
+                alert('maximum of 9 subjects for First Semester!');
+            } else {
+                this.$Progress.start();
+                this.subject_course_second.fill({
+                    SubjectID: this.SubjectID_Second,
+                    CourseID: this.CourseID,
+                    CSOYear: this.subject_year,
+                    CSOSem: 'Second Semester'
+                });
+                this.subject_course_second.post('api/create_course_subject_first').then(function () {
+                    Fire.$emit('AfterCreateSubject');
+                    toast({
+                        type: 'success',
+                        title: 'Subject for Second Semester Added successfully'
+                    });
+                    _this8.$Progress.finish();
+                }).catch(function () {
+                    _this8.$Progress.fail();
                 });
             }
         },
-        deleteRowSecond: function deleteRowSecond(index) {
-            this.subject_second_inputs.splice(index, 1);
-            this.subject_second_term.splice(index, 1);
-        },
-        create_first_sem: function create_first_sem() {}
+        getsizeofarray: function getsizeofarray(obj) {
+            var size = 0,
+                key;
+            for (key in obj) {
+                if (obj.hasOwnProperty(key)) size++;
+            }
+            return size;
+        }
     },
     created: function created() {
-        var _this5 = this;
+        var _this9 = this;
 
         this.loadCourse();
 
         Fire.$on('AfterCreate', function () {
-            _this5.loadCourse();
+            _this9.loadCourse();
+        });
+
+        Fire.$on('AfterCreateSubject', function () {
+            _this9.loadSubjectsPerCourse();
         });
 
         Fire.$on('AfterDelete', function () {
-            _this5.loadCourse();
+            _this9.loadCourse();
+        });
+
+        Fire.$on('AfterDeleteSubject', function () {
+            _this9.loadSubjectsPerCourse();
         });
 
         Fire.$on('AfterUpdate', function () {
-            _this5.loadCourse();
+            _this9.loadCourse();
         });
     },
     mounted: function mounted() {
@@ -91318,11 +91458,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     watch: {
         // detect all the changes in the table
         courses: function courses(val) {
-            var _this6 = this;
+            var _this10 = this;
 
             this.dt.destroy();
             this.$nextTick(function () {
-                _this6.dt = $('#course_table').DataTable();
+                _this10.dt = $('#course_table').DataTable();
             });
         }
     }
@@ -91399,7 +91539,10 @@ var render = function() {
                                   staticStyle: { margin: "2px" },
                                   on: {
                                     click: function($event) {
-                                      _vm.addsubjecttocoursemodal(year)
+                                      _vm.addsubjecttocoursemodal(
+                                        year,
+                                        course.CourseID
+                                      )
                                     }
                                   }
                                 },
@@ -91694,7 +91837,7 @@ var render = function() {
     _c(
       "div",
       {
-        staticClass: "modal fade bd-example-modal-xl",
+        staticClass: "modal fade bd-example-modal-lg",
         attrs: {
           id: "addsubjecttocoursemodal",
           tabindex: "-1",
@@ -91704,7 +91847,7 @@ var render = function() {
         }
       },
       [
-        _c("div", { staticClass: "modal-dialog modal-xl" }, [
+        _c("div", { staticClass: "modal-dialog modal-lg" }, [
           _c(
             "div",
             { staticClass: "modal-content", attrs: { role: "document" } },
@@ -91719,37 +91862,49 @@ var render = function() {
               _vm._v(" "),
               _c("div", { staticClass: "modal-body" }, [
                 _c("div", { staticClass: "row" }, [
-                  _c("div", { staticClass: "col-md-4" }, [
+                  _c("div", { staticClass: "col-md-6 col-sm-6 col-xs-6" }, [
+                    _vm._m(4),
+                    _vm._v(" "),
                     _c(
                       "form",
                       {
                         on: {
                           submit: function($event) {
                             $event.preventDefault()
-                            _vm.create_first_sem()
+                            _vm.create_subject_first()
                           }
                         }
                       },
                       [
-                        _vm._m(4),
+                        _vm._m(5),
                         _vm._v(" "),
-                        _c("div", { staticClass: "form-group" }, [
-                          _c(
-                            "select",
-                            {
-                              directives: [
-                                {
-                                  name: "model",
-                                  rawName: "v-model",
-                                  value: _vm.subject_first,
-                                  expression: "subject_first"
-                                }
-                              ],
-                              staticClass: "form-control",
-                              attrs: { name: "Subjects" },
-                              on: {
-                                change: [
-                                  function($event) {
+                        _c(
+                          "div",
+                          { staticClass: "form-group" },
+                          [
+                            _c(
+                              "select",
+                              {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.SubjectID_First,
+                                    expression: "SubjectID_First"
+                                  }
+                                ],
+                                staticClass: "form-control",
+                                class: {
+                                  "is-invalid": _vm.subject_course_first.errors.has(
+                                    "SubjectID"
+                                  )
+                                },
+                                attrs: {
+                                  id: "SubjectID_First",
+                                  name: "SubjectID_First"
+                                },
+                                on: {
+                                  change: function($event) {
                                     var $$selectedVal = Array.prototype.filter
                                       .call($event.target.options, function(o) {
                                         return o.selected
@@ -91759,146 +91914,145 @@ var render = function() {
                                           "_value" in o ? o._value : o.value
                                         return val
                                       })
-                                    _vm.subject_first = $event.target.multiple
+                                    _vm.SubjectID_First = $event.target.multiple
                                       ? $$selectedVal
                                       : $$selectedVal[0]
-                                  },
-                                  function($event) {
-                                    _vm.addSubjectFirst()
                                   }
-                                ]
-                              }
-                            },
-                            [
-                              _c("option", { attrs: { value: "" } }, [
-                                _vm._v("Select Subjects")
-                              ]),
-                              _vm._v(" "),
-                              _vm._l(_vm.subjects, function(subject) {
-                                return _c(
-                                  "option",
-                                  {
-                                    key: subject.id,
-                                    domProps: {
-                                      value: subject.SubjectDescription
-                                    }
-                                  },
-                                  [
-                                    _vm._v(
-                                      "\n                                            " +
-                                        _vm._s(subject.SubjectDescription) +
-                                        "\n                                        "
-                                    )
-                                  ]
-                                )
-                              })
-                            ],
-                            2
-                          )
-                        ]),
-                        _vm._v(" "),
-                        _vm._l(_vm.subject_first_inputs, function(
-                          subject_first_input,
-                          index
-                        ) {
-                          return _c(
-                            "div",
-                            {
-                              key: subject_first_input.id,
-                              staticClass: "form-group row"
-                            },
-                            [
-                              _c("div", { staticClass: "col-md-10" }, [
-                                _c("input", {
-                                  directives: [
+                                }
+                              },
+                              [
+                                _c("option", { attrs: { value: "" } }, [
+                                  _vm._v("Select Subjects")
+                                ]),
+                                _vm._v(" "),
+                                _vm._l(_vm.subjects, function(subject) {
+                                  return _c(
+                                    "option",
                                     {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value:
-                                        subject_first_input.SubjectDescription,
-                                      expression:
-                                        "subject_first_input.SubjectDescription"
-                                    }
-                                  ],
-                                  staticClass: "form-control",
-                                  attrs: { type: "text", readonly: "" },
-                                  domProps: {
-                                    value:
-                                      subject_first_input.SubjectDescription
-                                  },
-                                  on: {
-                                    input: function($event) {
-                                      if ($event.target.composing) {
-                                        return
-                                      }
-                                      _vm.$set(
-                                        subject_first_input,
-                                        "SubjectDescription",
-                                        $event.target.value
-                                      )
-                                    }
-                                  }
+                                      key: subject.id,
+                                      domProps: { value: subject.SubjectID }
+                                    },
+                                    [_vm._v(_vm._s(subject.SubjectDescription))]
+                                  )
                                 })
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "a",
-                                {
-                                  staticClass: "col-md-2",
-                                  attrs: { href: "#" },
-                                  on: {
-                                    click: function($event) {
-                                      _vm.deleteRowFirst(index)
-                                    }
-                                  }
-                                },
-                                [
-                                  _c("i", {
-                                    staticClass: "fas fa-trash fa-2x text-red"
-                                  })
-                                ]
-                              )
-                            ]
-                          )
-                        }),
-                        _vm._v(" "),
-                        _vm._m(5)
-                      ],
-                      2
-                    )
-                  ]),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "col-md-4" }, [
-                    _c(
-                      "form",
-                      {
-                        on: {
-                          submit: function($event) {
-                            $event.preventDefault()
-                            _vm.create_second_sem()
-                          }
-                        }
-                      },
-                      [
+                              ],
+                              2
+                            ),
+                            _vm._v(" "),
+                            _c("has-error", {
+                              attrs: {
+                                form: _vm.subject_course_first,
+                                field: "SubjectID"
+                              }
+                            }),
+                            _vm._v(" "),
+                            _c("has-error", {
+                              attrs: {
+                                form: _vm.subject_course_first,
+                                field: "error_subjects"
+                              }
+                            })
+                          ],
+                          1
+                        )
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "form-group" }, [
+                      _c("table", { staticClass: "table table-hover" }, [
                         _vm._m(6),
                         _vm._v(" "),
-                        _c("div", { staticClass: "form-group" }, [
-                          _c(
-                            "select",
-                            {
-                              directives: [
-                                {
-                                  name: "model",
-                                  rawName: "v-model",
-                                  value: _vm.subject_second,
-                                  expression: "subject_second"
-                                }
-                              ],
-                              staticClass: "form-control",
-                              attrs: { name: "Subjects" },
-                              on: {
-                                change: [
-                                  function($event) {
+                        _c(
+                          "tbody",
+                          [
+                            _c("div", { attrs: { hidden: "" } }, [
+                              _vm._v(_vm._s((_vm.id = 1)))
+                            ]),
+                            _vm._v(" "),
+                            _vm._l(_vm.Subjects_First, function(
+                              subjects_first
+                            ) {
+                              return _c("tr", { key: subjects_first.id }, [
+                                _c("td", [_vm._v(_vm._s(_vm.id++))]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _vm._v(
+                                    _vm._s(subjects_first.SubjectDescription)
+                                  )
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _c(
+                                    "a",
+                                    {
+                                      attrs: { href: "#" },
+                                      on: {
+                                        click: function($event) {
+                                          _vm.deleteSubject(
+                                            subjects_first.CSOID
+                                          )
+                                        }
+                                      }
+                                    },
+                                    [
+                                      _c("i", {
+                                        staticClass: "fas fa-trash text-red"
+                                      })
+                                    ]
+                                  )
+                                ])
+                              ])
+                            })
+                          ],
+                          2
+                        )
+                      ])
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "col-md-6 col-sm-6 col-xs-6" }, [
+                    _vm._m(7),
+                    _vm._v(" "),
+                    _c(
+                      "form",
+                      {
+                        on: {
+                          submit: function($event) {
+                            $event.preventDefault()
+                            _vm.create_subject_second()
+                          }
+                        }
+                      },
+                      [
+                        _vm._m(8),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "form-group" },
+                          [
+                            _c(
+                              "select",
+                              {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.SubjectID_Second,
+                                    expression: "SubjectID_Second"
+                                  }
+                                ],
+                                staticClass: "form-control",
+                                class: {
+                                  "is-invalid": _vm.subject_course_second.errors.has(
+                                    "SubjectID"
+                                  )
+                                },
+                                attrs: {
+                                  id: "SubjectID_Second",
+                                  name: "SubjectID_Second"
+                                },
+                                on: {
+                                  change: function($event) {
                                     var $$selectedVal = Array.prototype.filter
                                       .call($event.target.options, function(o) {
                                         return o.selected
@@ -91908,113 +92062,101 @@ var render = function() {
                                           "_value" in o ? o._value : o.value
                                         return val
                                       })
-                                    _vm.subject_second = $event.target.multiple
+                                    _vm.SubjectID_Second = $event.target
+                                      .multiple
                                       ? $$selectedVal
                                       : $$selectedVal[0]
-                                  },
-                                  function($event) {
-                                    _vm.addSubjectSecond()
                                   }
-                                ]
-                              }
-                            },
-                            [
-                              _c("option", { attrs: { value: "" } }, [
-                                _vm._v("Select Subjects")
-                              ]),
-                              _vm._v(" "),
-                              _vm._l(_vm.subjects, function(subject) {
-                                return _c(
-                                  "option",
-                                  {
-                                    key: subject.id,
-                                    domProps: {
-                                      value: subject.SubjectDescription
-                                    }
-                                  },
-                                  [
-                                    _vm._v(
-                                      "\n                                            " +
-                                        _vm._s(subject.SubjectDescription) +
-                                        "\n                                        "
-                                    )
-                                  ]
-                                )
-                              })
-                            ],
-                            2
-                          )
-                        ]),
-                        _vm._v(" "),
-                        _vm._l(_vm.subject_second_inputs, function(
-                          subject_second_input,
-                          index
-                        ) {
-                          return _c(
-                            "div",
-                            {
-                              key: subject_second_input.id,
-                              staticClass: "form-group row"
-                            },
-                            [
-                              _c("div", { staticClass: "col-md-10" }, [
-                                _c("input", {
-                                  directives: [
+                                }
+                              },
+                              [
+                                _c("option", { attrs: { value: "" } }, [
+                                  _vm._v("Select Subjects")
+                                ]),
+                                _vm._v(" "),
+                                _vm._l(_vm.subjects, function(subject) {
+                                  return _c(
+                                    "option",
                                     {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value:
-                                        subject_second_input.SubjectDescription,
-                                      expression:
-                                        "subject_second_input.SubjectDescription"
-                                    }
-                                  ],
-                                  staticClass: "form-control",
-                                  attrs: { type: "text", readonly: "" },
-                                  domProps: {
-                                    value:
-                                      subject_second_input.SubjectDescription
-                                  },
-                                  on: {
-                                    input: function($event) {
-                                      if ($event.target.composing) {
-                                        return
-                                      }
-                                      _vm.$set(
-                                        subject_second_input,
-                                        "SubjectDescription",
-                                        $event.target.value
-                                      )
-                                    }
-                                  }
+                                      key: subject.id,
+                                      domProps: { value: subject.SubjectID }
+                                    },
+                                    [_vm._v(_vm._s(subject.SubjectDescription))]
+                                  )
                                 })
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "a",
-                                {
-                                  staticClass: "col-md-2",
-                                  attrs: { href: "#" },
-                                  on: {
-                                    click: function($event) {
-                                      _vm.deleteRowSecond(index)
-                                    }
-                                  }
-                                },
-                                [
-                                  _c("i", {
-                                    staticClass: "fas fa-trash fa-2x text-red"
-                                  })
-                                ]
-                              )
-                            ]
-                          )
-                        }),
+                              ],
+                              2
+                            ),
+                            _vm._v(" "),
+                            _c("has-error", {
+                              attrs: {
+                                form: _vm.subject_course_second,
+                                field: "SubjectID"
+                              }
+                            }),
+                            _vm._v(" "),
+                            _c("has-error", {
+                              attrs: {
+                                form: _vm.subject_course_second,
+                                field: "error_subjects"
+                              }
+                            })
+                          ],
+                          1
+                        )
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "form-group" }, [
+                      _c("table", { staticClass: "table table-hover" }, [
+                        _vm._m(9),
                         _vm._v(" "),
-                        _vm._m(7)
-                      ],
-                      2
-                    )
+                        _c(
+                          "tbody",
+                          [
+                            _c("div", { attrs: { hidden: "" } }, [
+                              _vm._v(_vm._s((_vm.id = 1)))
+                            ]),
+                            _vm._v(" "),
+                            _vm._l(_vm.Subjects_Second, function(
+                              subjects_second
+                            ) {
+                              return _c("tr", { key: subjects_second.id }, [
+                                _c("td", [_vm._v(_vm._s(_vm.id++))]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _vm._v(
+                                    _vm._s(subjects_second.SubjectDescription)
+                                  )
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _c(
+                                    "a",
+                                    {
+                                      attrs: { href: "#" },
+                                      on: {
+                                        click: function($event) {
+                                          _vm.deleteSubject(
+                                            subjects_second.CSOID
+                                          )
+                                        }
+                                      }
+                                    },
+                                    [
+                                      _c("i", {
+                                        staticClass: "fas fa-trash text-red"
+                                      })
+                                    ]
+                                  )
+                                ])
+                              ])
+                            })
+                          ],
+                          2
+                        )
+                      ])
+                    ])
                   ])
                 ])
               ])
@@ -92094,28 +92236,12 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("div", { staticClass: "form-group" }, [
-      _c("h5", [_vm._v("First Semester")])
-    ])
-  },
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "modal-footer" }, [
-      _c(
-        "button",
-        {
-          staticClass: "btn btn-danger",
-          attrs: { type: "button", "data-dismiss": "modal" }
-        },
-        [_vm._v("Close")]
-      ),
-      _vm._v(" "),
-      _c(
-        "button",
-        { staticClass: "btn btn-primary", attrs: { type: "submit" } },
-        [_vm._v("Create")]
-      )
+      _c("h5", [
+        _vm._v("First Semester "),
+        _c("small", { staticClass: "text-red" }, [
+          _vm._v("(maximum of 9 subjects per sem)")
+        ])
+      ])
     ])
   },
   function() {
@@ -92123,28 +92249,64 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("div", { staticClass: "form-group" }, [
-      _c("h5", [_vm._v("Second Semester")])
+      _c(
+        "button",
+        { staticClass: "btn btn-primary", attrs: { type: "submit" } },
+        [_c("i", { staticClass: "fas fa-plus" }), _vm._v(" Add")]
+      )
     ])
   },
   function() {
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "modal-footer" }, [
-      _c(
-        "button",
-        {
-          staticClass: "btn btn-danger",
-          attrs: { type: "button", "data-dismiss": "modal" }
-        },
-        [_vm._v("Close")]
-      ),
-      _vm._v(" "),
+    return _c("thead", [
+      _c("tr", [
+        _c("th", { attrs: { scope: "col" } }, [_vm._v("No.")]),
+        _vm._v(" "),
+        _c("th", { attrs: { scope: "col" } }, [_vm._v("Subject Name")]),
+        _vm._v(" "),
+        _c("th", { attrs: { scope: "col" } }, [_vm._v("Modify")])
+      ])
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "form-group" }, [
+      _c("h5", [
+        _vm._v("Second Semester "),
+        _c("small", { staticClass: "text-red" }, [
+          _vm._v("(maximum of 9 subjects per sem)")
+        ])
+      ])
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "form-group" }, [
       _c(
         "button",
         { staticClass: "btn btn-primary", attrs: { type: "submit" } },
-        [_vm._v("Create")]
+        [_c("i", { staticClass: "fas fa-plus" }), _vm._v(" Add")]
       )
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("thead", [
+      _c("tr", [
+        _c("th", { attrs: { scope: "col" } }, [_vm._v("No.")]),
+        _vm._v(" "),
+        _c("th", { attrs: { scope: "col" } }, [_vm._v("Subject Name")]),
+        _vm._v(" "),
+        _c("th", { attrs: { scope: "col" } }, [_vm._v("Modify")])
+      ])
     ])
   }
 ]

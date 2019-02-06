@@ -154,6 +154,7 @@ return [
         'CTID1' => 'Classroom Type Name',
         'SubjectHours1' => 'Total Hours',
         'SubjectHours' => 'Total Hours',
+        'SubjectID' => 'Subjects',
 
     ],
 

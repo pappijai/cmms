@@ -21,6 +21,7 @@ import { Form, HasError, AlertError } from 'vform'
 window.Form = Form; 
 window.SM_Form1 = Form;
 window.SM_Form2 = Form;
+window.Subject_Course = Form;
 
 Vue.component(HasError.name, HasError);
 Vue.component(AlertError.name, AlertError);

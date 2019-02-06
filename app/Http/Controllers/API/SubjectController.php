@@ -141,10 +141,12 @@ class SubjectController extends Controller
         }              
     }
 
+    // selecting all subject meetings per subject
     public function getsubjectmeetings($id){
         return DB::select('SELECT md5(concat(SMID)) SMID, SubjectID, CTID, SubjectHours FROM subject_meetings WHERE md5(concat(SubjectID)) = "'.$id.'"');
     }
 
+    // update function for subject meetings #1
     public function updatesubjectmeetings1(Request $request, $id){
         $this->validate($request, [            
             'CTID' => 'required|integer',
@@ -162,6 +164,7 @@ class SubjectController extends Controller
         
     }
 
+    // update function for subject meetings #2
     public function updatesubjectmeetings2(Request $request, $id){
         $this->validate($request, [            
             'CTID' => 'required|integer',
@@ -176,5 +179,10 @@ class SubjectController extends Controller
             WHERE md5(concat(SMID)) = "'.$id.'"
             
         ');        
+    }
+
+    public function subjectsforcourse(){
+        return DB::select('SELECT SubjectID,SubjectDescription,SubjectCode,
+                        SubjectMeetings,created_at FROM subjects ORDER BY SubjectDescription ASC');
     }
 }
