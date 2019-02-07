@@ -78,7 +78,8 @@ class CourseController extends Controller
         //
         $course = DB::select('SELECT * FROM courses WHERE md5(concat(CourseID)) = "'.$id.'"');
         $course_id = $course['0']->CourseID;
-        
+        $course_year = $course['0']->CourseYears;
+
         $this->validate($request, [            
             'CourseCode' => 'required|string|unique:courses,CourseCode,'.$course_id.',CourseID',
             'CourseDescription' => 'required|string|unique:courses,CourseDescription,'.$course_id.',CourseID',
@@ -94,6 +95,14 @@ class CourseController extends Controller
                 WHERE md5(concat(CourseID)) = "'.$id.'"
                 
         ');
+
+        if($request->CourseYears < $course_year ){
+            for($i = $request->CourseYears+1;$i < $course_year+1;$i++){
+                DB::delete('DELETE FROM course_subject_offereds 
+                            WHERE md5(concat(CourseID)) = "'.$id.'" AND CSOYear = "'.$i.'"');
+            }
+
+        }
 
         if($courses){
             return ["message" => "Updated Successfully"];

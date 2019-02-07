@@ -38,6 +38,8 @@ let routes = [
     { path: '/dashboard', component: require('./components/Dashboard.vue') },
     { path: '/developer', component: require('./components/Developer.vue') },
     { path: '/users', component: require('./components/Users.vue') },
+    { path: '/professor', component: require('./components/Professor.vue') },
+
     { path: '/building', component: require('./components/classroom/building.vue') },
     { path: '/floor', component: require('./components/classroom/floor.vue') },
     { path: '/classroom', component: require('./components/classroom/classroom.vue') },

@@ -82,26 +82,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
               </p>
             </router-link>
           </li>
-
-          {{-- <li class="nav-item has-treeview menu-close">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-cog text-green"></i>
-              <p>
-                Management
-                <i class="right fa fa-angle-left"></i>
-              </p>
-            </a>
-            <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <router-link to="/users" class="nav-link">
-                  <i class="nav-icon fas fa-users text-purple"></i>
-                  <p>
-                    Users
-                  </p>
-                </router-link>
-              </li>
-            </ul>
-          </li>     --}}
           @endcan     
 
           <li class="nav-item has-treeview menu-close">
@@ -202,7 +182,16 @@ scratch. This page gets rid of all links and provides the needed markup only.
               </li>
             </ul>
           </li> 
-          
+
+          <li class="nav-item">
+            <router-link to="/professor" class="nav-link">
+              <i class="nav-icon fas fa-chalkboard-teacher text-blue"></i>
+              <p>
+                Professor Management
+              </p>
+            </router-link>
+          </li>          
+
           <li class="nav-item">
               <router-link to="/profile" class="nav-link">
                 <i class="nav-icon fas fa-user text-orange"></i>
