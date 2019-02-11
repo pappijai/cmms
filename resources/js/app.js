@@ -46,6 +46,7 @@ let routes = [
     { path: '/classroomType', component: require('./components/classroom/classroomType.vue') },
     { path: '/subject', component: require('./components/subject/subject.vue') },
     { path: '/course', component: require('./components/course/course.vue') },
+    { path: '/section', component: require('./components/course/section.vue') },
     //return this component if invalid url
     { path: '*', component: require('./components/NotFound.vue') },
 ]
@@ -99,8 +100,6 @@ var converter = require('number-to-words');
 Vue.filter('convert', function(text) {
     return converter.toOrdinal(text);
 });
-
-
 
 
 

@@ -33,7 +33,33 @@ scratch. This page gets rid of all links and provides the needed markup only.
           <h4 class="text-teal">Classroom Management and Mapping System</h4>
       </div>
     </div>
+    <ul class="navbar-nav ml-auto">
+      <!-- Notifications Dropdown Menu -->
+      <li class="nav-item dropdown">
+        <a class="nav-link" data-toggle="dropdown" href="#" aria-expanded="false">
+          <i class="fa fa-cog"></i> Settings
+        </a>
+        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
 
+          <router-link to="/profile" class="dropdown-item">
+            <i class="fa fa-users mr-2 text-orange"></i>Profile
+          </router-link>
+          <div class="dropdown-divider"></div>
+
+          <a class="dropdown-item" href="{{ route('logout') }}"
+          onclick="event.preventDefault(); 
+                      document.getElementById('logout-form').submit();">
+            <i class="fas fa-power-off mr-2 text-red"></i>Logout
+          </a>
+
+          <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+            @csrf
+          </form>
+
+
+        </div>
+      </li>
+    </ul>
   </nav>
   <!-- /.navbar -->
 
@@ -190,9 +216,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 Professor Management
               </p>
             </router-link>
-          </li>          
+          </li>       
 
-          <li class="nav-item">
+          {{-- <li class="nav-item">
               <router-link to="/profile" class="nav-link">
                 <i class="nav-icon fas fa-user text-orange"></i>
                 <p>
@@ -214,7 +240,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
             <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
               @csrf
             </form>
-          </li>
+          </li> --}}
 
         </ul>
       </nav>
@@ -247,14 +273,12 @@ scratch. This page gets rid of all links and provides the needed markup only.
   <!-- Main Footer -->
   <footer class="main-footer">
     <!-- To the right -->
-    <div class="float-right d-none d-sm-inline">
-      Anything you want
-    </div>
     <!-- Default to the left -->
     <strong>Copyright &copy; 2019-2020 <a href="#">Codetrap</a>.</strong> All rights reserved.
   </footer>
 </div>
 <!-- ./wrapper -->
+
 
 
 @auth

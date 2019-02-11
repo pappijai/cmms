@@ -9,7 +9,7 @@
 
                 <p>
                     We could not find the page you were looking for.
-                    Meanwhile, you may <a href="/dashboard" class="text-teal">return to dashboard.</a>
+                    Meanwhile, you may <router-link to="/dashboard" class="text-teal">return to dashboard.</router-link>
                 </p>
                 </div>
             </div>

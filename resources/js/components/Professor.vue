@@ -53,7 +53,6 @@
                         <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <!-- Identify if update or create function -->
                     <form @submit.prevent="editmode ? updatedProfessor() : createProfessor()">
                     <div class="modal-body">
 
@@ -73,6 +72,8 @@
                 </div>
             </div>
         </div>
+
+        
     </div>
 </template>
 

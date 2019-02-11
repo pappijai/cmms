@@ -155,6 +155,8 @@ return [
         'SubjectHours1' => 'Total Hours',
         'SubjectHours' => 'Total Hours',
         'SubjectID' => 'Subjects',
+        'CourseID' => 'Course',
+        'SectionYear' => 'Year Created',
 
     ],
 
