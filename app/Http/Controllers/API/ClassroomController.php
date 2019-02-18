@@ -25,7 +25,7 @@ class ClassroomController extends Controller
                         d.BFID,d.BFName, a.created_at 
                         FROM classrooms a INNER JOIN classroom_types b ON a.ClassroomType = CTID 
                         INNER JOIN buildings c ON a.ClassroomBldg = c.BldgID 
-                        INNER JOIN floors d ON a.ClassroomFloor = d.BFID ORDER BY a.ClassroomName ASC');
+                        INNER JOIN floors d ON a.ClassroomFloor = d.BFID ORDER BY a.ClassroomCode ASC');
     }
 
     /**
@@ -45,8 +45,8 @@ class ClassroomController extends Controller
             'BFID' => 'required|integer',
             'ClassroomName' => 'required|string|unique:classrooms,ClassroomName,Null,id,ClassroomBldg,'.$request->BldgID.',ClassroomFloor,'.$request->BFID.'',
             'ClassroomCode' => 'required|string|unique:classrooms,ClassroomCode,Null,id,ClassroomBldg,'.$request->BldgID.',ClassroomFloor,'.$request->BFID.'',            
-            'ClassroomIn' => 'required',
-            'ClassroomOut' => 'required|after:ClassroomIn',
+            'ClassroomIn' => 'required|date_format:H:i',
+            'ClassroomOut' => 'required|date_format:H:i|after:ClassroomIn',
         ]);        
 
         $classrooms = DB::insert('

@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateSectionsTable extends Migration
+class CreateSchedulesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,9 @@ class CreateSectionsTable extends Migration
      */
     public function up()
     {
-        Schema::create('sections', function (Blueprint $table) {
-            $table->increments('SectionID');
-            $table->integer('CourseID');
-            $table->year('SectionYear');
-            $table->string('SectionName');
-            $table->string('SectionStatus')->nullable();
+        Schema::create('schedules', function (Blueprint $table) {
+            $table->increments('SchedID');
+            $table->time('SchedTime');
             $table->timestamps();
         });
     }
@@ -30,6 +27,6 @@ class CreateSectionsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('sections');
+        Schema::dropIfExists('schedules');
     }
 }

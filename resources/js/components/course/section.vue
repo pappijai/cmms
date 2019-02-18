@@ -31,8 +31,13 @@
                                     <td>{{section.SectionName}}</td>
                                     <td>{{section.SectionYear}}</td>
                                     <td>
-                                        <span class="badge badge-danger" v-if="section.CourseYears < year_today - section.SectionYear && month_today > 5">Inactive</span>
-                                        <span class="badge badge-success" v-else>active</span>
+                                        
+                                        <span class="badge badge-danger" v-if="section.SectionStatus == 'Inactive'">
+                                            Inactive
+                                        </span>
+                                        <span class="badge badge-success" v-else>
+                                            Active
+                                        </span>
                                     </td>
                                     <td>
                                         <a href="#" @click="editModal(section)">
@@ -71,7 +76,7 @@
                         </div>
 
                         <div class="form-group">
-                            <input v-model="form.SectionYear" type="number" min="2000" v-bind:max="year_today" name="SectionYear" placeholder="Year Created"
+                            <input v-model="form.SectionYear" type="number" min="2000" v-bind:max="year_today" name="SectionYear" placeholder="Year Admitted"
                                 class="form-control" :class="{ 'is-invalid': form.errors.has('SectionYear') }">
                             <has-error :form="form" field="SectionYear"></has-error>
                         </div>

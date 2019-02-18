@@ -157,6 +157,7 @@ return [
         'SubjectID' => 'Subjects',
         'CourseID' => 'Course',
         'SectionYear' => 'Year Created',
+        'ProfessorID' => 'Professor',
 
     ],
 

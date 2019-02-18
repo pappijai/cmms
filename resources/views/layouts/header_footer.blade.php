@@ -216,31 +216,16 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 Professor Management
               </p>
             </router-link>
-          </li>       
-
-          {{-- <li class="nav-item">
-              <router-link to="/profile" class="nav-link">
-                <i class="nav-icon fas fa-user text-orange"></i>
-                <p>
-                  Profile
-                </p>
-              </router-link>
-          </li>
+          </li>  
 
           <li class="nav-item">
-            <a class="nav-link" href="{{ route('logout') }}"
-              onclick="event.preventDefault(); 
-                          document.getElementById('logout-form').submit();">
-                <i class="nav-icon fas fa-power-off text-red"></i>
-                <p>
-                  {{ __('Logout') }}
-                </p>
-            </a>
-
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-              @csrf
-            </form>
-          </li> --}}
+            <router-link to="/subjecttagging" class="nav-link">
+              <i class="nav-icon fas fa-tags text-orange"></i>
+              <p>
+                Tagged Subject & Schedule
+              </p>
+            </router-link>
+          </li>          
 
         </ul>
       </nav>

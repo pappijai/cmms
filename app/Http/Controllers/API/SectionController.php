@@ -19,9 +19,36 @@ class SectionController extends Controller
     public function index()
     {
         //
+        $year_today = date('Y');
+        $month_today = date('m');
 
-        return DB::select("SELECT md5(concat(a.SectionID)) SectionID, a.SectionName,a.SectionYear,a.CourseID,b.CourseDescription,b.CourseYears 
-                        FROM sections a INNER JOIN courses b ON a.CourseID = b.CourseID ORDER BY b.CourseDescription ASC");
+        $sections = DB::select("SELECT md5(concat(a.SectionID)) SectionID, a.SectionName,a.SectionYear,a.CourseID,a.SectionStatus,b.CourseDescription,b.CourseYears 
+                        FROM sections a INNER JOIN courses b ON a.CourseID = b.CourseID ORDER BY a.SectionYear DESC");
+
+        foreach($sections as $row){
+            if($row->CourseYears <= $year_today - $row->SectionYear  && $month_today > 5){
+                DB::update('
+                UPDATE sections SET
+                    SectionStatus = "Inactive"
+                    WHERE md5(concat(SectionID)) = "'.$row->SectionID.'"
+                ');
+            }
+            elseif ($row->CourseYears < $year_today - $row->SectionYear) {
+                DB::update('
+                UPDATE sections SET
+                    SectionStatus = "Inactive"
+                    WHERE md5(concat(SectionID)) = "'.$row->SectionID.'"         
+                ');             
+            }
+            else{
+                DB::update('
+                UPDATE sections SET
+                    SectionStatus = "Active"
+                    WHERE md5(concat(SectionID)) = "'.$row->SectionID.'"                    
+                ');
+            }
+        }
+        return $sections;
     }
 
     /**

@@ -47,6 +47,7 @@ let routes = [
     { path: '/subject', component: require('./components/subject/subject.vue') },
     { path: '/course', component: require('./components/course/course.vue') },
     { path: '/section', component: require('./components/course/section.vue') },
+    { path: '/subjecttagging', component: require('./components/subjecttagging/subjecttagging.vue') },
     //return this component if invalid url
     { path: '*', component: require('./components/NotFound.vue') },
 ]
