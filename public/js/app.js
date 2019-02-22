@@ -87345,6 +87345,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     data: function data() {
@@ -87353,7 +87359,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             editmode: false,
             form: new Form({
                 BldgID: '',
-                BldgName: ''
+                BldgName: '',
+                BldgCoordinates: ''
             })
         };
     },
@@ -87660,6 +87667,50 @@ var render = function() {
                         _vm._v(" "),
                         _c("has-error", {
                           attrs: { form: _vm.form, field: "BldgName" }
+                        })
+                      ],
+                      1
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "div",
+                      { staticClass: "form-group" },
+                      [
+                        _c("input", {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.form.BldgCoordinates,
+                              expression: "form.BldgCoordinates"
+                            }
+                          ],
+                          staticClass: "form-control",
+                          class: {
+                            "is-invalid": _vm.form.errors.has("BldgCoordinates")
+                          },
+                          attrs: {
+                            type: "text",
+                            name: "BldgCoordinates",
+                            placeholder: "Building Coordinates"
+                          },
+                          domProps: { value: _vm.form.BldgCoordinates },
+                          on: {
+                            input: function($event) {
+                              if ($event.target.composing) {
+                                return
+                              }
+                              _vm.$set(
+                                _vm.form,
+                                "BldgCoordinates",
+                                $event.target.value
+                              )
+                            }
+                          }
+                        }),
+                        _vm._v(" "),
+                        _c("has-error", {
+                          attrs: { form: _vm.form, field: "BldgCoordinates" }
                         })
                       ],
                       1
@@ -91850,32 +91901,36 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 _this4.$Progress.fail();
             });
         },
-        deleteCourse: function deleteCourse(id) {
-            var _this5 = this;
 
-            swal({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
-                type: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!'
-            }).then(function (result) {
-                // Send ajax request to server
-                if (result.value) {
-                    _this5.form.delete('api/course/' + id).then(function () {
-                        toast({
-                            type: 'success',
-                            title: 'Course Deleted successfully'
-                        });
-                        Fire.$emit('AfterDelete');
-                    }).catch(function () {
-                        swal('Error', 'There was something wrong.', 'error');
-                    });
-                }
-            });
-        },
+        // deleteCourse(id){
+        //     swal({
+        //         title: 'Are you sure?',
+        //         text: "You won't be able to revert this!",
+        //         type: 'warning',
+        //         showCancelButton: true,
+        //         confirmButtonColor: '#3085d6',
+        //         cancelButtonColor: '#d33',
+        //         confirmButtonText: 'Yes, delete it!'
+        //     }).then((result) => {
+        //         // Send ajax request to server
+        //         if(result.value){
+        //             this.form.delete('api/course/'+id).then(() => {
+        //                 toast({
+        //                     type: 'success',
+        //                     title: 'Course Deleted successfully'
+        //                 })
+        //                 Fire.$emit('AfterDelete');
+
+        //             }).catch(() =>{
+        //                 swal(
+        //                     'Error',
+        //                     'There was something wrong.',
+        //                     'error'
+        //                 )
+        //             })
+        //         }
+        //     })  
+        // },
         addsubjecttocoursemodal: function addsubjecttocoursemodal(year, CourseID) {
 
             //reseting input fields
@@ -91900,7 +91955,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             $('#addsubjecttocoursemodal').modal('show');
         },
         create_subject_first: function create_subject_first() {
-            var _this6 = this;
+            var _this5 = this;
 
             if (this.getsizeofarray(this.Subjects_First) == 9) {
                 alert('maximum of 9 subjects for First Semester!');
@@ -91918,14 +91973,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                         type: 'success',
                         title: 'Subject for First Semester Added successfully'
                     });
-                    _this6.$Progress.finish();
+                    _this5.$Progress.finish();
                 }).catch(function () {
-                    _this6.$Progress.fail();
+                    _this5.$Progress.fail();
                 });
             }
         },
         deleteSubject: function deleteSubject(id) {
-            var _this7 = this;
+            var _this6 = this;
 
             swal({
                 title: 'Are you sure?',
@@ -91938,7 +91993,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             }).then(function (result) {
                 // Send ajax request to server
                 if (result.value) {
-                    _this7.subject_course_first.delete('api/delete_course_subject/' + id).then(function () {
+                    _this6.subject_course_first.delete('api/delete_course_subject/' + id).then(function () {
                         toast({
                             type: 'success',
                             title: 'Course Subject Deleted successfully'
@@ -91951,7 +92006,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             });
         },
         create_subject_second: function create_subject_second() {
-            var _this8 = this;
+            var _this7 = this;
 
             if (this.getsizeofarray(this.Subjects_Second) == 9) {
                 alert('maximum of 9 subjects for First Semester!');
@@ -91969,9 +92024,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                         type: 'success',
                         title: 'Subject for Second Semester Added successfully'
                     });
-                    _this8.$Progress.finish();
+                    _this7.$Progress.finish();
                 }).catch(function () {
-                    _this8.$Progress.fail();
+                    _this7.$Progress.fail();
                 });
             }
         },
@@ -91985,28 +92040,28 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         }
     },
     created: function created() {
-        var _this9 = this;
+        var _this8 = this;
 
         this.loadCourse();
 
         Fire.$on('AfterCreate', function () {
-            _this9.loadCourse();
+            _this8.loadCourse();
         });
 
         Fire.$on('AfterCreateSubject', function () {
-            _this9.loadSubjectsPerCourse();
+            _this8.loadSubjectsPerCourse();
         });
 
         Fire.$on('AfterDelete', function () {
-            _this9.loadCourse();
+            _this8.loadCourse();
         });
 
         Fire.$on('AfterDeleteSubject', function () {
-            _this9.loadSubjectsPerCourse();
+            _this8.loadSubjectsPerCourse();
         });
 
         Fire.$on('AfterUpdate', function () {
-            _this9.loadCourse();
+            _this8.loadCourse();
         });
     },
     mounted: function mounted() {
@@ -92018,11 +92073,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     watch: {
         // detect all the changes in the table
         courses: function courses(val) {
-            var _this10 = this;
+            var _this9 = this;
 
             this.dt.destroy();
             this.$nextTick(function () {
-                _this10.dt = $('#course_table').DataTable();
+                _this9.dt = $('#course_table').DataTable();
             });
         }
     }
@@ -92131,21 +92186,6 @@ var render = function() {
                               }
                             },
                             [_c("i", { staticClass: "fas fa-edit text-blue" })]
-                          ),
-                          _vm._v(
-                            "\n                                    / \n                                    "
-                          ),
-                          _c(
-                            "a",
-                            {
-                              attrs: { href: "#" },
-                              on: {
-                                click: function($event) {
-                                  _vm.deleteCourse(course.CourseID)
-                                }
-                              }
-                            },
-                            [_c("i", { staticClass: "fas fa-trash text-red" })]
                           )
                         ])
                       ])
@@ -93043,6 +93083,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     data: function data() {
@@ -93121,49 +93166,23 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             }).catch(function () {
                 _this3.$Progress.fail();
             });
-        },
-        deleteSection: function deleteSection(id) {
-            var _this4 = this;
-
-            swal({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
-                type: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!'
-            }).then(function (result) {
-                // Send ajax request to server
-                if (result.value) {
-                    _this4.form.delete('api/section/' + id).then(function () {
-                        toast({
-                            type: 'success',
-                            title: 'Section Deleted successfully'
-                        });
-                        Fire.$emit('AfterDelete');
-                    }).catch(function () {
-                        swal('Error', 'There was something wrong.', 'error');
-                    });
-                }
-            });
         }
     },
     created: function created() {
-        var _this5 = this;
+        var _this4 = this;
 
         this.loadSection();
 
         Fire.$on('AfterCreate', function () {
-            _this5.loadSection();
+            _this4.loadSection();
         });
 
         Fire.$on('AfterDelete', function () {
-            _this5.loadSection();
+            _this4.loadSection();
         });
 
         Fire.$on('AfterUpdate', function () {
-            _this5.loadSection();
+            _this4.loadSection();
         });
     },
     mounted: function mounted() {
@@ -93175,11 +93194,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     watch: {
         // detect all the changes in the table
         sections: function sections(val) {
-            var _this6 = this;
+            var _this5 = this;
 
             this.dt.destroy();
             this.$nextTick(function () {
-                _this6.dt = $('#section_table').DataTable();
+                _this5.dt = $('#section_table').DataTable();
             });
         }
     }
@@ -93238,7 +93257,27 @@ var render = function() {
                         _vm._v(" "),
                         _c("td", [_vm._v(_vm._s(section.CourseDescription))]),
                         _vm._v(" "),
-                        _c("td", [_vm._v(_vm._s(section.SectionName))]),
+                        _vm.month_today >= 5 && _vm.month_today <= 9
+                          ? _c("td", [
+                              _vm._v(
+                                "\n                                    " +
+                                  _vm._s(
+                                    _vm.year_today - section.SectionYear + 1
+                                  ) +
+                                  " - " +
+                                  _vm._s(section.SectionName) +
+                                  "\n                                "
+                              )
+                            ])
+                          : _c("td", [
+                              _vm._v(
+                                "\n                                    " +
+                                  _vm._s(_vm.year_today - section.SectionYear) +
+                                  " - " +
+                                  _vm._s(section.SectionName) +
+                                  "\n                                "
+                              )
+                            ]),
                         _vm._v(" "),
                         _c("td", [_vm._v(_vm._s(section.SectionYear))]),
                         _vm._v(" "),
@@ -93276,21 +93315,6 @@ var render = function() {
                               }
                             },
                             [_c("i", { staticClass: "fas fa-edit text-blue" })]
-                          ),
-                          _vm._v(
-                            "\n                                    / \n                                    "
-                          ),
-                          _c(
-                            "a",
-                            {
-                              attrs: { href: "#" },
-                              on: {
-                                click: function($event) {
-                                  _vm.deleteSection(section.SectionID)
-                                }
-                              }
-                            },
-                            [_c("i", { staticClass: "fas fa-trash text-red" })]
                           )
                         ])
                       ])
@@ -93590,7 +93614,7 @@ var staticRenderFns = [
         _vm._v(" "),
         _c("th", [_vm._v("Course Description")]),
         _vm._v(" "),
-        _c("th", [_vm._v("Sec. Name")]),
+        _c("th", [_vm._v("Yr & Sec")]),
         _vm._v(" "),
         _c("th", [_vm._v("Yr. Created")]),
         _vm._v(" "),
@@ -93821,22 +93845,16 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     data: function data() {
         return {
+            expired_schedule: {},
             js_date: new Date(),
             year_today: '',
             month_today: '',
+            year_from: '',
+            year_to: '',
             sem: '',
             offered_subjects: {},
             professors: {},
@@ -93875,7 +93893,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 var data = _ref2.data;
                 return _this.professors = data;
             });
-            // axios.get('api/courses').then(({ data }) => (this.courses = data));
+
             this.year_today = this.js_date.getFullYear();
             this.month_today = this.js_date.getMonth();
 
@@ -93889,20 +93907,39 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             if (this.month_today >= 0 && this.month_today <= 2) {
                 this.sem = "Second Semester";
             }
+
+            // check the school year
+            if (this.month_today >= 5 && this.month_today <= 9) {
+                this.year_from = this.year_today;
+                this.year_to = this.year_today + 1;
+            }
+            if (this.month_today >= 10 && this.month_today <= 11) {
+                this.year_from = this.year_today;
+                this.year_to = this.year_today + 1;
+            }
+            if (this.month_today >= 0 && this.month_today <= 2) {
+                this.year_from = this.year_today - 1;
+                this.year_to = this.year_today;
+            }
+
+            axios.get('api/update_status_subject_schedule/' + this.sem + '/' + this.year_from + '/' + this.year_to).then(function (_ref3) {
+                var data = _ref3.data;
+                return _this.expired_schedule = data;
+            });
         },
         loadSubjectSection: function loadSubjectSection() {
             var _this2 = this;
 
-            axios.get('api/tagged_subject_sections/' + this.form.SectionID + '/' + this.form.STSem + '/' + this.form.STYear + '/' + this.form.STYearFrom + '/' + this.form.STYearTo).then(function (_ref3) {
-                var data = _ref3.data;
+            axios.get('api/tagged_subject_sections/' + this.form.SectionID + '/' + this.form.STSem + '/' + this.form.STYear + '/' + this.form.STYearFrom + '/' + this.form.STYearTo).then(function (_ref4) {
+                var data = _ref4.data;
                 return _this2.tagged_subject_sections = data;
             });
         },
         loadschedulepersubject: function loadschedulepersubject(id) {
             var _this3 = this;
 
-            axios.get('api/schedule_per_subject/' + id).then(function (_ref4) {
-                var data = _ref4.data;
+            axios.get('api/schedule_per_subject/' + id).then(function (_ref5) {
+                var data = _ref5.data;
                 return _this3.schedule_per_subjects = data;
             });
         },
@@ -93934,8 +93971,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 this.form.STYearTo = this.year_today;
             }
 
-            axios.get('api/subjects_per_course_year_sem/' + this.form.CourseID + '/' + this.form.STYear + '/' + this.form.STSem).then(function (_ref5) {
-                var data = _ref5.data;
+            axios.get('api/subjects_per_course_year_sem/' + this.form.CourseID + '/' + this.form.STYear + '/' + this.form.STSem).then(function (_ref6) {
+                var data = _ref6.data;
                 return _this4.offered_subjects = data;
             });
 
@@ -93953,31 +93990,63 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                     type: 'success',
                     title: 'Tagged Subjects Created successfully'
                 });
+                _this5.form.SubjectID = '';
+                _this5.form.ProfessorID = '';
                 _this5.$Progress.finish();
             }).catch(function () {
                 _this5.$Progress.fail();
             });
+        },
+        deleteSubject: function deleteSubject(id) {
+            var _this6 = this;
+
+            swal({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                type: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then(function (result) {
+                // Send ajax request to server
+                if (result.value) {
+                    _this6.form.delete('api/delete_subject_schedule/' + id).then(function () {
+                        toast({
+                            type: 'success',
+                            title: 'Subject Schedule Deleted successfully'
+                        });
+                        Fire.$emit('AfterDeleteSubject');
+                    }).catch(function () {
+                        swal('Error', 'There was something wrong.', 'error');
+                    });
+                }
+            });
         }
     },
     created: function created() {
-        var _this6 = this;
+        var _this7 = this;
 
-        this.loadSectionAvailable();
+        //this.loadSectionAvailable();
 
         Fire.$on('AfterCreateSubject', function () {
-            _this6.loadSubjectSection();
+            _this7.loadSubjectSection();
+        });
+
+        Fire.$on('AfterDeleteSubject', function () {
+            _this7.loadSubjectSection();
         });
 
         Fire.$on('AfterCreate', function () {
-            _this6.loadSectionAvailable();
+            _this7.loadSectionAvailable();
         });
 
         Fire.$on('AfterDelete', function () {
-            _this6.loadSectionAvailable();
+            _this7.loadSectionAvailable();
         });
 
         Fire.$on('AfterUpdate', function () {
-            _this6.loadSectionAvailable();
+            _this7.loadSectionAvailable();
         });
     },
     mounted: function mounted() {
@@ -93989,11 +94058,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     watch: {
         // detect all the changes in the table
         available_sections: function available_sections(val) {
-            var _this7 = this;
+            var _this8 = this;
 
             this.dt.destroy();
             this.$nextTick(function () {
-                _this7.dt = $('#section_available_table').DataTable();
+                _this8.dt = $('#section_available_table').DataTable();
             });
         }
     }
@@ -94038,15 +94107,32 @@ var render = function() {
                           _vm._v(_vm._s(available_section.CourseDescription))
                         ]),
                         _vm._v(" "),
-                        _c("td", [
-                          _vm._v(_vm._s(available_section.SectionYear))
-                        ]),
-                        _vm._v(" "),
-                        _c("td", [
-                          _vm._v(_vm._s(available_section.SectionName))
-                        ]),
-                        _vm._v(" "),
-                        _c("td"),
+                        _vm.month_today >= 5 && _vm.month_today <= 9
+                          ? _c("td", [
+                              _vm._v(
+                                "\n                                    " +
+                                  _vm._s(
+                                    _vm.year_today -
+                                      available_section.SectionYear +
+                                      1
+                                  ) +
+                                  " - " +
+                                  _vm._s(available_section.SectionName) +
+                                  "\n                                "
+                              )
+                            ])
+                          : _c("td", [
+                              _vm._v(
+                                "\n                                    " +
+                                  _vm._s(
+                                    _vm.year_today -
+                                      available_section.SectionYear
+                                  ) +
+                                  " - " +
+                                  _vm._s(available_section.SectionName) +
+                                  "\n                                "
+                              )
+                            ]),
                         _vm._v(" "),
                         _c("td", [
                           _c(
@@ -94118,6 +94204,15 @@ var render = function() {
                         { staticClass: "col-md-12 col-sm-12 col-xs-12" },
                         [
                           _c("div", { staticClass: "form-group" }, [
+                            _c("h5", [
+                              _vm._v(
+                                "Sy " +
+                                  _vm._s(_vm.year_from) +
+                                  " - " +
+                                  _vm._s(_vm.year_to)
+                              )
+                            ]),
+                            _vm._v(" "),
                             _c("h5", [
                               _vm._v(
                                 _vm._s(_vm._f("convert")(this.form.STYear)) +
@@ -94389,7 +94484,9 @@ var render = function() {
                                               attrs: { href: "#" },
                                               on: {
                                                 click: function($event) {
-                                                  _vm.deleteSubject()
+                                                  _vm.deleteSubject(
+                                                    tagged_subject_section.STID
+                                                  )
                                                 }
                                               }
                                             },
@@ -94446,11 +94543,7 @@ var staticRenderFns = [
         _vm._v(" "),
         _c("th", [_vm._v("Course Code")]),
         _vm._v(" "),
-        _c("th", [_vm._v("Year Addmitted")]),
-        _vm._v(" "),
-        _c("th", [_vm._v("Section Name")]),
-        _vm._v(" "),
-        _c("th", [_vm._v("Status")]),
+        _c("th", [_vm._v("Yr & Sec")]),
         _vm._v(" "),
         _c("th", [_vm._v("Modify")])
       ])

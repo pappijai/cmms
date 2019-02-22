@@ -16,9 +16,7 @@
                                 <tr>
                                     <th>No.</th>
                                     <th>Course Code</th>
-                                    <th>Year Addmitted</th>
-                                    <th>Section Name</th>
-                                    <th>Status</th>
+                                    <th>Yr & Sec</th>
                                     <th>Modify</th>
                                 </tr>
                             </thead>
@@ -27,19 +25,11 @@
                                 <tr v-for="available_section in available_sections" :key="available_section.id">
                                     <td>{{id++}}</td>
                                     <td>{{available_section.CourseDescription}}</td>
-                                    <td>{{available_section.SectionYear}}</td>
-                                    <td>{{available_section.SectionName}}</td>
-                                    <td>
-                                        
-                                        <!-- <span class="badge badge-danger" v-if="section.CourseYears <= year_today - section.SectionYear  && month_today > 4">
-                                            Inactive
-                                        </span>
-                                        <span class="badge badge-danger" v-else-if="section.CourseYears < year_today - section.SectionYear">
-                                            Inactive
-                                        </span>
-                                        <span class="badge badge-success" v-else>
-                                            active
-                                        </span> -->
+                                    <td v-if="month_today >= 5 && month_today <= 9">
+                                        {{year_today - available_section.SectionYear + 1}} - {{available_section.SectionName}}
+                                    </td>
+                                    <td v-else>
+                                        {{year_today - available_section.SectionYear}} - {{available_section.SectionName}}
                                     </td>
                                     <td>
                                         <button class="btn btn-primary" href="#" @click="taggedsubjects(available_section)">
@@ -71,6 +61,7 @@
                         <div class="row">
                             <div class="col-md-12 col-sm-12 col-xs-12">
                                 <div class="form-group">
+                                    <h5>Sy {{year_from}} - {{year_to}}</h5>
                                     <h5>{{this.form.STYear | convert}} year</h5>
                                     <h5>{{sem}} <small class="text-red">(maximum of 9 subjects per sem)</small></h5>
                                 </div>     
@@ -129,7 +120,7 @@
                                                     
                                                 </td>
                                                 <td>
-                                                    <a href="#" @click="deleteSubject()">
+                                                    <a href="#" @click="deleteSubject(tagged_subject_section.STID)">
                                                         <i class="fas fa-trash text-red"></i>    
                                                     </a> 
                                                 </td>
@@ -152,9 +143,12 @@
     export default {
         data(){
             return {
+                expired_schedule: {},
                 js_date: new Date(),
                 year_today: '',
                 month_today: '',
+                year_from: '',
+                year_to: '',
                 sem: '',
                 offered_subjects: {},
                 professors: {},
@@ -184,7 +178,7 @@
             loadSectionAvailable(){
                 axios.get('api/subjecttagging').then(({ data }) => (this.available_sections = data));
                 axios.get('api/get_professor').then(({ data }) => (this.professors = data));
-                // axios.get('api/courses').then(({ data }) => (this.courses = data));
+
                 this.year_today = this.js_date.getFullYear();
                 this.month_today = this.js_date.getMonth();
 
@@ -198,6 +192,22 @@
                 if(this.month_today >= 0 && this.month_today <= 2){
                     this.sem = "Second Semester";
                 }
+
+                // check the school year
+                if(this.month_today >= 5 && this.month_today <= 9){
+                    this.year_from = this.year_today;
+                    this.year_to = this.year_today + 1;
+                }
+                if(this.month_today >= 10 && this.month_today <= 11){
+                    this.year_from = this.year_today;
+                    this.year_to = this.year_today + 1;
+                }
+                if(this.month_today >= 0 && this.month_today <= 2){
+                    this.year_from = this.year_today - 1;
+                    this.year_to = this.year_today;
+                }
+
+                axios.get('api/update_status_subject_schedule/'+this.sem+'/'+this.year_from+'/'+this.year_to).then(({ data }) => (this.expired_schedule = data));
             },
             loadSubjectSection(){
                 axios.get('api/tagged_subject_sections/'+this.form.SectionID+'/'+this.form.STSem+'/'+this.form.STYear+'/'+this.form.STYearFrom+'/'+this.form.STYearTo)
@@ -247,18 +257,53 @@
                     toast({
                         type: 'success',
                         title: 'Tagged Subjects Created successfully'
-                    })                      
+                    })              
+                    this.form.SubjectID = ''
+                    this.form.ProfessorID = ''        
                     this.$Progress.finish()
                 })
                 .catch(() => {
                     this.$Progress.fail()
                 })                
+            },
+            deleteSubject(id){
+                swal({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this!",
+                    type: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    // Send ajax request to server
+                    if(result.value){
+                        this.form.delete('api/delete_subject_schedule/'+id).then(() => {
+                            toast({
+                                type: 'success',
+                                title: 'Subject Schedule Deleted successfully'
+                            })
+                            Fire.$emit('AfterDeleteSubject');
+                            
+                        }).catch(() =>{
+                            swal(
+                                'Error',
+                                'There was something wrong.',
+                                'error'
+                            )
+                        })
+                    }
+                })  
             }
         },
         created(){
-            this.loadSectionAvailable();
+            //this.loadSectionAvailable();
 
             Fire.$on('AfterCreateSubject', () => {
+                this.loadSubjectSection();
+            })
+
+            Fire.$on('AfterDeleteSubject', () => {
                 this.loadSubjectSection();
             })
 

@@ -141,13 +141,13 @@ class SectionController extends Controller
     public function destroy($id)
     {
         //
-        $query = DB::delete('DELETE FROM sections WHERE md5(concat(SectionID)) = "'.$id.'"');
-        if($query){
-            return ["message" => "Course Deleted"];
-        }
-        else{
-            return ["message" => "Error"];
-        }   
+        // $query = DB::delete('DELETE FROM sections WHERE md5(concat(SectionID)) = "'.$id.'"');
+        // if($query){
+        //     return ["message" => "Course Deleted"];
+        // }
+        // else{
+        //     return ["message" => "Error"];
+        // }   
     }
 
     public function courses(){

@@ -16,6 +16,7 @@ class CreateBuildingsTable extends Migration
         Schema::create('buildings', function (Blueprint $table) {
             $table->increments('BldgID');
             $table->string('BldgName');
+            $table->string('BldgCoordinates')->nullable();
             $table->timestamps();
         });
     }

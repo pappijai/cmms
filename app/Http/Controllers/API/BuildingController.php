@@ -24,7 +24,7 @@ class BuildingController extends Controller
     {
         // returning building infor
 
-        return DB::select('SELECT md5(BldgID) BldgID,BldgName,created_at FROM buildings ORDER BY BldgName ASC');
+        return DB::select('SELECT md5(BldgID) BldgID,BldgName,BldgCoordinates,created_at FROM buildings ORDER BY BldgName ASC');
     }
 
     /**
@@ -37,13 +37,14 @@ class BuildingController extends Controller
     {
         // Checking inputs
         $this->validate($request, [
-            'BldgName' => 'required|max:50|unique:buildings'
+            'BldgName' => 'required|max:50|unique:buildings',
+            'BldgCoordinates' => 'required|string|unique:buildings'
         ]);
 
         // inserting data to database
         $buildings = DB::insert('
-            INSERT INTO buildings (BldgName,created_at,updated_at) VALUES
-            ("'.$request['BldgName'].'",now(),now())
+            INSERT INTO buildings (BldgName,BldgCoordinates,created_at,updated_at) VALUES
+            ("'.$request['BldgName'].'","'.$request['BldgCoordinates'].'",now(),now())
             
         ');
         if ($buildings){
@@ -80,12 +81,14 @@ class BuildingController extends Controller
 
         //
         $this->validate($request, [
-            'BldgName' => 'required|max:50|unique:buildings,BldgName,'.$building_id.',BldgID'
+            'BldgName' => 'required|max:50|unique:buildings,BldgName,'.$building_id.',BldgID',
+            'BldgCoordinates' => 'required|string|unique:buildings,BldgCoordinates,'.$building_id.',BldgID',
         ]);
 
         $buildings = DB::update('
             UPDATE buildings SET
                 BldgName = "'.$request->BldgName.'",
+                BldgCoordinates = "'.$request->BldgCoordinates.'",
                 updated_at = now()
                 WHERE md5(concat(BldgID)) = "'.$id.'"
                 

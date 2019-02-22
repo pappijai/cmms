@@ -25,6 +25,8 @@ class SubjectTaggingController extends Controller
         $sections = DB::select("SELECT md5(concat(a.SectionID)) SectionID, a.SectionName,a.SectionYear,a.CourseID,a.SectionStatus,b.CourseDescription,b.CourseYears 
                         FROM sections a INNER JOIN courses b ON a.CourseID = b.CourseID ORDER BY a.SectionYear DESC");
 
+
+
         foreach($sections as $row){
             if($row->CourseYears <= $year_today - $row->SectionYear  && $month_today > 5){
                 DB::update('
@@ -49,8 +51,10 @@ class SubjectTaggingController extends Controller
             }
         }
 
+
+
         return DB::select("SELECT md5(concat(a.SectionID)) SectionID, a.SectionName,a.SectionYear,a.CourseID,b.CourseDescription,b.CourseYears 
-                            FROM sections a INNER JOIN courses b ON a.CourseID = b.CourseID WHERE a.SectionStatus = 'Active' ORDER BY b.CourseDescription ASC");
+                            FROM sections a INNER JOIN courses b ON a.CourseID = b.CourseID WHERE a.SectionStatus = 'Active' ORDER BY b.CourseDescription, a.SectionYear ASC");
     }   
 
     /**
@@ -103,7 +107,8 @@ class SubjectTaggingController extends Controller
                 $total_hours = 0;
                 $timestamps = '';
                 $end_time = '';
-                $can_sched = false;                 
+                $can_sched = false;  
+                $record_sched_start = '';               
                 
                 shuffle($days);
 
@@ -118,9 +123,10 @@ class SubjectTaggingController extends Controller
                     
                     // foreach loop of schedule time
                     foreach($schedule_time as $row_3){
+                        // check if the generated end time is greater than the classroom availability
                         if($end_time > $row_1->ClassroomOut){
                             break 2;
-                        }
+                        }// end of check if the generated end time is greater than the classroom availability
                         else{
                             $sts_day = $row_2->DayName;
                             $start_time = $row_3->SchedTime;
@@ -128,20 +134,187 @@ class SubjectTaggingController extends Controller
                             $timestamps = strtotime($row_3->SchedTime) + $total_hours;
                             $end_time = date('H:i', $timestamps);
 
-
+                            // check if no schedule for the room selected
                             if(empty($subject_tagged_schedule)){
+
+                                // getting all the secton subject schedule that is active
+                                $section_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                WHERE b.SectionID = "'.$section_id.'" AND 
+                                                                a.STSDay = "'.$sts_day.'" AND 
+                                                                b.STYear = "'.$request['STYear'].'" AND
+                                                                b.STStatus = "Active" AND 
+                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                ');
+
+                                // check the schedule of section if empty
+                                if(empty($section_subject_schedule_save)){
+                                    $can_sched = true;
+                                    break 2;
+                                }// end of check the schedule of section if empty
+                                else{
+                                    // loop of the subject and schedule that this section have
+                                    for($i = 0;$i < count($section_subject_schedule_save);$i++){
+                                        $j = $i;
+
+                                        // check if the generated start time is available in the section schedule
+                                        if($start_time >= $section_subject_schedule_save[$i]->STSTimeEnd){
+                                            
+                                            $j++;
+
+                                            // check if the schedule subject of section is empty
+                                            if(!isset($section_subject_schedule_save[$j])){
+                                                $can_sched = true;
+                                                $record_sched_start = $section_subject_schedule_save[$i]->STSTimeStart;      
+                                                break 3;
+                                            }// end of check if the schedule subject of section is empty
+                                            else{
+                                                if($end_time <= $section_subject_schedule_save[$j]->STSTimeStart){
+                                                    $can_sched = true;
+                                                    break 3;
+                                                }
+                                                else{
+                                                    $can_sched = false;
+                                                    break 1;
+                                                }
+                                            }
+                                            
+                                        }// end of check if the generated start time is available in the section schedule
+                                        else{
+                                            $can_sched = false;
+                                            break 1;
+                                        }
+                                    }// end of loop of the subject and schedule that this section have                                                                
+                                }
 
                             }
                             else{
-                                for($i = 0;$i < count($subject_tagged_schedule);$i++){
-                                    if($subject_tagged_schedule[$i]->STSTimeStart >= $start_time && 
-                                    $subject_tagged_schedule[$i]->STSTimeStart <= $end_time &&
-                                    $subject_tagged_schedule[$i]->STSTimeEnd >= $start_time){
-                                        
-                                        $can_sched = false;
 
+                                // loop of the subject that is scheduled in the classroom generated
+                                for($i = 0;$i < count($subject_tagged_schedule);$i++){
+                                    $j = $i;
+
+                                    // check if the generated start time is available
+                                    if($start_time >= $subject_tagged_schedule[$i]->STSTimeEnd){
+
+                                        $j++;
+
+                                        // check if the subject schedule in generate classroom is empty
+                                        if(!isset($subject_tagged_schedule[$j])){
+
+                                            // getting all the section subject schedule that is active
+                                            $section_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                            WHERE b.SectionID = "'.$section_id.'" AND 
+                                                                            a.STSDay = "'.$sts_day.'" AND 
+                                                                            b.STYear = "'.$request['STYear'].'" AND
+                                                                            b.STStatus = "Active" AND 
+                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                            ');
+
+                                            // check if the section subject schedule is empty
+                                            if(empty($section_subject_schedule_save)){
+                                                $can_sched = true;
+                                                break 3;
+                                            }// end of check if the section subject schedule is empty
+                                            else{
+
+                                                // loop of the section subject schedule
+                                                for($ii = 0;$ii < count($section_subject_schedule_save);$ii++){
+                                                    $jj = $ii;
+
+                                                    // check if the generated start time is available
+                                                    if($start_time >= $section_subject_schedule_save[$ii]->STSTimeEnd){
+                                                        
+                                                        $jj++;
+
+                                                        // check if the section subject schedule is empty
+                                                        if(!isset($section_subject_schedule_save[$jj])){
+                                                            $can_sched = true;
+                                                            $record_sched_start = $section_subject_schedule_save[$ii]->STSTimeStart;      
+                                                            break 4;
+                                                        }// end of check if the section subject schedule is empty
+                                                        else{
+                                                            if($end_time <= $section_subject_schedule_save[$jj]->STSTimeStart){
+                                                                $can_sched = true;
+                                                                break 4;
+                                                            }
+                                                            else{
+                                                                $can_sched = false;
+                                                                break 2;
+                                                            }
+                                                        }
+                                                        
+                                                    }// end of check if the generated start time is available
+                                                    else{
+                                                        $can_sched = false;
+                                                        break 2;
+                                                    }
+                                                }// end of loop of the section subject schedule                                                                
+                                            }
+                                        }// end of check if the subject schedule in generate classroom is empty
+                                        else{
+                                            if($end_time <= $subject_tagged_schedule[$j]->STSTimeStart){
+
+                                                // getting all the section subject schedule that is active
+                                                $section_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                WHERE b.SectionID = "'.$section_id.'" AND 
+                                                                                a.STSDay = "'.$sts_day.'" AND 
+                                                                                b.STYear = "'.$request['STYear'].'" AND
+                                                                                b.STStatus = "Active" AND 
+                                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                ');
+
+                                                // check if the section subject schedule is empty
+                                                if(empty($section_subject_schedule_save)){
+                                                    $can_sched = true;
+                                                    break 3;
+                                                }// end of check if the section subject schedule is empty
+                                                else{
+
+                                                    // loop of section subject schedule save 
+                                                    for($ii = 0;$ii < count($section_subject_schedule_save);$ii++){
+                                                        $jj = $ii;
+
+                                                        // check if generate start time is available
+                                                        if($start_time >= $section_subject_schedule_save[$ii]->STSTimeEnd){
+                                                            
+                                                            $jj++;
+                                                            if(!isset($section_subject_schedule_save[$jj])){
+                                                                $can_sched = true;
+                                                                $record_sched_start = $section_subject_schedule_save[$ii]->STSTimeStart;      
+                                                                break 4;
+                                                            }
+                                                            else{
+                                                                if($end_time <= $section_subject_schedule_save[$jj]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 4;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    break 2;
+                                                                }
+                                                            }
+                                                            
+                                                        }// end of check if generate start time is available
+                                                        else{
+                                                            $can_sched = false;
+                                                            break 2;
+                                                        }
+                                                    }// end of loop of section subject schedule save                                                                 
+                                                }
+                                            }
+                                            else{
+                                                $can_sched = false;
+                                            }
+                                        }
+                                        
+                                    }// end of check if the generated start time is available
+                                    else{
+                                        $can_sched = false;
                                     }
-                                }
+                                }// end loop of the subject that is scheduled in the classroom generated
                             }
                         }                       
                     }  // end of foreach loop of schedule time
@@ -149,198 +322,21 @@ class SubjectTaggingController extends Controller
                 }// end of foreach loop of days
 
 
-                // inserting the schedule to the database
+                // check if can sched the generated schedule & inserting the schedule to the database
                 if($can_sched == true){
-                    // DB::insert('INSERT INTO subject_tagging_schedules (STID,SMID,ClassroomID,STSTimeStart,STSTimeEnd,STSDay,STSStatus,created_at,updated_at) VALUES
-                    // ("'.$subject_taggings_id.'","'.$row->SMID.'","'.$row_1->ClassroomID.'",
-                    // "'.$start_time.'","'.$end_time.'","'.$sts_day.'","Active",now(),now())');
+                    //return ["day" => $sts_day,"start_time"=>$start_time,"end_time"=>$end_time,"record_time_start"=>$record_sched_start,"classroom_id"=>$row_1->ClassroomID];
 
-                    // break;
-                }   
+                    DB::insert('INSERT INTO subject_tagging_schedules (STID,SMID,ClassroomID,STSTimeStart,STSTimeEnd,STSDay,STSStatus,created_at,updated_at) VALUES
+                    ("'.$subject_taggings_id.'","'.$row->SMID.'","'.$row_1->ClassroomID.'",
+                    "'.$start_time.'","'.$end_time.'","'.$sts_day.'","Active",now(),now())');
+                    break;
+                }// check if can sched the generated schedule & end of inserting the schedule to the database   
                 
                 
             }// end of foreach loop for classroom available 
 
         }// end of foreach loop for subject meetings
-    
-        
-
-        foreach($subject_meetings as $row){
-            // $classroom_available = DB::select('SELECT * FROM classrooms WHERE ClassroomType = "'.$row->CTID.'"');
-            // shuffle($classroom_available);
-
-            // foreach($classroom_available as $row_1){
-                
-            //     $sts_day = '';
-            //     $start_time = '';
-            //     $total_hours = 0;
-            //     $timestamps = '';
-            //     $end_time = '';
-            //     $record_start_time = '';
-            //     $record_end_time = '';
-            //     $can_sched = false;                 
-                
-            //     shuffle($days);
-            //     foreach($days as $row_2){
-
-            //         // getting all the tagged schedule where the day is same day in the loop and same the classroom ID
-            //         $subject_tagged_schedule = DB::select('SELECT * FROM subject_tagging_schedules WHERE 
-            //         ClassroomID = "'.$row_1->ClassroomID.'" AND 
-            //         STSStatus = "Active" AND
-            //         STSDay = "'.$row_2->DayName.'" ORDER BY STSTimeStart ASC');
-                    
-
-            //         foreach($schedule_time as $row_3){
-            //             if($end_time > $row_1->ClassroomOut){
-            //                 break 2;
-            //             }
-            //             else{
-                            
-            //                 // if the existing schedule is not in the classroom given then the given day and time will be save
-            //                 if(empty($subject_tagged_schedule)){
-            //                     $sts_day = $row_2->DayName;
-            //                     $start_time = $row_3->SchedTime;
-            //                     $total_hours = $row->SubjectHours * (60*60);
-            //                     $timestamps = strtotime($row_3->SchedTime) + $total_hours;
-            //                     $end_time = date('H:i', $timestamps);
-            //                     $record_start_time = '';
-            //                     $record_end_time = '';
-
-            //                     $section_subject_schedule_save = DB::select('SELECT b.STSDay,b.STSTimeStart,b.STSTimeEnd 
-            //                     FROM subject_taggings a INNER JOIN subject_tagging_schedules b ON a.STID = b.STID 
-            //                     WHERE a.SectionID = "'.$section_id.'" ORDER BY b.STSTimeStart
-            //                     ');
-
-            //                     foreach($section_subject_schedule_save as $row_5){
-            //                         if($row_5->STSTimeStart >= $start_time && 
-            //                         $row_5->STSTimeStart <= $end_time &&
-            //                         $row_5->STSTimeEnd >= $start_time && 
-            //                         $row_5->STSTimeStart <= $end_time &&
-            //                         $sts_day == $row_5->STSDay){
-            //                             $can_sched = false;
-
-            //                         }
-            //                         else{
-            //                             $can_sched = true;
-            //                             break 3;
-            //                         }
-            //                     }
-                                
-            //                 }
-            //                 else{
-                                
-            //                     // saving the given day and time
-            //                     $sts_day = $row_2->DayName;
-            //                     $start_time = $row_3->SchedTime;
-            //                     $total_hours = $row->SubjectHours * (60*60);
-            //                     $timestamps = strtotime($row_3->SchedTime) + $total_hours;
-            //                     $end_time = date('H:i', $timestamps);
-            //                     $record_start_time = '';
-            //                     $record_end_time = '';
-                                
-            //                     // check if the generated time and day is available
-            //                     for($i = 0; $i < count($subject_tagged_schedule);$i++){
-            //                         $j = $i + 1;
-            //                         if($subject_tagged_schedule[$i]->STSTimeStart >= $start_time && 
-            //                         $subject_tagged_schedule[$i]->STSTimeStart <= $end_time &&
-            //                         $subject_tagged_schedule[$i]->STSTimeEnd >= $start_time && 
-            //                         $subject_tagged_schedule[$i]->STSTimeStart <= $end_time){
-            //                             $can_sched = false; 
-            //                             break; 
-            //                         }
-            //                         else{
-            //                             if($subject_tagged_schedule[$j]->STSTimeStart >= $start_time && 
-            //                             $subject_tagged_schedule[$j]->STSTimeStart <= $end_time &&
-            //                             $subject_tagged_schedule[$j]->STSTimeEnd >= $start_time && 
-            //                             $subject_tagged_schedule[$j]->STSTimeStart <= $end_time){
-            //                                 $can_sched = false;
-            //                                 break;
-            //                             }
-            //                             else{
-            //                                 $section_subject_schedule_save = DB::select('SELECT b.STSDay,b.STSTimeStart,b.STSTimeEnd 
-            //                                                                 FROM subject_taggings a INNER JOIN subject_tagging_schedules b ON a.STID = b.STID 
-            //                                                                 WHERE a.SectionID = "'.$section_id.'" ORDER BY b.STSTimeStart
-            //                                                                 ');
-            //                                 foreach($section_subject_schedule_save as $row_5){
-            //                                     if($row_5->STSTimeStart >= $start_time && 
-            //                                     $row_5->STSTimeStart <= $end_time &&
-            //                                     $row_5->STSTimeEnd >= $start_time && 
-            //                                     $row_5->STSTimeStart <= $end_time &&
-            //                                     $sts_day == $row_5->STSDay){
-            //                                         $can_sched = false;
-            //                                         break 2;
-            //                                     }
-            //                                     else{
-            //                                         $can_sched = true;
-            //                                     }
-            //                                 }
-                                            
-            //                             }
-            //                         }
-            //                     }
-                                
-            //                     // foreach($subject_tagged_schedule as $row_4){
-
-            //                     //     if($row_4->STSTimeStart >= $start_time && 
-            //                     //         $row_4->STSTimeStart <= $end_time &&
-            //                     //         $row_4->STSTimeEnd >= $start_time && 
-            //                     //         $row_4->STSTimeStart <= $end_time){
-                                        
-            //                     //         $can_sched = false;  
-            //                     //     }
-            //                     //     else{
-                                        
-            //                     //         $section_subject_schedule_save = DB::select('SELECT b.STSDay,b.STSTimeStart,b.STSTimeEnd 
-            //                     //                                         FROM subject_taggings a INNER JOIN subject_tagging_schedules b ON a.STID = b.STID 
-            //                     //                                         WHERE a.SectionID = "'.$section_id.'"
-            //                     //                                         ');
-            //                     //         foreach($section_subject_schedule_save as $row_5){
-            //                     //             if($row_5->STSTimeStart >= $start_time && 
-            //                     //             $row_5->STSTimeStart <= $end_time &&
-            //                     //             $row_5->STSTimeEnd >= $start_time && 
-            //                     //             $row_5->STSTimeStart <= $end_time &&
-            //                     //             $sts_day == $row_5->STSDay){
-            //                     //                 $can_sched = false;
-            //                     //             }
-            //                     //         }
-
-            //                     //         $can_sched = true;
-            //                     //         $record_start_time = $row_4->STSTimeStart;
-            //                     //         $record_end_time = $row_4->STSTimeEnd;
-                                        
-            //                     //     }
-            //                     // }
-    
-            //                 }
-
-            //             }                        
-
-
-            //         }                    
-            //     }
-
-            //     if($can_sched == true){
-            //         DB::insert('INSERT INTO subject_tagging_schedules (STID,SMID,ClassroomID,STSTimeStart,STSTimeEnd,STSDay,STSStatus,created_at,updated_at) VALUES
-            //         ("'.$subject_taggings_id.'","'.$row->SMID.'","'.$row_1->ClassroomID.'",
-            //         "'.$start_time.'","'.$end_time.'","'.$sts_day.'","Active",now(),now())');
-
-            //         break;
-
-            //         // return [
-            //         //     "day"=> $sts_day,
-            //         //     "record_start_time"=> $record_start_time,
-            //         //     "record_end_time"=> $record_end_time,
-            //         //     "start_time"=> $start_time,
-            //         //     "end_time"=> $end_time,
-            //         //     "ClassroomID"=> $row_1->ClassroomID,
-            //         // ];
-            //         // break 2;
-
-            //     }
-                
-            // }
-            
-        }        
+         
     }
 
     /**
@@ -410,6 +406,36 @@ class SubjectTaggingController extends Controller
         return DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd,b.ClassroomCode FROM 
                         subject_tagging_schedules a INNER JOIN classrooms b ON a.ClassroomID = b.ClassroomID 
                         WHERE md5(concat(a.STID)) = "'.$id.'" AND a.STSStatus = "Active"');
+    }
+
+    public function update_status_subject_schedule($sem,$year_from,$year_to){
+        $sched_expired =  DB::select('SELECT * FROM subject_taggings WHERE 
+                    STSem <> "'.$sem.'" OR 
+                    STYearFrom <> "'.$year_from.'" OR
+                    STYearTo <> "'.$year_to.'"
+                    ');
+
+        foreach($sched_expired as $row){
+            DB::update('UPDATE subject_tagging_schedules SET 
+                        STSStatus = "Inactive"
+                        WHERE STID = "'.$row->STID.'"');
+
+            DB::update('UPDATE subject_taggings SET 
+            STStatus = "Inactive"
+            WHERE STID = "'.$row->STID.'"');
+        }
+    }
+
+    public function delete_subject_schedule($id){
+        $delete_subject_schedule =  DB::select('SELECT * FROM subject_taggings WHERE 
+                    md5(concat(STID)) = "'.$id.'"
+                    ');
+
+        foreach($delete_subject_schedule as $row){
+            DB::delete('DELETE FROM subject_tagging_schedules WHERE md5(concat(STID)) = "'.$id.'"');
+        }
+
+        DB::delete('DELETE FROM subject_taggings WHERE md5(concat(STID)) = "'.$id.'"');
     }
     
 }

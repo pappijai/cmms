@@ -274,6 +274,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 @endauth
 
 <!-- jQuery -->
+<script src="/image-map-resizer/js/imageMapResizer.min.js"></script>
 <script src="/js/app.js"></script>
 
 </body>

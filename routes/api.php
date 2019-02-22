@@ -41,6 +41,7 @@ Route::get('tagged_subject_sections/{section_id}/{sem}/{year}/{year_from}/{year_
 Route::get('schedule_per_subject/{id}', 'API\SubjectTaggingController@schedule_per_subject');
 Route::get('courses', 'API\SectionController@courses');
 Route::get('get_professor', 'API\SubjectTaggingController@get_professor');
+Route::get('update_status_subject_schedule/{sem}/{year_from}/{year_to}', 'API\SubjectTaggingController@update_status_subject_schedule');
 
 Route::put('updatesubjectmeetings1/{id}', 'API\SubjectController@updatesubjectmeetings1');
 Route::put('updatesubjectmeetings2/{id}', 'API\SubjectController@updatesubjectmeetings2');
@@ -48,5 +49,6 @@ Route::put('updatesubjectmeetings2/{id}', 'API\SubjectController@updatesubjectme
 Route::post('create_course_subject_first', 'API\CourseController@create_course_subject_first');
 
 Route::delete('delete_course_subject/{id}', 'API\CourseController@delete_course_subject');
+Route::delete('delete_subject_schedule/{id}', 'API\SubjectTaggingController@delete_subject_schedule');
 
 

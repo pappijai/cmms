@@ -63,6 +63,12 @@
                             <has-error :form="form" field="BldgName"></has-error>
                         </div>
 
+                        <div class="form-group">
+                            <input v-model="form.BldgCoordinates" type="text" name="BldgCoordinates" placeholder="Building Coordinates"
+                                class="form-control" :class="{ 'is-invalid': form.errors.has('BldgCoordinates') }">
+                            <has-error :form="form" field="BldgCoordinates"></has-error>
+                        </div>
+
                         <div class="modal-footer">
                             <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
                             <button v-show="editmode" type="submit" class="btn btn-success">Update</button>
@@ -84,7 +90,8 @@
                 editmode: false,
                 form: new Form({
                     BldgID: '',
-                    BldgName: ''
+                    BldgName: '',
+                    BldgCoordinates: ''
                 })
             }
         },

@@ -158,6 +158,7 @@ return [
         'CourseID' => 'Course',
         'SectionYear' => 'Year Created',
         'ProfessorID' => 'Professor',
+        'BldgCoordinates' => 'Building Coordinates',
 
     ],
 

@@ -17,7 +17,7 @@
                                 <tr>
                                     <th>No.</th>
                                     <th>Course Description</th>
-                                    <th>Sec. Name</th>
+                                    <th>Yr & Sec</th>
                                     <th>Yr. Created</th>
                                     <th>Status</th>
                                     <th>Modify</th>
@@ -28,7 +28,12 @@
                                 <tr v-for="section in sections" :key="section.id">
                                     <td>{{id++}}</td>
                                     <td>{{section.CourseDescription}}</td>
-                                    <td>{{section.SectionName}}</td>
+                                    <td v-if="month_today >= 5 && month_today <= 9">
+                                        {{year_today - section.SectionYear + 1}} - {{section.SectionName}}
+                                    </td>
+                                    <td v-else>
+                                        {{year_today - section.SectionYear}} - {{section.SectionName}}
+                                    </td>
                                     <td>{{section.SectionYear}}</td>
                                     <td>
                                         
@@ -43,10 +48,10 @@
                                         <a href="#" @click="editModal(section)">
                                             <i class="fas fa-edit text-blue"></i>    
                                         </a>
-                                        / 
+                                        <!-- / 
                                         <a href="#" @click="deleteSection(section.SectionID)">
                                             <i class="fas fa-trash text-red"></i>    
-                                        </a> 
+                                        </a>  -->
                                     </td>
                                 </tr>
                             </tbody>
@@ -178,35 +183,35 @@
                     this.$Progress.fail()
                 })                
             },
-            deleteSection(id){
-                swal({
-                    title: 'Are you sure?',
-                    text: "You won't be able to revert this!",
-                    type: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then((result) => {
-                    // Send ajax request to server
-                    if(result.value){
-                        this.form.delete('api/section/'+id).then(() => {
-                            toast({
-                                type: 'success',
-                                title: 'Section Deleted successfully'
-                            })
-                            Fire.$emit('AfterDelete');
+            // deleteSection(id){
+            //     swal({
+            //         title: 'Are you sure?',
+            //         text: "You won't be able to revert this!",
+            //         type: 'warning',
+            //         showCancelButton: true,
+            //         confirmButtonColor: '#3085d6',
+            //         cancelButtonColor: '#d33',
+            //         confirmButtonText: 'Yes, delete it!'
+            //     }).then((result) => {
+            //         // Send ajax request to server
+            //         if(result.value){
+            //             this.form.delete('api/section/'+id).then(() => {
+            //                 toast({
+            //                     type: 'success',
+            //                     title: 'Section Deleted successfully'
+            //                 })
+            //                 Fire.$emit('AfterDelete');
                             
-                        }).catch(() =>{
-                            swal(
-                                'Error',
-                                'There was something wrong.',
-                                'error'
-                            )
-                        })
-                    }
-                })              
-            }
+            //             }).catch(() =>{
+            //                 swal(
+            //                     'Error',
+            //                     'There was something wrong.',
+            //                     'error'
+            //                 )
+            //             })
+            //         }
+            //     })              
+            // }
         },
         created(){
             this.loadSection();

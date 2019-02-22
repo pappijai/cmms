@@ -42,10 +42,10 @@
                                         <a href="#" @click="editModal(course)">
                                             <i class="fas fa-edit text-blue"></i>    
                                         </a>
-                                        / 
+                                        <!-- / 
                                         <a href="#" @click="deleteCourse(course.CourseID)">
                                             <i class="fas fa-trash text-red"></i>    
-                                        </a> 
+                                        </a>  -->
                                     </td>
                                 </tr>
                             </tbody>
@@ -305,35 +305,35 @@
                     this.$Progress.fail()
                 })
             },
-            deleteCourse(id){
-                swal({
-                    title: 'Are you sure?',
-                    text: "You won't be able to revert this!",
-                    type: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then((result) => {
-                    // Send ajax request to server
-                    if(result.value){
-                        this.form.delete('api/course/'+id).then(() => {
-                            toast({
-                                type: 'success',
-                                title: 'Course Deleted successfully'
-                            })
-                            Fire.$emit('AfterDelete');
+            // deleteCourse(id){
+            //     swal({
+            //         title: 'Are you sure?',
+            //         text: "You won't be able to revert this!",
+            //         type: 'warning',
+            //         showCancelButton: true,
+            //         confirmButtonColor: '#3085d6',
+            //         cancelButtonColor: '#d33',
+            //         confirmButtonText: 'Yes, delete it!'
+            //     }).then((result) => {
+            //         // Send ajax request to server
+            //         if(result.value){
+            //             this.form.delete('api/course/'+id).then(() => {
+            //                 toast({
+            //                     type: 'success',
+            //                     title: 'Course Deleted successfully'
+            //                 })
+            //                 Fire.$emit('AfterDelete');
                             
-                        }).catch(() =>{
-                            swal(
-                                'Error',
-                                'There was something wrong.',
-                                'error'
-                            )
-                        })
-                    }
-                })  
-            },
+            //             }).catch(() =>{
+            //                 swal(
+            //                     'Error',
+            //                     'There was something wrong.',
+            //                     'error'
+            //                 )
+            //             })
+            //         }
+            //     })  
+            // },
             addsubjecttocoursemodal(year,CourseID){
                 
                 //reseting input fields
