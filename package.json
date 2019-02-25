@@ -28,6 +28,7 @@
         "datatables.net": "^1.10.19",
         "datatables.net-dt": "^1.10.19",
         "image-map-resizer": "^1.0.9",
+        "image-map-wrapper": "^1.0.0",
         "laravel-mix": "^2.0.0",
         "laravel-vue-pagination": "^2.2.0",
         "moment": "^2.23.0",

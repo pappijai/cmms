@@ -76,6 +76,18 @@
                             <has-error :form="form" field="BFName"></has-error>
                         </div>
 
+                        <div class="form-group">
+                            <label v-if="editmode" for="exampleInputFile">Floor Photo (leave empty if not changing | Image Pixels must be 1000 x 1000 max. | File size must be 5mb maximum)</label>
+                            <label v-else for="exampleInputFile">Floor Photo (Image Pixels must be 1000 x 1000 max. | File size must be 5mb maximum)</label>
+                            <input id="BFPhoto" type="file" class="form-control" @change="UpdateFloorImage" name="BFPhoto"
+                                :class="{ 'is-invalid': form.errors.has('BFName') }">
+                            <has-error :form="form" field="BFPhoto"></has-error>
+                        </div>
+
+                        <div>
+                            <img style="width: 100%;" :src="getFloorPhoto()" class="img-fluid" alt="Responsive image">
+                        </div>
+
                         <div class="modal-footer">
                             <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
                             <button v-show="editmode" type="submit" class="btn btn-success">Update</button>
@@ -100,7 +112,8 @@
                     BFID: '',
                     BldgID: '',
                     BldgName: '',
-                    BFName: ''
+                    BFName: '',
+                    BFPhoto: '',
                 })
             }
         },
@@ -162,6 +175,7 @@
             editModal(floor){
                 this.editmode = true;
                 this.form.reset();
+                $("#BFPhoto").val('');
                 $('#addfloormodal').modal('show');      
                 this.form.fill(floor); 
             },
@@ -180,6 +194,33 @@
                 .catch(() => {
                     this.$Progress.fail();
                 })                
+            },
+            UpdateFloorImage(e){
+                let file = e.target.files[0];
+                console.log(file);
+                let reader = new FileReader();
+
+                if(file['size'] < 5000000){
+                    reader.onloadend = (file) => {
+                        //console.log('RESULT', reader.result);
+    
+                        this.form.BFPhoto = reader.result;
+                    }
+                    reader.readAsDataURL(file);
+                }
+                else{
+                    swal({
+                        type: 'error',
+                        title: 'Oops...',
+                        text: 'You are uploading a large file.',
+
+                    })
+                }
+            },
+            getFloorPhoto(){
+                let photo = (this.form.BFPhoto.length > 200) ? this.form.BFPhoto : "./img/floorplan/"+this.form.BFPhoto;
+
+                return photo;                   
             }
         },
         created(){

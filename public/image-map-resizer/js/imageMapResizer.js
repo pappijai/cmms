@@ -13,21 +13,17 @@
             function resizeAreaTag(cachedAreaCoords,idx){
                 function scale(coord){
                     var dimension = ( 1 === (isWidth = 1-isWidth) ? 'width' : 'height' );
-                    return padding[dimension] + Math.floor(Number(coord) * scalingFactor[dimension]);
+                    return Math.floor(Number(coord) * scallingFactor[dimension]);
                 }
 
                 var isWidth = 0;
+
                 areas[idx].coords = cachedAreaCoords.split(',').map(scale).join(',');
             }
 
-            var scalingFactor = {
+            var scallingFactor = {
                 width  : image.width  / image.naturalWidth,
                 height : image.height / image.naturalHeight
-            };
-            
-            var padding = {
-                width  : parseInt(window.getComputedStyle(image, null).getPropertyValue('padding-left'), 10),
-                height : parseInt(window.getComputedStyle(image, null).getPropertyValue('padding-top'), 10)
             };
 
             cachedAreaCoordsArray.forEach(resizeAreaTag);
@@ -61,14 +57,10 @@
             return ('function' === typeof map._resize);
         }
 
-        function getImg(name){
-            return document.querySelector('img[usemap="'+name+'"]');
-        }
-
         function setup(){
             areas                 = map.getElementsByTagName('area');
             cachedAreaCoordsArray = Array.prototype.map.call(areas, getCoords);
-            image                 = getImg('#' + map.name) || getImg(map.name);
+            image                 = document.querySelector('img[usemap="#'+map.name+'"]');
             map._resize           = resizeMap; //Bind resize method to HTML map element
         }
 

@@ -17,6 +17,7 @@ class CreateFloorsTable extends Migration
             $table->increments('BFID');
             $table->integer('BldgID');
             $table->string('BFName');
+            $table->string('BFPhoto')->nullable();
             $table->timestamps();
         });
     }

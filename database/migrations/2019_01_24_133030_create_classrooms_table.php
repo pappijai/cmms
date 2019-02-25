@@ -22,6 +22,7 @@ class CreateClassroomsTable extends Migration
             $table->time('ClassroomOut');
             $table->integer('ClassroomBldg');
             $table->integer('ClassroomFloor');
+            $table->string('ClassroomCoordinates')->nullable();
             $table->timestamps();
         });
     }

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 use Illuminate\Validation\Rule;
+use Image;
 
 class FloorController extends Controller
 {
@@ -25,7 +26,7 @@ class FloorController extends Controller
     public function index()
     {
         //
-        return DB::select('SELECT md5(a.BFID) BFID,a.BldgID,a.BFName,a.created_at,b.BldgName 
+        return DB::select('SELECT md5(a.BFID) BFID,a.BldgID,a.BFName,a.BFPhoto,a.created_at,b.BldgName 
                           FROM floors a INNER JOIN buildings b ON a.BldgID = b.BldgID 
                           ORDER BY b.BldgName ASC, a.BFName ASC');
     }
@@ -42,12 +43,19 @@ class FloorController extends Controller
         $id = $request->BldgID;
         $this->validate($request, [
             'BldgID' => 'required|integer',
-            'BFName' => 'required|unique:floors,BFName,NULL,id,BldgID,'.$id.''
+            'BFName' => 'required|unique:floors,BFName,NULL,id,BldgID,'.$id.'',
+            'BFPhoto' => 'required',
         ]);        
 
+        $name = time().'.'.explode('/', explode(':',substr($request->BFPhoto, 0,strpos
+        ($request->BFPhoto, ';')))[1])[1];
+
+        Image::make($request->BFPhoto)->save(public_path('/img/floorplan/').$name);
+        $request->merge(['BFPhoto' => $name]);
+
         $floors = DB::insert('
-            INSERT INTO floors (BldgID,BFName,created_at,updated_at) VALUES
-            ("'.$request['BldgID'].'","'.$request['BFName'].'",now(),now())
+            INSERT INTO floors (BldgID,BFName,BFPhoto,created_at,updated_at) VALUES
+            ("'.$request['BldgID'].'","'.$request['BFName'].'","'.$request['BFPhoto'].'",now(),now())
             
         ');
         if ($floors){
@@ -85,13 +93,29 @@ class FloorController extends Controller
 
         $this->validate($request, [
             'BldgID' => 'required|integer',
-            'BFName' => 'required|unique:floors,BFName,'.$floors_id.',BFID,BldgID,'.$bldg_id.''
-        ]);        
+            'BFName' => 'required|unique:floors,BFName,'.$floors_id.',BFID,BldgID,'.$bldg_id.'',
+        ]);   
+
+        $currentPhoto = $floors[0]->BFPhoto;
+        if($request->BFPhoto != $currentPhoto){
+            $name = time().'.'.explode('/', explode(':',substr($request->BFPhoto, 0,strpos
+            ($request->BFPhoto, ';')))[1])[1];
+
+            Image::make($request->BFPhoto)->save(public_path('/img/floorplan/').$name);
+            $request->merge(['BFPhoto' => $name]);
+
+            $userPhoto = public_path('img/floorplan/').$currentPhoto;
+
+            if(file_exists($userPhoto)){
+                @unlink($userPhoto);
+            }
+        }    
 
         $floors = DB::update('
             UPDATE floors SET
                 BldgID = "'.$request->BldgID.'",
                 BFName = "'.$request->BFName.'",
+                BFPhoto = "'.$request->BFPhoto.'",
                 updated_at = now()
                 WHERE md5(concat(BFID)) = "'.$id.'"
                 
@@ -116,6 +140,14 @@ class FloorController extends Controller
     public function destroy($id)
     {
         //
+        $floors = DB::select('SELECT * FROM floors WHERE md5(concat(BFID)) = "'.$id.'"');
+
+        $userPhoto = public_path('img/floorplan/').$floors[0]->BFPhoto;
+
+        if(file_exists($userPhoto)){
+            @unlink($userPhoto);
+        }
+
         $query = DB::delete('DELETE FROM floors WHERE md5(concat(BFID)) = "'.$id.'"');
         if($query){
             return ["message" => "User Deleted"];

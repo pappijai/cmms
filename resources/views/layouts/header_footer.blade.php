@@ -41,6 +41,11 @@ scratch. This page gets rid of all links and provides the needed markup only.
         </a>
         <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
 
+          <router-link to="/upload_floorplan" class="dropdown-item">
+            <i class="fas fa-map-marked mr-2 text-green"></i>Upload Floorplan
+          </router-link>
+          <div class="dropdown-divider"></div>
+          
           <router-link to="/profile" class="dropdown-item">
             <i class="fa fa-users mr-2 text-orange"></i>Profile
           </router-link>
@@ -112,7 +117,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
           <li class="nav-item has-treeview menu-close">
             <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-building text-green"></i>
+              <i class="nav-icon fas fa-building text-red"></i>
               <p>
                 Classroom Management
                 <i class="right fa fa-angle-left"></i>
@@ -225,7 +230,16 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 Tagged Subject & Schedule
               </p>
             </router-link>
-          </li>          
+          </li> 
+
+          <li class="nav-item">
+            <router-link to="/floorplan" class="nav-link">
+              <i class="nav-icon fas fa-map-marked text-green"></i>
+              <p>
+                Floorplan
+              </p>
+            </router-link>
+          </li>            
 
         </ul>
       </nav>
@@ -239,7 +253,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
     <!-- Main content -->
     <div class="content">
       <div class="container-fluid">
-        <div class="row">
+        {{-- <div class="row"> --}}
 
           <!-- This thing is to view all the vue js content -->
           <router-view></router-view>
@@ -247,7 +261,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
           <!-- This thing is for progressbar -->
           <vue-progress-bar></vue-progress-bar>
 
-        </div>
+        {{-- </div> --}}
         <!-- /.row -->
       </div><!-- /.container-fluid -->
     </div>
@@ -274,8 +288,14 @@ scratch. This page gets rid of all links and provides the needed markup only.
 @endauth
 
 <!-- jQuery -->
-<script src="/image-map-resizer/js/imageMapResizer.min.js"></script>
+{{-- <script src="/jquery/dist/jquery.min.js"></script>
+<script src="/image-map-resizer/js/imageMapResizer.min.js"></script> --}}
+{{-- <script src="/jQuery-rwdImageMaps-master/jquery.rwdImageMaps.min.js"></script> --}}
+{{-- <script type="text/javascript">
+  $(document).ready(function() {
+    $('map').imageMapResize();
+  });
+</script> --}}
 <script src="/js/app.js"></script>
-
 </body>
 </html>

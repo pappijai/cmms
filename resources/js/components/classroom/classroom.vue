@@ -130,6 +130,12 @@
                                 </div>
                         </div>
 
+                        <div class="form-group">
+                            <input v-model="form.ClassroomCoordinates" type="text" name="ClassroomCoordinates" placeholder="Classroom Coordinates"
+                                class="form-control" :class="{ 'is-invalid': form.errors.has('ClassroomCoordinates') }">
+                            <has-error :form="form" field="ClassroomCoordinates"></has-error>
+                        </div>
+
 
                         <!-- <div class="form-group">
                             <select v-model="form.ClassroomType" name="ClassroomType" id="bldgid"
@@ -171,6 +177,7 @@
                     CTID: '',
                     ClassroomIn: '',
                     ClassroomOut: '',
+                    ClassroomCoordinates: '',
                     BldgID: '',
                     BFID: '',
                 })

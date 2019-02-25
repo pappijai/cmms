@@ -39,6 +39,8 @@ let routes = [
     { path: '/developer', component: require('./components/Developer.vue') },
     { path: '/users', component: require('./components/Users.vue') },
     { path: '/professor', component: require('./components/Professor.vue') },
+    { path: '/upload_floorplan', component: require('./components/UploadFloorplan.vue') },
+    { path: '/floorplan', component: require('./components/floorplan/Floorplan.vue') },
 
     { path: '/building', component: require('./components/classroom/building.vue') },
     { path: '/floor', component: require('./components/classroom/floor.vue') },
@@ -72,7 +74,6 @@ Vue.use(VueProgressBar, {
     height: '3px'    
 });
 
-
 // Sweetalert2
 import swal from 'sweetalert2'
 window.swal = swal;
@@ -83,7 +84,7 @@ const toast = swal.mixin({
     timer: 3000
   });
 
-  window.toast = toast;
+window.toast = toast;
 
 
 // on fire event
@@ -137,7 +138,6 @@ Vue.component(
     'not-found',
     require('./components/NotFound.vue')
 );
-
 
 
 /**

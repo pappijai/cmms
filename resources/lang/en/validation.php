@@ -159,6 +159,7 @@ return [
         'SectionYear' => 'Year Created',
         'ProfessorID' => 'Professor',
         'BldgCoordinates' => 'Building Coordinates',
+        'BFPhoto' => 'Floor Photo',
 
     ],
 

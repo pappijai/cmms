@@ -21,7 +21,7 @@ class ClassroomController extends Controller
         //
 
         return DB::select('SELECT concat(md5(a.ClassroomID)) ClassroomID, a.ClassroomCode, 
-                        a.ClassroomName, b.CTID,b.CTName, a.ClassroomIn, a.ClassroomOut, c.BldgID,c.BldgName, 
+                        a.ClassroomName, b.CTID,b.CTName, a.ClassroomIn, a.ClassroomOut,a.ClassroomCoordinates, c.BldgID,c.BldgName, 
                         d.BFID,d.BFName, a.created_at 
                         FROM classrooms a INNER JOIN classroom_types b ON a.ClassroomType = CTID 
                         INNER JOIN buildings c ON a.ClassroomBldg = c.BldgID 
@@ -47,15 +47,16 @@ class ClassroomController extends Controller
             'ClassroomCode' => 'required|string|unique:classrooms,ClassroomCode,Null,id,ClassroomBldg,'.$request->BldgID.',ClassroomFloor,'.$request->BFID.'',            
             'ClassroomIn' => 'required|date_format:H:i',
             'ClassroomOut' => 'required|date_format:H:i|after:ClassroomIn',
+            'ClassroomCoordinates' => 'required|string|unique:classrooms',
         ]);        
 
         $classrooms = DB::insert('
             INSERT INTO classrooms (ClassroomCode,ClassroomName,ClassroomType,ClassroomIn,
-                                    ClassroomOut,ClassroomBldg,ClassroomFloor,created_at,updated_at) VALUES
+                                    ClassroomOut,ClassroomBldg,ClassroomFloor,ClassroomCoordinates,created_at,updated_at) VALUES
                                     ("'.$request['ClassroomCode'].'","'.$request['ClassroomName'].'",
                                     "'.$request['CTID'].'","'.$request['ClassroomIn'].'",
                                     "'.$request['ClassroomOut'].'","'.$request['BldgID'].'",
-                                    "'.$request['BFID'].'",now(),now())
+                                    "'.$request['BFID'].'","'.$request['ClassroomCoordinates'].'",now(),now())
             
         ');
         if ($classrooms){
@@ -99,6 +100,7 @@ class ClassroomController extends Controller
             'ClassroomCode' => 'required|string|unique:classrooms,ClassroomCode,'.$classroom_id.',ClassroomID,ClassroomBldg,'.$request->BldgID.',ClassroomFloor,'.$request->BFID.'',            
             'ClassroomIn' => 'required',
             'ClassroomOut' => 'required|after:ClassroomIn',
+            'ClassroomCoordinates' => 'required|string|unique:classrooms,ClassroomCoordinates,'.$classroom_id.',ClassroomID',
         ]);   
 
         $classrooms = DB::update('
@@ -110,6 +112,7 @@ class ClassroomController extends Controller
                 ClassroomOut = "'.$request->ClassroomOut.'",
                 ClassroomBldg = "'.$request->BldgID.'",
                 ClassroomFloor = "'.$request->BFID.'",
+                ClassroomCoordinates = "'.$request->ClassroomCoordinates.'",
                 updated_at = now()
                 WHERE md5(concat(ClassroomID)) = "'.$id.'"
                 

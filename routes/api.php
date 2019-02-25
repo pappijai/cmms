@@ -28,8 +28,10 @@ Route::apiResources(['course' => 'API\CourseController']);
 Route::apiResources(['professor' => 'API\ProfessorController']);
 Route::apiResources(['section' => 'API\SectionController']);
 Route::apiResources(['subjecttagging' => 'API\SubjectTaggingController']);
+Route::apiResources(['floorplan' => 'API\FloorplanController']);
 
 
+Route::get('get_floorplan', 'API\FloorplanController@get_floorplan');
 Route::get('buildingInfo', 'API\FloorController@buildinginfo');
 Route::get('classroomTypeInfo', 'API\ClassroomController@classroomTypeInfo');
 Route::get('floorsInfo/{id}', 'API\ClassroomController@floorsInfo');
@@ -42,6 +44,8 @@ Route::get('schedule_per_subject/{id}', 'API\SubjectTaggingController@schedule_p
 Route::get('courses', 'API\SectionController@courses');
 Route::get('get_professor', 'API\SubjectTaggingController@get_professor');
 Route::get('update_status_subject_schedule/{sem}/{year_from}/{year_to}', 'API\SubjectTaggingController@update_status_subject_schedule');
+Route::get('get_floors/{id}', 'API\FloorplanController@get_floors');
+Route::get('get_floors_coordinates/{id}', 'API\FloorplanController@get_floors_coordinates');
 
 Route::put('updatesubjectmeetings1/{id}', 'API\SubjectController@updatesubjectmeetings1');
 Route::put('updatesubjectmeetings2/{id}', 'API\SubjectController@updatesubjectmeetings2');
