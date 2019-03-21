@@ -317,10 +317,10 @@
                 }).then((result) => {
                     // Send ajax request to server
                     if(result.value){
-                        this.form.delete('api/subject/'+id).then(() => {
+                        this.form.delete('api/subject/'+id).then(({data}) => {
                             toast({
-                                type: 'success',
-                                title: 'Subject Deleted successfully'
+                                type: data.type,
+                                title: data.message
                             })
                             Fire.$emit('AfterDelete');
                             

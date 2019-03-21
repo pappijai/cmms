@@ -41,6 +41,8 @@ let routes = [
     { path: '/professor', component: require('./components/Professor.vue') },
     { path: '/upload_floorplan', component: require('./components/UploadFloorplan.vue') },
     { path: '/floorplan', component: require('./components/floorplan/Floorplan.vue') },
+    { path: '/profile', component: require('./components/Profile.vue') },
+    { path: '/backup', component: require('./components/Backup.vue') },
 
     { path: '/building', component: require('./components/classroom/building.vue') },
     { path: '/floor', component: require('./components/classroom/floor.vue') },

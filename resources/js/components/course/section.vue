@@ -18,7 +18,7 @@
                                     <th>No.</th>
                                     <th>Course Description</th>
                                     <th>Yr & Sec</th>
-                                    <th>Yr. Created</th>
+                                    <th>Yr. Admitted</th>
                                     <th>Status</th>
                                     <th>Modify</th>
                                 </tr>
@@ -28,7 +28,10 @@
                                 <tr v-for="section in sections" :key="section.id">
                                     <td>{{id++}}</td>
                                     <td>{{section.CourseDescription}}</td>
-                                    <td v-if="month_today >= 5 && month_today <= 9">
+                                    <td v-if="year_today - section.SectionYear > section.CourseYears">
+                                        {{section.CourseYears}} - {{section.SectionName}}
+                                    </td>
+                                    <td v-else-if="month_today >= 5 && month_today <= 9">
                                         {{year_today - section.SectionYear + 1}} - {{section.SectionName}}
                                     </td>
                                     <td v-else>
@@ -45,7 +48,7 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <a href="#" @click="editModal(section)">
+                                        <a v-show="section.SectionStatus == 'Active'" href="#" @click="editModal(section)">
                                             <i class="fas fa-edit text-blue"></i>    
                                         </a>
                                         <!-- / 

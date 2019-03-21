@@ -9,6 +9,8 @@ use App\SubjectTagging;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
+use Pdf;
+
 class SubjectTaggingController extends Controller
 {
     /**
@@ -41,6 +43,13 @@ class SubjectTaggingController extends Controller
                     SectionStatus = "Inactive"
                     WHERE md5(concat(SectionID)) = "'.$row->SectionID.'"         
                 ');             
+            }
+            elseif ($year_today - $row->SectionYear == 0){
+                DB::update('
+                UPDATE sections SET
+                    SectionStatus = "Inactive"
+                    WHERE md5(concat(SectionID)) = "'.$row->SectionID.'"         
+                ');  
             }
             else{
                 DB::update('
@@ -438,4 +447,104 @@ class SubjectTaggingController extends Controller
         DB::delete('DELETE FROM subject_taggings WHERE md5(concat(STID)) = "'.$id.'"');
     }
     
+    public function print_section_schedule($id){
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($this->convert_schedule_table_to_html($id));
+        $pdf->setPaper('A4', 'landscape');
+        return $pdf->stream('section_schedule.pdf');        
+    }
+    
+    public function convert_schedule_table_to_html($id){
+        $year_today = date('Y');
+        $month_today = date('m');
+        $section_year = 0;
+
+        $section = DB::select('SELECT a.*,b.* FROM sections a INNER JOIN courses b ON a.CourseID = b.CourseID WHERE md5(concat(a.SectionID)) = "'.$id.'"');
+
+        $data = DB::select('SELECT md5(concat(a.STID)) STID, b.SubjectDescription,f.SectionYear,
+                            f.SectionName,c.ProfessorName,g.CourseCode,
+                            GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
+                            FROM subject_taggings a 
+                            INNER JOIN subjects b ON a.SubjectID = b.SubjectID 
+                            INNER JOIN professors c ON a.ProfessorID = c.ProfessorID
+                            LEFT JOIN subject_tagging_schedules d ON a.STID = d.STID
+                            INNER JOIN classrooms e ON d.ClassroomID = e.ClassroomID
+                            INNER JOIN sections f ON a.SectionID = f.SectionID
+                            INNER JOIN courses g ON f.CourseID = g.CourseID
+                            WHERE md5(concat(a.SectionID)) = "'.$id.'" AND 
+                            a.STStatus = "Active"
+                            GROUP BY b.SubjectDescription,a.STID,c.ProfessorName,f.SectionYear,f.SectionName,g.CourseCode
+                        ');
+                        
+        $output = '';
+        if($month_today >= 5 && $month_today <= 9){
+            $section_year = $year_today - $section[0]->SectionYear + 1;
+        }
+        else{
+            $section_year = $year_today - $section[0]->SectionYear;
+        }
+
+        if(empty($data)){
+            $output .= '
+                <h3 align="center";>'.$section[0]->CourseCode.' '.$section_year.' - '.$section[0]->SectionName.' Schedules</h3>
+                <table width="100%" style="border-collapse: collapse; border 0px;">
+                    <thead style="background-color:black;color: #fff;">
+                        <tr>
+                            <th style="border: 1px solid;padding: 12px;width:25%;">Subject Name</th>
+                            <th style="border: 1px solid;padding: 12px;width:25%;">Professor</th>
+                            <th style="border: 1px solid;padding: 12px;width:50%;">Schedule</th>
+                        </tr>                        
+                    </thead>
+                    <tbody>
+            ';
+            $output .='
+                    </tbody>
+                </table>
+            ';
+
+        }
+        else{
+    
+    
+            $output .= '
+                <h3 align="center";>'.$section[0]->CourseCode.' '.$section_year.' - '.$section[0]->SectionName.' Schedules</h3>
+                <table width="100%" style="border-collapse: collapse; border 0px;">
+                    <thead style="background-color:black;color: #fff;">
+                        <tr>
+                            <th style="border: 1px solid;padding: 12px;width:25%;">Subject Name</th>
+                            <th style="border: 1px solid;padding: 12px;width:25%;">Professor</th>
+                            <th style="border: 1px solid;padding: 12px;width:50%;">Schedule</th>
+                        </tr>                        
+                    </thead>
+                    <tbody>
+            ';
+            foreach($data as $row){
+                $output .= '
+                    <tr>';
+                
+                $output .= '
+                        <td style="border: 1px solid;padding: 5px;">
+                            '.$row->SubjectDescription.'
+                        </td>
+                        <td style="border: 1px solid;padding: 5px;">
+                            '.$row->ProfessorName.'
+                        </td>
+                        <td style="border: 1px solid;padding: 5px;">
+                            '.$row->Schedule.'
+                        </td>    
+                ';
+    
+                $output .= '
+                    </tr>';
+            }
+            $output .='
+                    </tbody>
+                </table>
+            ';
+
+        }
+
+        return $output;        
+
+    }
 }

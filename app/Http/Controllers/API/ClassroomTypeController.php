@@ -104,13 +104,22 @@ class ClassroomTypeController extends Controller
      */
     public function destroy($id)
     {
-        //
-        $query = DB::delete('DELETE FROM classroom_types WHERE md5(concat(CTID)) = "'.$id.'"');
-        if($query){
-            return ["message" => "User Deleted"];
+        $count_classroom_type = DB::select('SELECT * FROM classrooms where md5(concat(ClassroomType)) = "'.$id.'"');
+
+        if(!empty($count_classroom_type)){
+            return ["type"=>"error","message"=>"This Classroom Type has sub record"];
         }
         else{
-            return ["message" => "Error"];
+           
+            $query = DB::delete('DELETE FROM classroom_types WHERE md5(concat(CTID)) = "'.$id.'"');
+            
+            if($query){
+                return ["type"=>"success","message"=>"Classroom Type Deleted Successfully"];
+            }
+            else{
+                return ["type"=>"error","message"=>"Error Deleting"];
+            }
+            
         }
     }
 }

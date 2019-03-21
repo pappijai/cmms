@@ -140,21 +140,46 @@ class FloorController extends Controller
     public function destroy($id)
     {
         //
-        $floors = DB::select('SELECT * FROM floors WHERE md5(concat(BFID)) = "'.$id.'"');
+        // $floors = DB::select('SELECT * FROM floors WHERE md5(concat(BFID)) = "'.$id.'"');
 
-        $userPhoto = public_path('img/floorplan/').$floors[0]->BFPhoto;
+        // $userPhoto = public_path('img/floorplan/').$floors[0]->BFPhoto;
 
-        if(file_exists($userPhoto)){
-            @unlink($userPhoto);
-        }
+        // if(file_exists($userPhoto)){
+        //     @unlink($userPhoto);
+        // }
 
-        $query = DB::delete('DELETE FROM floors WHERE md5(concat(BFID)) = "'.$id.'"');
-        if($query){
-            return ["message" => "User Deleted"];
+        // $query = DB::delete('DELETE FROM floors WHERE md5(concat(BFID)) = "'.$id.'"');
+        // if($query){
+        //     return ["message" => "User Deleted"];
+        // }
+        // else{
+        //     return ["message" => "Error"];
+        // }        
+
+        $count_floor = DB::select('SELECT * FROM classrooms where md5(concat(ClassroomFloor)) = "'.$id.'"');
+
+        if(!empty($count_floor)){
+            return ["type"=>"error","message"=>"This floor has sub record"];
         }
         else{
-            return ["message" => "Error"];
-        }        
+            $floors = DB::select('SELECT * FROM floors WHERE md5(concat(BFID)) = "'.$id.'"');
+
+            $userPhoto = public_path('img/floorplan/').$floors[0]->BFPhoto;
+
+            if(file_exists($userPhoto)){
+                @unlink($userPhoto);
+            }
+            
+            $query = DB::delete('DELETE FROM floors WHERE md5(concat(BFID)) = "'.$id.'"');
+            
+            if($query){
+                return ["type"=>"success","message"=>"Building Deleted Successfully"];
+            }
+            else{
+                return ["type"=>"error","message"=>"Error Deleting"];
+            }
+            
+        }
     }
 
     public function buildingInfo(){

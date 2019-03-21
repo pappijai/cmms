@@ -40,11 +40,19 @@ scratch. This page gets rid of all links and provides the needed markup only.
           <i class="fa fa-cog"></i> Settings
         </a>
         <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+          @can('isAdministrative')
+            <router-link to="/upload_floorplan" class="dropdown-item">
+              <i class="fas fa-map-marked mr-2 text-green"></i>Upload Floorplan
+            </router-link>
+            <div class="dropdown-divider"></div>
+          @endcan
 
-          <router-link to="/upload_floorplan" class="dropdown-item">
-            <i class="fas fa-map-marked mr-2 text-green"></i>Upload Floorplan
-          </router-link>
-          <div class="dropdown-divider"></div>
+          @can('isAdmin')
+            <router-link to="/backup" class="dropdown-item">
+              <i class="fa fa-download mr-2 text-yellow"></i>Backup Database
+            </router-link>
+            <div class="dropdown-divider"></div>
+          @endcan  
           
           <router-link to="/profile" class="dropdown-item">
             <i class="fa fa-users mr-2 text-orange"></i>Profile
@@ -57,6 +65,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
             <i class="fas fa-power-off mr-2 text-red"></i>Logout
           </a>
 
+
+             
           <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
             @csrf
           </form>
@@ -82,7 +92,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
       <!-- Sidebar user panel (optional) -->
       <div class="user-panel mt-3 pb-3 mb-3 d-flex">
         <div class="image">
-          <img src="./img/people.png" class="img-circle elevation-3" alt="User Image">
+          <img src="./img/profile/{{ Auth::user()->photo }}" class="img-circle elevation-3" alt="User Image">
         </div>
         <div class="info">
           <a href="#" class="d-block">
@@ -104,7 +114,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
             </router-link>
           </li>
 
-          @can('isAdmin')
+          @can('isSuperAdmin')
           <li class="nav-item">
             <router-link to="/users" class="nav-link">
               <i class="nav-icon fas fa-users text-purple"></i>
@@ -114,123 +124,127 @@ scratch. This page gets rid of all links and provides the needed markup only.
             </router-link>
           </li>
           @endcan     
-
-          <li class="nav-item has-treeview menu-close">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-building text-red"></i>
-              <p>
-                Classroom Management
-                <i class="right fa fa-angle-left"></i>
-              </p>
-            </a>
-            <ul class="nav nav-treeview">
-
-              <li class="nav-item ml-2">
-                <router-link to="/building" class="nav-link">
-                  <i class="nav-icon fas fa-angle-right text-green"></i>
-                  <p>
-                    Buildings
-                  </p>
-                </router-link>
-              </li>
-
-              <li class="nav-item ml-2">
-                <router-link to="/floor" class="nav-link">
-                  <i class="nav-icon fas fa-angle-right text-green"></i>
-                  <p>
-                    Floors
-                  </p>
-                </router-link>
-              </li>
+          
+          @can('isAdministrative')
+            <li class="nav-item has-treeview menu-close">
+              <a href="#" class="nav-link">
+                <i class="nav-icon fas fa-building text-red"></i>
+                <p>
+                  Classroom Management
+                  <i class="right fa fa-angle-left"></i>
+                </p>
+              </a>
+              <ul class="nav nav-treeview">
 
                 <li class="nav-item ml-2">
-                  <router-link to="/classroom" class="nav-link">
-                    <i class="nav-icon fas fa-angle-right text-green"></i>
+                  <router-link to="/building" class="nav-link">
+                    <i class="nav-icon fas fa-angle-right text-red"></i>
                     <p>
-                      Classrooms
+                      Buildings
                     </p>
                   </router-link>
                 </li>
 
                 <li class="nav-item ml-2">
-                  <router-link to="/classroomtype" class="nav-link">
-                    <i class="nav-icon fas fa-angle-right text-green"></i>
+                  <router-link to="/floor" class="nav-link">
+                    <i class="nav-icon fas fa-angle-right text-red"></i>
                     <p>
-                      Classroom Types
+                      Floors
                     </p>
                   </router-link>
                 </li>
-            </ul>
-          </li>    
 
-          <li class="nav-item has-treeview menu-close">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-book-open text-teal"></i>
-              <p>
-                Subject Management
-                <i class="right fa fa-angle-left"></i>
-              </p>
-            </a>
-            <ul class="nav nav-treeview">
+                  <li class="nav-item ml-2">
+                    <router-link to="/classroom" class="nav-link">
+                      <i class="nav-icon fas fa-angle-right text-red"></i>
+                      <p>
+                        Classrooms
+                      </p>
+                    </router-link>
+                  </li>
 
-              <li class="nav-item ml-2">
-                <router-link to="/subject" class="nav-link">
-                  <i class="nav-icon fas fa-angle-right text-teal"></i>
-                  <p>
-                    Subjects
-                  </p>
-                </router-link>
-              </li>
-            </ul>
-          </li> 
+                  <li class="nav-item ml-2">
+                    <router-link to="/classroomtype" class="nav-link">
+                      <i class="nav-icon fas fa-angle-right text-red"></i>
+                      <p>
+                        Classroom Types
+                      </p>
+                    </router-link>
+                  </li>
+              </ul>
+            </li>    
+          @endcan
 
-          <li class="nav-item has-treeview menu-close">
-            <a href="#" class="nav-link">
-              <i class="nav-icon fas fa-graduation-cap text-yellow"></i>
-              <p>
-                Course Management
-                <i class="right fa fa-angle-left"></i>
-              </p>
-            </a>
-            <ul class="nav nav-treeview">
+          @can('isRegistrar')
+            <li class="nav-item has-treeview menu-close">
+              <a href="#" class="nav-link">
+                <i class="nav-icon fas fa-book-open text-teal"></i>
+                <p>
+                  Subject Management
+                  <i class="right fa fa-angle-left"></i>
+                </p>
+              </a>
+              <ul class="nav nav-treeview">
 
-              <li class="nav-item ml-2">
-                <router-link to="/course" class="nav-link">
-                  <i class="nav-icon fas fa-angle-right text-yellow"></i>
-                  <p>
-                    Courses
-                  </p>
-                </router-link>
-              </li>
+                <li class="nav-item ml-2">
+                  <router-link to="/subject" class="nav-link">
+                    <i class="nav-icon fas fa-angle-right text-teal"></i>
+                    <p>
+                      Subjects
+                    </p>
+                  </router-link>
+                </li>
+              </ul>
+            </li> 
 
-              <li class="nav-item ml-2">
-                <router-link to="/section" class="nav-link">
-                  <i class="nav-icon fas fa-angle-right text-yellow"></i>
-                  <p>
-                    Sections
-                  </p>
-                </router-link>
-              </li>
-            </ul>
-          </li> 
+            <li class="nav-item has-treeview menu-close">
+              <a href="#" class="nav-link">
+                <i class="nav-icon fas fa-graduation-cap text-yellow"></i>
+                <p>
+                  Course Management
+                  <i class="right fa fa-angle-left"></i>
+                </p>
+              </a>
+              <ul class="nav nav-treeview">
 
-          <li class="nav-item">
-            <router-link to="/professor" class="nav-link">
-              <i class="nav-icon fas fa-chalkboard-teacher text-blue"></i>
-              <p>
-                Professor Management
-              </p>
-            </router-link>
-          </li>  
+                <li class="nav-item ml-2">
+                  <router-link to="/course" class="nav-link">
+                    <i class="nav-icon fas fa-angle-right text-yellow"></i>
+                    <p>
+                      Courses
+                    </p>
+                  </router-link>
+                </li>
 
-          <li class="nav-item">
-            <router-link to="/subjecttagging" class="nav-link">
-              <i class="nav-icon fas fa-tags text-orange"></i>
-              <p>
-                Tagged Subject & Schedule
-              </p>
-            </router-link>
-          </li> 
+                <li class="nav-item ml-2">
+                  <router-link to="/section" class="nav-link">
+                    <i class="nav-icon fas fa-angle-right text-yellow"></i>
+                    <p>
+                      Sections
+                    </p>
+                  </router-link>
+                </li>
+              </ul>
+            </li> 
+
+            <li class="nav-item">
+              <router-link to="/professor" class="nav-link">
+                <i class="nav-icon fas fa-chalkboard-teacher text-blue"></i>
+                <p>
+                  Professor Management
+                </p>
+              </router-link>
+            </li>  
+
+            <li class="nav-item">
+              <router-link to="/subjecttagging" class="nav-link">
+                <i class="nav-icon fas fa-tags text-orange"></i>
+                <p>
+                  Tagged Subj. & Sched.
+                </p>
+              </router-link>
+            </li> 
+          @endcan
 
           <li class="nav-item">
             <router-link to="/floorplan" class="nav-link">

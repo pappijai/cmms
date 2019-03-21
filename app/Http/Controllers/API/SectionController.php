@@ -26,7 +26,7 @@ class SectionController extends Controller
                         FROM sections a INNER JOIN courses b ON a.CourseID = b.CourseID ORDER BY a.SectionYear DESC");
 
         foreach($sections as $row){
-            if($row->CourseYears <= $year_today - $row->SectionYear  && $month_today > 5){
+            if($row->CourseYears <= $year_today - $row->SectionYear && $month_today > 5){
                 DB::update('
                 UPDATE sections SET
                     SectionStatus = "Inactive"
@@ -39,6 +39,13 @@ class SectionController extends Controller
                     SectionStatus = "Inactive"
                     WHERE md5(concat(SectionID)) = "'.$row->SectionID.'"         
                 ');             
+            }
+            elseif ($year_today - $row->SectionYear == 0 && $month_today < 4){
+                DB::update('
+                UPDATE sections SET
+                    SectionStatus = "Inactive"
+                    WHERE md5(concat(SectionID)) = "'.$row->SectionID.'"         
+                ');  
             }
             else{
                 DB::update('
@@ -63,7 +70,7 @@ class SectionController extends Controller
         $year_today = date("Y");
 
         $this->validate($request, [            
-            'SectionName' => 'required|string',
+            'SectionName' => 'required|string|unique:sections,SectionName,null,id,SectionYear,'.$request->SectionYear.',CourseID,'.$request->CourseID,
             'SectionYear' => 'required|integer|min:1900|max:'.$year_today,
             'CourseID' => 'required|integer',
         ]); 

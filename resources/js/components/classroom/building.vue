@@ -155,10 +155,10 @@
                 }).then((result) => {
                     // Send ajax request to server
                     if(result.value){
-                        this.form.delete('api/building/'+id).then(() => {
+                        this.form.delete('api/building/'+id).then(({data}) => {
                             toast({
-                                type: 'success',
-                                title: 'Building Deleted successfully'
+                                type: data.type,
+                                title: data.message
                             })
                             Fire.$emit('AfterDelete');
                                 

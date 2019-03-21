@@ -198,6 +198,50 @@
                                 </div>
                             </div>                            
 
+                            <div class="col-md-6 col-sm-6 col-xs-6">
+                                <div class="form-group">
+                                    <h5>Summer Semester <small class="text-red">(maximum of 9 subjects per sem)</small></h5>
+                                </div>     
+                                <form @submit.prevent="create_subject_summer()">
+                                    <div class="form-group">
+                                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Add</button>                                                   
+                                    </div>
+                                    <div class="form-group">
+                                        <select v-model="SubjectID_Summer" id="SubjectID_Summer" name="SubjectID_Summer" 
+                                            class="form-control" :class="{ 'is-invalid': subject_course_summer.errors.has('SubjectID') }">
+                                            <option value="">Select Subjects</option>
+                                            <option v-for="subject in subjects" :key="subject.id" v-bind:value="subject.SubjectID">{{subject.SubjectDescription}}</option>                  
+                                        </select>
+                                        <has-error :form="subject_course_summer" field="SubjectID"></has-error>
+                                        <has-error :form="subject_course_summer" field="error_subjects"></has-error>
+                                    </div>
+                                </form>
+                                
+                                <div class="form-group">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">No.</th>
+                                                <th scope="col">Subject Name</th>
+                                                <th scope="col">Modify</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <div hidden>{{id = 1}}</div>
+                                            <tr v-for="subjects_summer in Subjects_Summer" :key="subjects_summer.id">
+                                                <td>{{id++}}</td>
+                                                <td>{{subjects_summer.SubjectDescription}}</td>
+                                                <td>
+                                                    <a href="#" @click="deleteSubject(subjects_summer.CSOID)">
+                                                        <i class="fas fa-trash text-red"></i>    
+                                                    </a> 
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>                                        
+                                </div>
+                            </div>                            
+
 
 
                         </div>
@@ -249,6 +293,12 @@
                     CSOYear: '',
                     CSOSem: '',
                 }),
+                subject_course_summer: new Subject_Course({
+                    SubjectID: '',
+                    CourseID: '',
+                    CSOYear: '',
+                    CSOSem: '',
+                }),
                 
             }
         },
@@ -261,6 +311,7 @@
             loadSubjectsPerCourse(){
                 axios.get('api/courses_subjects_per_year_sem/'+this.CourseID+'/'+this.subject_year+'/'+this.First_Semester).then(({ data }) => (this.Subjects_First = data));
                 axios.get('api/courses_subjects_per_year_sem/'+this.CourseID+'/'+this.subject_year+'/'+this.Second_Semester).then(({ data }) => (this.Subjects_Second = data));
+                axios.get('api/courses_subjects_per_year_sem/'+this.CourseID+'/'+this.subject_year+'/'+this.Summer_Semester).then(({ data }) => (this.Subjects_Summer = data));
             },
             newCourse(){
                 this.form.reset()
@@ -339,7 +390,7 @@
                 //reseting input fields
                 this.subject_course_first.reset();
                 this.subject_course_second.reset();
-                //this.subject_course_summer.reset();
+                this.subject_course_summer.reset();
 
                 this.subject_year = '';
                 this.CourseID = '';
@@ -354,7 +405,6 @@
 
                 // load all subjects in their respective data object
                 this.loadSubjectsPerCourse()
-
                 $('#addsubjecttocoursemodal').modal('show');
             },
             create_subject_first(){
@@ -383,6 +433,60 @@
                     })
                 }
             },
+            create_subject_second(){
+                if(this.getsizeofarray(this.Subjects_Second) == 9){
+                    alert('maximum of 9 subjects for First Semester!')
+                }
+                else{
+                    this.$Progress.start()
+                    this.subject_course_second.fill({
+                        SubjectID: this.SubjectID_Second,
+                        CourseID: this.CourseID,
+                        CSOYear: this.subject_year,
+                        CSOSem: 'Second Semester',                    
+                    })
+                    this.subject_course_second.post('api/create_course_subject_first')
+                    .then(() => {
+                        Fire.$emit('AfterCreateSubject');
+                        toast({
+                            type: 'success',
+                            title: 'Subject for Second Semester Added successfully'
+                        })   
+                        this.$Progress.finish()
+                    })
+                    .catch(() => {
+                        this.$Progress.fail()
+                    })
+                }
+            },
+            create_subject_summer(){
+                if(this.getsizeofarray(this.Subjects_Summer) == 9){
+                    alert('maximum of 9 subjects for First Semester!')
+                }
+                else{
+                    this.$Progress.start()
+                    this.subject_course_summer.fill({
+                        SubjectID: this.SubjectID_Summer,
+                        CourseID: this.CourseID,
+                        CSOYear: this.subject_year,
+                        CSOSem: 'Summer Semester',                    
+                    })
+                    this.subject_course_summer.post('api/create_course_subject_first')
+                    .then(() => {
+                        Fire.$emit('AfterCreateSubject');
+                        toast({
+                            type: 'success',
+                            title: 'Subject for Summer Semester Added successfully'
+                        })   
+                        this.$Progress.finish()
+                    })
+                    .catch(() => {
+                        this.$Progress.fail()
+                    })
+                }
+            },
+            
+
             deleteSubject(id){
                 swal({
                     title: 'Are you sure?',
@@ -414,32 +518,6 @@
                 })  
             },
 
-            create_subject_second(){
-                if(this.getsizeofarray(this.Subjects_Second) == 9){
-                    alert('maximum of 9 subjects for First Semester!')
-                }
-                else{
-                    this.$Progress.start()
-                    this.subject_course_second.fill({
-                        SubjectID: this.SubjectID_Second,
-                        CourseID: this.CourseID,
-                        CSOYear: this.subject_year,
-                        CSOSem: 'Second Semester',                    
-                    })
-                    this.subject_course_second.post('api/create_course_subject_first')
-                    .then(() => {
-                        Fire.$emit('AfterCreateSubject');
-                        toast({
-                            type: 'success',
-                            title: 'Subject for Second Semester Added successfully'
-                        })   
-                        this.$Progress.finish()
-                    })
-                    .catch(() => {
-                        this.$Progress.fail()
-                    })
-                }
-            },
             getsizeofarray(obj){
                 var size = 0, key;
                 for (key in obj) {

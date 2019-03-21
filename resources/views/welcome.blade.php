@@ -8,11 +8,16 @@
         <link rel="shortcut icon" href="/img/favicon.png">
         <!-- Fonts -->
         <link href="https://fonts.googleapis.com/css?family=Nunito:200,600" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="/css/app.css">
 
         <!-- Styles -->
         <style>
             html, body {
-                background-image: linear-gradient(180deg, #08a4a7, #0388e6);
+                /* background-image: linear-gradient(180deg, #08a4a7, #0388e6); */
+                background-image: linear-gradient(-38deg, #08a4a7, #ffffff);
+                /* background-image: url('./img/landing.jpg');
+                background-repeat: no-repeat;
+                background-size: cover; */
                 color: #636b6f;
                 font-family: 'Nunito', sans-serif;
                 font-weight: 200;
@@ -85,6 +90,10 @@
             <div class="content">
                 <div class="title m-b-md text-white">
                     {{ config('app.name')}}
+                </div>
+                <div class="text-white">
+                    <a href="/view_floorplan" class="btn bgc-teal text-white"><h3><i class="fas fa-map-marked"></i> View Floorplan</h3></a>
+                    <a href="/view_schedule" class="btn btn-primary"><h3><i class="fas fa-clock"></i> Sections Schedule</h3></a>
                 </div>
             </div>
         </div>

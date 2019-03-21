@@ -1,7 +1,7 @@
 <template>
     <div class="container mt-4">
         <!-- verify if the user is admin -->
-        <div class="row justify-content-center" v-if="$gate.isAdmin()">
+        <div class="row justify-content-center" v-if="$gate.isSuperAdmin()">
             <div class="col-md-12">
                 <div class="card card-default">
                     <div class="card-header bgc-teal">
@@ -51,7 +51,7 @@
         </div>
 
         <!-- verify if the user is admin -->
-        <div v-if="!$gate.isAdmin()">
+        <div v-if="!$gate.isSuperAdmin()">
             <not-found></not-found>
         </div>
 
@@ -84,8 +84,10 @@
                             <select v-model="form.type" name="type"
                                 class="form-control" :class="{ 'is-invalid': form.errors.has('type') }">
                                 <option value="">Select User Role</option>
+                                <!-- <option value="super admin">Super Admin</option> -->
                                 <option value="admin">Admin</option>
-                                <option value="user">Standard User</option>
+                                <option value="registrar">Registrar</option>
+                                <option value="administrative">Administrative</option>
                             </select>
                             <has-error :form="form" field="type"></has-error>
                         </div>
@@ -137,7 +139,7 @@
         methods: {
             // Fetching all the users data
            loadUsers(){
-               if(this.$gate.isAdmin()){
+               if(this.$gate.isSuperAdmin()){
                    axios.get('api/user').then(({ data }) => (this.users = data));
                }
            },
@@ -149,7 +151,7 @@
            },
            // function that create user
            createUser(){
-               if(this.$gate.isAdmin()){
+               if(this.$gate.isSuperAdmin()){
                     this.$Progress.start()
                     this.form.post('api/user')
                     .then(() =>{
@@ -205,7 +207,7 @@
            },
            // updating the user information
            updateUser(){
-               if(this.$gate.isAdmin()){
+               if(this.$gate.isSuperAdmin()){
                     this.$Progress.start()
                     this.form.put('api/user/'+this.form.id)
                     .then(() =>{

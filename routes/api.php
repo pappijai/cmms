@@ -46,9 +46,21 @@ Route::get('get_professor', 'API\SubjectTaggingController@get_professor');
 Route::get('update_status_subject_schedule/{sem}/{year_from}/{year_to}', 'API\SubjectTaggingController@update_status_subject_schedule');
 Route::get('get_floors/{id}', 'API\FloorplanController@get_floors');
 Route::get('get_floors_coordinates/{id}', 'API\FloorplanController@get_floors_coordinates');
+Route::get('get_classroom_schedules/{id}', 'API\FloorplanController@get_classroom_schedules');
+Route::get('print_schedule/{id}', 'API\FloorplanController@print_schedule');
+Route::get('get_count_data/{tables}', 'API\UserController@get_count_data');
+Route::get('get_count_section_for_tagging', 'API\UserController@get_count_section_for_tagging');
+Route::get('print_section_schedule/{id}', 'API\SubjectTaggingController@print_section_schedule');
+Route::get('get_profile', 'API\UserController@get_profile');
+Route::get('get_backups', 'API\UserController@get_backups');
+Route::get('create_backup', 'API\UserController@create_backup');
+// Route::get('download_backup/{file_name}', 'API\UserController@download_backup');
 
+Route::put('download_backup', 'API\UserController@download_backup');
+Route::put('delete_backup', 'API\UserController@delete_backup');
 Route::put('updatesubjectmeetings1/{id}', 'API\SubjectController@updatesubjectmeetings1');
 Route::put('updatesubjectmeetings2/{id}', 'API\SubjectController@updatesubjectmeetings2');
+Route::put('update_profile/{id}', 'API\UserController@update_profile');
 
 Route::post('create_course_subject_first', 'API\CourseController@create_course_subject_first');
 

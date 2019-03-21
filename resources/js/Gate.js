@@ -5,13 +5,25 @@ export default class Gate{
     }
 
     // Identify if admin
+    isSuperAdmin(){
+        return this.user.type == 'super admin';
+    }
+
     isAdmin(){
-        return this.user.type == 'admin';
+        return this.user.type == 'admin' || this.user.type == 'super admin';
     }
 
     // Identify if user
     isUser(){
-        return this.user.type == 'user';
+        return this.user.type == 'user' || this.user.type == 'admin' || this.user.type == 'super admin';
+    }
+
+    isRegistrar(){
+        return this.user.type == 'registrar' || this.user.type == 'admin' || this.user.type == 'super admin';
+    }
+
+    isAdministrative(){
+        return this.user.type == 'administrative' || this.user.type == 'admin' || this.user.type == 'super admin';
     }
 
 

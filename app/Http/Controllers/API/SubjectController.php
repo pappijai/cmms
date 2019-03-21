@@ -130,15 +130,33 @@ class SubjectController extends Controller
     {
         //
 
-        $query = DB::delete('DELETE FROM subjects WHERE md5(concat(SubjectID)) = "'.$id.'"');
-        DB::delete('DELETE FROM subject_meetings WHERE md5(concat(SubjectID)) = "'.$id.'"');
+        // $query = DB::delete('DELETE FROM subjects WHERE md5(concat(SubjectID)) = "'.$id.'"');
+        // DB::delete('DELETE FROM subject_meetings WHERE md5(concat(SubjectID)) = "'.$id.'"');
         
-        if($query){
-            return ["message" => "User Deleted"];
+        // if($query){
+        //     return ["message" => "User Deleted"];
+        // }
+        // else{
+        //     return ["message" => "Error"];
+        // }              
+
+        $count_subject = DB::select('SELECT * FROM course_subject_offereds where md5(concat(SubjectID)) = "'.$id.'"');
+
+        if(!empty($count_subject)){
+            return ["type"=>"error","message"=>"This Subject has sub record"];
         }
         else{
-            return ["message" => "Error"];
-        }              
+            
+            $query = DB::delete('DELETE FROM subjects WHERE md5(concat(SubjectID)) = "'.$id.'"');
+            DB::delete('DELETE FROM subject_meetings WHERE md5(concat(SubjectID)) = "'.$id.'"');
+            if($query){
+                return ["type"=>"success","message"=>"Subject Deleted Successfully"];
+            }
+            else{
+                return ["type"=>"error","message"=>"Error Deleting"];
+            }
+            
+        }        
     }
 
     // selecting all subject meetings per subject

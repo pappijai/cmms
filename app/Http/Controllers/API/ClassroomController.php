@@ -137,13 +137,31 @@ class ClassroomController extends Controller
     {
         //
 
-        $query = DB::delete('DELETE FROM classrooms WHERE md5(concat(ClassroomID)) = "'.$id.'"');
-        if($query){
-            return ["message" => "User Deleted"];
+        // $query = DB::delete('DELETE FROM classrooms WHERE md5(concat(ClassroomID)) = "'.$id.'"');
+        // if($query){
+        //     return ["message" => "User Deleted"];
+        // }
+        // else{
+        //     return ["message" => "Error"];
+        // }        
+
+        $count_classroom = DB::select('SELECT * FROM subject_tagging_schedules where md5(concat(ClassroomID)) = "'.$id.'"');
+
+        if(!empty($count_classroom)){
+            return ["type"=>"error","message"=>"This Classroom has sub record"];
         }
         else{
-            return ["message" => "Error"];
-        }        
+            
+            $query = DB::delete('DELETE FROM classrooms WHERE md5(concat(ClassroomID)) = "'.$id.'"');
+
+            if($query){
+                return ["type"=>"success","message"=>"Classroom Deleted Successfully"];
+            }
+            else{
+                return ["type"=>"error","message"=>"Error Deleting"];
+            }
+            
+        }
     }
 
     public function classroomTypeInfo(){

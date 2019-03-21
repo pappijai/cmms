@@ -35,6 +35,9 @@
                                         <button class="btn btn-primary" href="#" @click="taggedsubjects(available_section)">
                                             <i class="fas fa-tag"></i> Tagged Subjects  
                                         </button>
+                                        <a class="btn btn-success text-white" v-bind:href="'api/print_section_schedule/'+available_section.SectionID" target="_blank">
+                                            <i class="fas fa-print"></i>
+                                        </a>
 
                                     </td>
                                 </tr>
@@ -192,6 +195,9 @@
                 if(this.month_today >= 0 && this.month_today <= 2){
                     this.sem = "Second Semester";
                 }
+                if(this.month_today >=3 && this.month_today <= 4){
+                    this.sem = "Summer Semester";
+                }
 
                 // check the school year
                 if(this.month_today >= 5 && this.month_today <= 9){
@@ -203,6 +209,11 @@
                     this.year_to = this.year_today + 1;
                 }
                 if(this.month_today >= 0 && this.month_today <= 2){
+                    this.year_from = this.year_today - 1;
+                    this.year_to = this.year_today;
+                }
+
+                if(this.month_today >=3 && this.month_today <= 4){
                     this.year_from = this.year_today - 1;
                     this.year_to = this.year_today;
                 }
@@ -241,6 +252,14 @@
                     this.form.STYearFrom = this.year_today - 1;
                     this.form.STYearTo = this.year_today;
                 }
+
+                if(this.month_today >= 3 && this.month_today <= 4){
+                    this.form.STYear = this.year_today - this.form.SectionYear;
+                    this.form.STYearFrom = this.year_today - 1;
+                    this.form.STYearTo = this.year_today;
+                }
+
+
 
                 axios.get('api/subjects_per_course_year_sem/'+this.form.CourseID+'/'+this.form.STYear+'/'+this.form.STSem)
                 .then(({ data }) => (this.offered_subjects = data));

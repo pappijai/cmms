@@ -25,4 +25,8 @@ class HomeController extends Controller
     {
         return view('dashboard');
     }
+
+    public function view_floorplan(){
+        return view('view_floorplan');
+    }
 }

@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>CMMS</title>
-  <!-- Tell the browser to be responsive to screen width -->
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="csrf-token" content="{{ csrf_token() }}">
-  <link rel="stylesheet" href="/css/app.css">
-  <link rel="stylesheet" href="/css/login-style.css">
-  <link rel="shortcut icon" href="./img/favicon.png">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>CMMS</title>
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/login-style.css">
+    <link rel="shortcut icon" href="./img/favicon.png">
+    <style>
+        html, body {
+            background-image: linear-gradient(-38deg, #08a4a7, #ffffff) !important;
+        }        
+    </style>
 </head>
 <body class="bg-blue">
     <div class=" d-flex align-content-center flex-wrap" id="app">

@@ -5,14 +5,14 @@
                 <!-- small box -->
                 <div class="small-box bg-info">
                 <div class="inner">
-                    <h3>150</h3>
+                    <h3>{{users}}</h3>
 
                     <p>Users</p>
                 </div>
                 <div class="icon">
                     <i class="fas fa-users"></i>
                 </div>
-                <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+                <router-link to="/users" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></router-link>
                 </div>
             </div>
           <!-- ./col -->
@@ -20,14 +20,14 @@
                 <!-- small box -->
                 <div class="small-box bg-success">
                 <div class="inner">
-                    <h3>53<sup style="font-size: 20px">%</sup></h3>
+                    <h3>{{classrooms}}</h3>
 
                     <p>Classrooms</p>
                 </div>
                 <div class="icon">
                     <i class="fas fa-school"></i>
                 </div>
-                <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+                <router-link to="/classroom" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></router-link>
                 </div>
             </div>
           <!-- ./col -->
@@ -35,14 +35,14 @@
                 <!-- small box -->
                 <div class="small-box bg-warning">
                 <div class="inner">
-                    <h3>44</h3>
+                    <h3>{{subjects}}</h3>
 
                     <p>Subjects</p>
                 </div>
                 <div class="icon">
                     <i class="fas fa-book-open"></i>
                 </div>
-                <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+                <router-link to="/subject" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></router-link>
                 </div>
             </div>
           <!-- ./col -->
@@ -50,14 +50,15 @@
                 <!-- small box -->
                 <div class="small-box bg-danger">
                 <div class="inner">
-                    <h3>65</h3>
+                    <h3>{{sectionfortagging}}</h3>
 
-                    <p>Tagged Subjects</p>
+                    <p>Sections for Tagging</p>
+                    
                 </div>
                 <div class="icon">
                     <i class="fas fa-tags"></i>
                 </div>
-                <a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
+                <router-link to="/subjecttagging" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></router-link>
                 </div>
             </div>
           <!-- ./col -->
@@ -67,8 +68,28 @@
 
 <script>
     export default {
-        mounted() {
-            console.log('Component mounted.')
-        }
+        data(){
+            return {
+                users: 0,
+                classrooms: 0,
+                subjects: 0,
+                sectionfortagging: 0,
+
+            }
+        },
+        methods:{
+            loaddashboard(){
+                axios.get('api/get_count_data/users').then(({ data }) => (this.users = data));
+                axios.get('api/get_count_data/classrooms').then(({ data }) => (this.classrooms = data));
+                axios.get('api/get_count_data/subjects').then(({ data }) => (this.subjects = data));
+                axios.get('api/get_count_section_for_tagging').then(({ data }) => (this.sectionfortagging = data));
+            },
+        },
+        created(){      
+                  
+        },
+        mounted() {    
+            this.loaddashboard();
+        },
     }
 </script>

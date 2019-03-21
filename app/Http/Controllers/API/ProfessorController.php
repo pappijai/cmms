@@ -104,12 +104,29 @@ class ProfessorController extends Controller
     public function destroy($id)
     {
         //
-        $query = DB::delete('DELETE FROM professors WHERE md5(concat(ProfessorID)) = "'.$id.'"');
-        if($query){
-            return ["message" => "Course Deleted"];
+        // $query = DB::delete('DELETE FROM professors WHERE md5(concat(ProfessorID)) = "'.$id.'"');
+        // if($query){
+        //     return ["message" => "Course Deleted"];
+        // }
+        // else{
+        //     return ["message" => "Error"];
+        // }   
+
+        $count_professor = DB::select('SELECT * FROM subject_taggings where md5(concat(ProfessorID)) = "'.$id.'"');
+
+        if(!empty($count_professor)){
+            return ["type"=>"error","message"=>"This Professor has sub record"];
         }
         else{
-            return ["message" => "Error"];
-        }            
+            
+            $query = DB::delete('DELETE FROM professors WHERE md5(concat(ProfessorID)) = "'.$id.'"');
+            if($query){
+                return ["type"=>"success","message"=>"Classroom Deleted Successfully"];
+            }
+            else{
+                return ["type"=>"error","message"=>"Error Deleting"];
+            }
+            
+        }         
     }
 }

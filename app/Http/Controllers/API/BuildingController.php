@@ -112,13 +112,23 @@ class BuildingController extends Controller
     public function destroy($id)
     {
         //
-        $query = DB::delete('DELETE FROM buildings WHERE md5(concat(BldgID)) = "'.$id.'"');
-        if($query){
-            return ["message" => "User Deleted"];
+        $count_building = DB::select('SELECT * FROM floors where md5(concat(BldgID)) = "'.$id.'"');
+        if(!empty($count_building)){
+            return ["type"=>"error","message"=>"This Building has sub record"];
         }
         else{
-            return ["message" => "Error"];
+            $query = DB::delete('DELETE FROM buildings WHERE md5(concat(BldgID)) = "'.$id.'"');
+
+            if($query){
+                return ["type"=>"success","message"=>"Building Deleted Successfully"];
+            }
+            else{
+                return ["type"=>"error","message"=>"Error Deleting"];
+            }
+            
         }
+
+
         
     }
 }
