@@ -83,9 +83,9 @@
                                     <td>{{tagged_subject_section.SubjectDescription}}</td>
                                     <td>{{tagged_subject_section.ProfessorName}}</td>
                                     <td>
-                                        <a @click="show_tagged_schedule(tagged_subject_section)">
+                                        <!-- <a @click="show_tagged_schedule(tagged_subject_section)">
                                             <i class="fas fa-edit text-blue"></i>    
-                                        </a> 
+                                        </a>  -->
                                         {{tagged_subject_section.Schedule}}
                                         
                                     </td>
@@ -704,6 +704,58 @@
             },
             get_classroom2(id){
                 axios.get('api/get_classroom_type/'+id).then(({ data }) => (this.two_classrooms = data));
+            },
+            update_tagged_meetings1(){
+                this.$Progress.start()
+                this.SMSched_Form1.put('api/update_tagged_meetings/'+this.SMSched_Form1.STSID)
+                .then(({data}) => {
+                    if(data.type == 'success'){
+                        toast({
+                            type: data.type,
+                            title: data.message
+                        })              
+                        Fire.$emit('AfterCreateSubject');   
+                        $('#tagged_schedule_meetings').modal('hide');  
+                    }
+                    if(data.type == 'error'){
+                        toast({
+                            type: data.type,
+                            title: data.message
+                        }) 
+                    }
+                    this.$Progress.finish()
+
+
+                })
+                .catch(() => {
+                    this.$Progress.fail()
+                })                    
+            },
+            update_tagged_meetings2(){
+                this.$Progress.start()
+                this.SMSched_Form2.put('api/update_tagged_meetings/'+this.SMSched_Form1.STSID)
+                .then(({data}) => {
+                    if(data.type == 'success'){
+                        toast({
+                            type: data.type,
+                            title: data.message
+                        })              
+                        Fire.$emit('AfterCreateSubject');   
+                        $('#tagged_schedule_meetings').modal('hide');  
+                    }
+                    if(data.type == 'error'){
+                        toast({
+                            type: data.type,
+                            title: data.message
+                        }) 
+                    }
+                    this.$Progress.finish()
+
+
+                })
+                .catch(() => {
+                    this.$Progress.fail()
+                })                    
             }
         },
         created(){

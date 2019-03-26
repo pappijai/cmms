@@ -74,6 +74,7 @@ Route::put('updatesubjectmeetings1/{id}', 'API\SubjectController@updatesubjectme
 Route::put('updatesubjectmeetings2/{id}', 'API\SubjectController@updatesubjectmeetings2');
 Route::put('update_profile/{id}', 'API\UserController@update_profile');
 Route::put('update_subjecttagging/{id}', 'API\SubjectTaggingController@update_subjecttagging');
+Route::put('update_tagged_meetings/{id}', 'API\SubjectTaggingController@update_tagged_meetings');
 
 Route::post('create_course_subject_first', 'API\CourseController@create_course_subject_first');
 Route::post('classroom_report', 'API\ReportController@classroom_report');

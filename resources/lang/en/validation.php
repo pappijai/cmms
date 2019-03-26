@@ -162,6 +162,7 @@ return [
         'BFPhoto' => 'Floor Photo',
         'SectionID' => 'Section',
         'ClassroomID' => 'Classroom',
+        'STSDay' => 'Day',
 
     ],
 

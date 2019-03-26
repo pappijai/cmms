@@ -99873,31 +99873,83 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 var data = _ref13.data;
                 return _this11.two_classrooms = data;
             });
+        },
+        update_tagged_meetings1: function update_tagged_meetings1() {
+            var _this12 = this;
+
+            this.$Progress.start();
+            this.SMSched_Form1.put('api/update_tagged_meetings/' + this.SMSched_Form1.STSID).then(function (_ref14) {
+                var data = _ref14.data;
+
+                if (data.type == 'success') {
+                    toast({
+                        type: data.type,
+                        title: data.message
+                    });
+                    Fire.$emit('AfterCreateSubject');
+                    $('#tagged_schedule_meetings').modal('hide');
+                }
+                if (data.type == 'error') {
+                    toast({
+                        type: data.type,
+                        title: data.message
+                    });
+                }
+                _this12.$Progress.finish();
+            }).catch(function () {
+                _this12.$Progress.fail();
+            });
+        },
+        update_tagged_meetings2: function update_tagged_meetings2() {
+            var _this13 = this;
+
+            this.$Progress.start();
+            this.SMSched_Form2.put('api/update_tagged_meetings/' + this.SMSched_Form1.STSID).then(function (_ref15) {
+                var data = _ref15.data;
+
+                if (data.type == 'success') {
+                    toast({
+                        type: data.type,
+                        title: data.message
+                    });
+                    Fire.$emit('AfterCreateSubject');
+                    $('#tagged_schedule_meetings').modal('hide');
+                }
+                if (data.type == 'error') {
+                    toast({
+                        type: data.type,
+                        title: data.message
+                    });
+                }
+                _this13.$Progress.finish();
+            }).catch(function () {
+                _this13.$Progress.fail();
+            });
         }
     },
     created: function created() {
-        var _this12 = this;
+        var _this14 = this;
 
         //this.loadSectionAvailable();
 
         Fire.$on('AfterCreateSubject', function () {
-            _this12.loadSubjectSection();
+            _this14.loadSubjectSection();
         });
 
         Fire.$on('AfterDeleteSubject', function () {
-            _this12.loadSubjectSection();
+            _this14.loadSubjectSection();
         });
 
         Fire.$on('AfterCreate', function () {
-            _this12.loadSectionAvailable();
+            _this14.loadSectionAvailable();
         });
 
         Fire.$on('AfterDelete', function () {
-            _this12.loadSectionAvailable();
+            _this14.loadSectionAvailable();
         });
 
         Fire.$on('AfterUpdate', function () {
-            _this12.loadSectionAvailable();
+            _this14.loadSectionAvailable();
         });
     },
     mounted: function mounted() {
@@ -99913,11 +99965,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     watch: {
         // detect all the changes in the table
         available_sections: function available_sections(val) {
-            var _this13 = this;
+            var _this15 = this;
 
             this.dt.destroy();
             this.$nextTick(function () {
-                _this13.dt = $('#section_available_table').DataTable();
+                _this15.dt = $('#section_available_table').DataTable();
             });
         },
         tagged_schedules: function tagged_schedules(val) {
@@ -100199,25 +100251,8 @@ var render = function() {
                                 ]),
                                 _vm._v(" "),
                                 _c("td", [
-                                  _c(
-                                    "a",
-                                    {
-                                      on: {
-                                        click: function($event) {
-                                          _vm.show_tagged_schedule(
-                                            tagged_subject_section
-                                          )
-                                        }
-                                      }
-                                    },
-                                    [
-                                      _c("i", {
-                                        staticClass: "fas fa-edit text-blue"
-                                      })
-                                    ]
-                                  ),
                                   _vm._v(
-                                    " \n                                    " +
+                                    "\n                                    " +
                                       _vm._s(tagged_subject_section.Schedule) +
                                       "\n                                    \n                                "
                                   )

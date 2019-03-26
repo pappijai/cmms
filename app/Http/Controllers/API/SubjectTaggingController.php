@@ -1119,4 +1119,41 @@ class SubjectTaggingController extends Controller
                     INNER JOIN subject_meetings c ON c.CTID = a.ClassroomType
                     WHERE c.SMID = "'.$smid.'"');
     }
+
+    public function update_tagged_meetings(Request $request, $STSID){
+        $this->validate($request, [            
+            'STSDay' => 'required',
+            'ClassroomID' => 'required',
+        ]);             
+    
+        $section = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd,b.SectionID,b.ProfessorID
+                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                            WHERE a.STSID = "'.$STSID.'" AND 
+                            b.STStatus = "Active" AND 
+                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                            ');
+
+        $section_id = $section[0]->SectionID;
+        $professor_id = $section[0]->ProfessorID;
+
+        $all_schedule = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd,b.SectionID,b.ProfessorID
+                        FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                        WHERE b.STStatus = "Active" AND 
+                        a.STSID <> "'.$STSID.'"
+                        a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                        ');
+
+        $can_sched = false;
+
+        foreach($all_schedule as $row){
+            if($row->STSDay == $request->STSDay && $row->ClassromID == $request->ClassroomID){
+
+            }
+            else{
+                
+            }
+        }
+
+        return ['type'=>'success','message'=>'Schedule Updated Successfully'];
+    }
 }
