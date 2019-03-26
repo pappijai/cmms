@@ -94,6 +94,7 @@
                 <div class="text-white">
                     <a href="/view_floorplan" class="btn bgc-teal text-white"><h3><i class="fas fa-map-marked"></i> View Floorplan</h3></a>
                     <a href="/view_schedule" class="btn btn-primary"><h3><i class="fas fa-clock"></i> Sections Schedule</h3></a>
+                    <a href="/view_schedule_professor" class="btn bgc-purple text-white"><h3><i class="fas fa-chalkboard-teacher"></i> Professor Schedule</h3></a>
                 </div>
             </div>
         </div>

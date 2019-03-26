@@ -1,6 +1,6 @@
 <template>
     <div class="container mt-4">
-        <div class="row justify-content-center">
+        <div class="row justify-content-center" v-if="$gate.isAdministrative()">
             <div class="col-md-12">
                 <div class="card card-default">
                     <div class="card-header bgc-teal">
@@ -21,7 +21,6 @@
                                     <th>Classroom Type</th>
                                     <th>Building</th>
                                     <th>Floor</th>                                   
-                                    <th>Created AT</th>
                                     <th>Modify</th>
                                 </tr>
                             </thead>
@@ -34,15 +33,13 @@
                                     <td>{{classroom.CTName}}</td>
                                     <td>{{classroom.BldgName}}</td>
                                     <td>{{classroom.BFName}}</td>
-                                    <td>{{classroom.created_at | myDate}}</td>
                                     <td>
-                                        <a href="#" @click="editModal(classroom)">
-                                            <i class="fas fa-edit text-blue"></i>    
-                                        </a>
-                                        / 
-                                        <a href="#" @click="deleteClassroom(classroom.ClassroomID)">
-                                            <i class="fas fa-trash text-red"></i>    
-                                        </a> 
+                                        <button class="btn btn-primary" @click="editModal(classroom)">
+                                            <i class="fas fa-edit text-white"></i>    
+                                        </button>
+                                        <button class="btn btn-danger" @click="deleteClassroom(classroom.ClassroomID)">
+                                            <i class="fas fa-trash text-white"></i>    
+                                        </button> 
                                     </td>
                                 </tr>
                             </tbody>
@@ -51,6 +48,11 @@
                 </div>
             </div>
         </div>
+
+        <div v-if="!$gate.isAdministrative()">
+            <not-found></not-found>
+        </div>
+
 
         <div class="modal fade" id="addclassroommodal" tabindex="-1" role="dialog" aria-labelledby="addclassroommodalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -111,23 +113,23 @@
 
                         <label for="">Schedule</label>
                         <div class="row mb-3 ">
-                                <div class="col-md-6 col-xs-12 col-sm-12 mb-3">
-                                    <div class="form-inline">
-                                        <label for="inlineFor" class="mr-2">From : </label>
-                                        <input v-model="form.ClassroomIn" type="time" name="ClassroomIn" placeholder="Classroom Name"
-                                            class="form-control" :class="{ 'is-invalid': form.errors.has('ClassroomIn') }">
-                                        <has-error :form="form" field="ClassroomIn"></has-error>
-                                    </div>
+                            <div class="col-md-6 col-xs-12 col-sm-12 mb-3">
+                                <div class="form-inline">
+                                    <label for="inlineFor" class="mr-2">From : </label>
+                                    <input v-model="form.ClassroomIn" type="time" name="ClassroomIn" placeholder="Classroom Name"
+                                        class="form-control" :class="{ 'is-invalid': form.errors.has('ClassroomIn') }">
+                                    <has-error :form="form" field="ClassroomIn"></has-error>
                                 </div>
+                            </div>
 
-                                <div class="col-md-6 col-xs-12 col-sm-12 mb-3">
-                                    <div class="form-inline">
-                                        <label for="inlineFor" class="mr-2">To : </label>
-                                        <input v-model="form.ClassroomOut" type="time" name="ClassroomOut" placeholder="Classroom Name"
-                                            class="form-control" :class="{ 'is-invalid': form.errors.has('ClassroomOut') }">
-                                        <has-error :form="form" field="ClassroomOut"></has-error>
-                                    </div>
+                            <div class="col-md-6 col-xs-12 col-sm-12 mb-3">
+                                <div class="form-inline">
+                                    <label for="inlineFor" class="mr-2">To : </label>
+                                    <input v-model="form.ClassroomOut" type="time" name="ClassroomOut" placeholder="Classroom Name"
+                                        class="form-control" :class="{ 'is-invalid': form.errors.has('ClassroomOut') }">
+                                    <has-error :form="form" field="ClassroomOut"></has-error>
                                 </div>
+                            </div>
                         </div>
 
                         <div class="form-group">

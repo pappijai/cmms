@@ -406,6 +406,9 @@ class FloorplanController extends Controller
     }
 
     public function get_schedule($section_id,$sem,$year,$year_from,$year_to){
+        $year_today = date('Y');
+        $month_today = date('m');
+
         $subjects = DB::select('SELECT md5(concat(a.STID)) STID, b.SubjectDescription,c.ProfessorName,GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
                             FROM subject_taggings a 
                             INNER JOIN subjects b ON a.SubjectID = b.SubjectID 
@@ -420,9 +423,256 @@ class FloorplanController extends Controller
                             a.STStatus = "Active"
                             GROUP BY b.SubjectDescription,a.STID,c.ProfessorName
                         ');
+
+        $sections = DB::SELECT('SELECT a.*,b.* FROM sections a INNER JOIN courses b ON a.CourseID = b.CourseID WHERE md5(concat(a.SectionID)) = "'.$section_id.'"');
+        
+        if($month_today >=6 && $month_today <=10 ){
+            $year = $year_today - $sections[0]->SectionYear + 1;
+            $section_name = $year.' - '.$sections[0]->SectionName;
+        }
+        else{
+            $year = $year_today - $sections[0]->SectionYear;
+            $section_name = $year.' - '.$sections[0]->SectionName;
+        }        
+        
         $output = '';
 
-        $output.= $id;
+        if(!empty($subjects)){
+            $output.= '
+                <div class="modal-header bgc-teal">
+                    <h5 class="modal-title text-white" id="taggedsubjectsLabel">'.$sections[0]->CourseCode.' '.$section_name.'</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>  
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Subject Name</th>
+                            <th scope="col">Professor</th>
+                            <th scope="col">Schedule</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            ';
+
+            foreach($subjects as $row){
+                $output.= '
+                    <tr>
+                        <td>'.$row->SubjectDescription.'</td>
+                        <td>'.$row->ProfessorName.'</td>
+                        <td>'.$row->Schedule.'</td>
+                    </tr>
+                ';
+            }
+
+            $output.= '
+                    </tbody>
+                </table>               
+            ';
+        }
+        else{
+            $output.= '
+                <div class="modal-header bgc-teal">
+                    <h5 class="modal-title text-white" id="taggedsubjectsLabel">'.$sections[0]->CourseCode.' '.$section_name.'</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>  
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Subject Name</th>
+                            <th scope="col">Professor</th>
+                            <th scope="col">Schedule</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>               
+            ';
+
+        }
+
+
+        echo json_encode($output);
+    }
+
+    public function view_schedule_professor(){
+        $year_today = date('Y');
+        $month_today = date('m');
+        $sem = '';
+        $year_from = '';
+        $year_to = '';
+
+        $sections = DB::select("SELECT md5(concat(a.SectionID)) SectionID, a.SectionName,a.SectionYear,a.CourseID,a.SectionStatus,b.CourseDescription,b.CourseYears 
+                        FROM sections a INNER JOIN courses b ON a.CourseID = b.CourseID ORDER BY a.SectionYear DESC");
+
+
+        foreach($sections as $row){
+            if($row->CourseYears <= $year_today - $row->SectionYear  && $month_today > 5){
+                DB::update('
+                UPDATE sections SET
+                    SectionStatus = "Inactive"
+                    WHERE md5(concat(SectionID)) = "'.$row->SectionID.'"
+                ');
+            }
+            elseif ($row->CourseYears < $year_today - $row->SectionYear) {
+                DB::update('
+                UPDATE sections SET
+                    SectionStatus = "Inactive"
+                    WHERE md5(concat(SectionID)) = "'.$row->SectionID.'"         
+                ');             
+            }
+            elseif ($year_today - $row->SectionYear == 0){
+                DB::update('
+                UPDATE sections SET
+                    SectionStatus = "Inactive"
+                    WHERE md5(concat(SectionID)) = "'.$row->SectionID.'"         
+                ');  
+            }
+            else{
+                DB::update('
+                UPDATE sections SET
+                    SectionStatus = "Active"
+                    WHERE md5(concat(SectionID)) = "'.$row->SectionID.'"                    
+                ');
+            }
+        }
+
+
+        if($month_today >= 6 && $month_today <= 10){
+            $sem = "First Semester";
+        }
+        if($month_today >= 11 && $month_today <= 12){
+            $sem = "Second Semester";
+        }
+        if($month_today >= 1 && $month_today <= 3){
+            $sem = "Second Semester";
+        }
+        if($month_today >=4 && $month_today <= 5){
+           $sem = "Summer Semester";
+        }
+        
+        
+        if($month_today >= 6 && $month_today <= 10){
+            $year_from = $year_today;
+            $year_to = $year_today + 1;
+        }
+        if($month_today >= 11 && $month_today <= 12){
+            $year_from = $year_today;
+            $year_to = $year_today + 1;
+        }
+        if($month_today >= 1 && $month_today <= 3){
+            $year_from = $year_today - 1;
+            $year_to = $year_today;
+        }
+
+        if($month_today >=4 && $month_today <= 5){
+            $year_from = $year_today - 1;
+            $year_to = $year_today;
+        }
+
+        $data['professors'] = DB::select("SELECT md5(concat(ProfessorID)) ProfessorID,ProfessorName FROM professors ORDER by ProfessorName ASC");
+       
+        $data['month_today'] = $month_today;
+        $data['year_today'] = $year_today;
+        $data['sem'] = $sem;
+        $data['year_from'] = $year_from;
+        $data['year_to'] = $year_to;
+        return view('view_schedule_professor')->with('data', $data);        
+    }
+
+    public function get_schedule_professor($professor_id,$sem,$year_from,$year_to){
+        $year_today = date('Y');
+        $month_today = date('m');
+
+        $subjects = DB::select('SELECT f.SectionName,f.SectionYear,i.CourseCode,b.SubjectDescription,GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
+                            FROM subject_taggings a 
+                            INNER JOIN subjects b ON a.SubjectID = b.SubjectID 
+                            LEFT JOIN subject_tagging_schedules d ON a.STID = d.STID
+                            INNER JOIN classrooms e ON d.ClassroomID = e.ClassroomID
+                            INNER JOIN sections f ON a.SectionID = f.SectionID
+                            INNER JOIN courses i ON f.CourseID = i.CourseID
+                            WHERE md5(concat(a.ProfessorID)) = "'.$professor_id.'" AND 
+                            a.STSem = "'.$sem.'" AND 
+                            a.STYearFrom = "'.$year_from.'" AND
+                            a.STYearTo = "'.$year_to.'" AND
+                            a.STStatus = "Active"
+                            GROUP BY b.SubjectDescription,i.CourseCode,f.SectionName,f.SectionYear
+                            ORDER BY i.CourseCode,f.SectionYear ASC
+                        ');
+
+        $professors = DB::SELECT('SELECT * FROM professors  WHERE md5(concat(ProfessorID)) = "'.$professor_id.'"');
+        
+        
+        $output = '';
+
+        if(!empty($subjects)){     
+            $output.= '
+                <div class="modal-header bgc-teal">
+                    <h5 class="modal-title text-white" id="taggedsubjectsLabel">'.$professors[0]->ProfessorName.'</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>  
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Course Yr & Sec.</th>
+                            <th scope="col">Subject Name</th>
+                            <th scope="col">Schedule</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            ';
+            
+            foreach($subjects as $row){
+                if($month_today >=6 && $month_today <=10 ){
+                    $year = $year_today - $row->SectionYear + 1;
+                    $section_name = $year.' - '.$row->SectionName;
+                }
+                else{
+                    $year = $year_today - $row->SectionYear;
+                    $section_name = $year.' - '.$row->SectionName;
+                }   
+
+                $output.='
+                    <tr>
+                        <td>'.$row->CourseCode.' '.$section_name.'</td>
+                        <td>'.$row->SubjectDescription.'</td>
+                        <td>'.$row->Schedule.'</td>
+                    </tr>
+                ';
+            }
+
+            $output.='
+                    </tbody>
+                </table>               
+            ';
+        }
+        else{
+            $output.= '
+                <div class="modal-header bgc-teal">
+                    <h5 class="modal-title text-white" id="taggedsubjectsLabel">'.$professors[0]->ProfessorName.'</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>  
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Course Yr & Sec.</th>
+                            <th scope="col">Subject Name</th>
+                            <th scope="col">Schedule</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>               
+            ';
+        }
+
 
         echo json_encode($output);
     }

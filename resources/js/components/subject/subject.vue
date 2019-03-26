@@ -1,6 +1,6 @@
 <template>
     <div class="container mt-4">
-        <div class="row justify-content-center">
+        <div class="row justify-content-center" v-if="$gate.isRegistrar()">
             <div class="col-md-12">
                 <div class="card card-default">
                     <div class="card-header bgc-teal">
@@ -36,13 +36,12 @@
                                     </td>
                                     <td>{{subject.created_at | myDate}}</td>
                                     <td>
-                                        <a href="#" @click="editModal(subject)">
-                                            <i class="fas fa-edit text-blue"></i>    
-                                        </a>
-                                        / 
-                                        <a href="#" @click="deleteSubject(subject.SubjectID)">
-                                            <i class="fas fa-trash text-red"></i>    
-                                        </a> 
+                                        <button class="btn btn-primary" @click="editModal(subject)">
+                                            <i class="fas fa-edit text-white"></i>    
+                                        </button>
+                                        <button class="btn btn-danger" @click="deleteSubject(subject.SubjectID)">
+                                            <i class="fas fa-trash text-white"></i>    
+                                        </button> 
                                     </td>
                                 </tr>
                             </tbody>
@@ -50,6 +49,10 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div v-if="!$gate.isRegistrar()">
+            <not-found></not-found>
         </div>
 
         <div class="modal fade" id="addsubjectmodal" tabindex="-1" role="dialog" aria-labelledby="addsubjectmodalLabel" aria-hidden="true">

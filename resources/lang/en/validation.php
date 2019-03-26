@@ -160,6 +160,8 @@ return [
         'ProfessorID' => 'Professor',
         'BldgCoordinates' => 'Building Coordinates',
         'BFPhoto' => 'Floor Photo',
+        'SectionID' => 'Section',
+        'ClassroomID' => 'Classroom',
 
     ],
 

@@ -66,6 +66,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
           </a>
 
 
+
              
           <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
             @csrf
@@ -253,7 +254,46 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 Floorplan
               </p>
             </router-link>
-          </li>            
+          </li>   
+
+          {{-- <li class="nav-item">
+            <router-link to="/report" class="nav-link">
+              <i class="nav-icon fas fa-print text-pink"></i>
+              <p>
+                Reports
+              </p>
+            </router-link>
+          </li>  --}}
+          
+          <li class="nav-item has-treeview menu-close">
+            <a href="#" class="nav-link">
+              <i class="nav-icon fas fa-print text-pink"></i>
+              <p>
+                Reports
+                <i class="right fa fa-angle-left"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+
+              <li class="nav-item ml-2">
+                <router-link to="/report" class="nav-link">
+                  <i class="nav-icon fas fa-angle-right text-pink"></i>
+                  <p>
+                    Schedule Reports
+                  </p>
+                </router-link>
+              </li>
+
+              <li class="nav-item ml-2">
+                <router-link to="/classroom_report" class="nav-link">
+                  <i class="nav-icon fas fa-angle-right text-pink"></i>
+                  <p>
+                    Classroom Reports
+                  </p>
+                </router-link>
+              </li>
+            </ul>
+          </li> 
 
         </ul>
       </nav>

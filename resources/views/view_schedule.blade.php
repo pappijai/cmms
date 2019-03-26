@@ -20,7 +20,7 @@
                 <div class="card">
                     <div class="card-header bgc-teal">
                         <h3 class="card-title text-white" align="center">
-                            <i class="fas fa-clock"></i> Schedule for {{$data['sem']}} Sy {{$data['year_from']}} - {{$data['year_to']}}
+                            <i class="fas fa-clock"></i> Schedule of Sections for {{$data['sem']}} Sy {{$data['year_from']}} - {{$data['year_to']}}
                         </h3>
 
                         <div class="card-tools">
@@ -58,7 +58,8 @@
                                                     
                                                 </td>
                                                 <td>
-                                                    <button class="btn btn-info text-white" onclick="view_schedule('{{$item->SectionID}}')">
+                                                    <button class="btn btn-info text-white" 
+                                                    onclick="view_schedule('{{$item->SectionID}}','{{$data['sem']}}','{{$year}}','{{$data['year_from']}}','{{$data['year_to']}}')">
                                                         <li class="fas fa-eye"></li> Schedule
                                                     </button>
                                                 </td>
@@ -82,13 +83,13 @@
             </div>
         </div>
     </div>    
-    <script type="text/javascript" src="./jquery/dist/jquery.min.js"></script>
-    <script type="text/javascript" src="./js/app.js"></script>
+    <script src="/vendor/jquery/jquery.min.js"></script>
+    <script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <script type="text/javascript">
-        function view_schedule(id){
+        function view_schedule(id,sem,year,year_from,year_to){
             $.ajax({
-                url: "/get_schedule/"+id,
+                url: "/get_schedule/"+id+"/"+sem+"/"+year+"/"+year_from+"/"+year_to,
                 type: "GET",
                 //data: {'type' : type},
                 dataType: 'json',

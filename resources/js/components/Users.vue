@@ -34,13 +34,12 @@
                                     <td>{{user.type | upText}}</td>
                                     <td>{{user.created_at | myDate}}</td>
                                     <td>
-                                        <a href="#" @click="editModal(user)">
-                                            <i class="fas fa-edit text-blue"></i>    
-                                        </a>
-                                        / 
-                                        <a href="#" @click="deleteUser(user.id)">
-                                            <i class="fas fa-trash text-red"></i>    
-                                        </a> 
+                                        <button class="btn btn-primary" @click="editModal(user)">
+                                            <i class="fas fa-edit text-white"></i>    
+                                        </button>
+                                        <button class="btn btn-danger" @click="deleteUser(user.id)">
+                                            <i class="fas fa-trash text-white"></i>    
+                                        </button> 
                                     </td>
                                 </tr>
                             </tbody>

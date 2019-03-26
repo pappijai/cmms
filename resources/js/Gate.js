@@ -8,6 +8,15 @@ export default class Gate{
     isSuperAdmin(){
         return this.user.type == 'super admin';
     }
+    isRegistrarOnly(){
+        return this.user.type == 'registrar';
+    }
+    isAdminOnly(){
+        return this.user.type == 'admin';
+    }
+    isAdministrativeOnly(){
+        return this.user.type == 'administrative';
+    }
 
     isAdmin(){
         return this.user.type == 'admin' || this.user.type == 'super admin';

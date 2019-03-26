@@ -22,7 +22,7 @@ class SectionController extends Controller
         $year_today = date('Y');
         $month_today = date('m');
 
-        $sections = DB::select("SELECT md5(concat(a.SectionID)) SectionID, a.SectionName,a.SectionYear,a.CourseID,a.SectionStatus,b.CourseDescription,b.CourseYears 
+        $sections = DB::select("SELECT md5(concat(a.SectionID)) SectionID, a.SectionName,a.SectionYear,a.CourseID,a.SectionStatus,b.CourseCode,b.CourseDescription,b.CourseYears 
                         FROM sections a INNER JOIN courses b ON a.CourseID = b.CourseID ORDER BY a.SectionYear DESC");
 
         foreach($sections as $row){

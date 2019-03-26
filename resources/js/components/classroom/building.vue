@@ -1,6 +1,6 @@
 <template>
     <div class="container mt-4">
-        <div class="row justify-content-center">
+        <div class="row justify-content-center" v-if="$gate.isAdministrative()">
             <div class="col-md-10">
                 <div class="card card-default">
                     <div class="card-header bgc-teal">
@@ -28,13 +28,12 @@
                                     <td>{{building.BldgName}}</td>
                                     <td>{{building.created_at | myDate}}</td>
                                     <td>
-                                        <a href="#" @click="editModal(building)">
-                                            <i class="fas fa-edit text-blue"></i>    
-                                        </a>
-                                        / 
-                                        <a href="#" @click="deleteUser(building.BldgID)">
-                                            <i class="fas fa-trash text-red"></i>    
-                                        </a> 
+                                        <button class="btn btn-primary" @click="editModal(building)">
+                                            <i class="fas fa-edit text-white"></i>    
+                                        </button>
+                                        <button class="btn btn-danger" @click="deleteUser(building.BldgID)">
+                                            <i class="fas fa-trash text-white"></i>    
+                                        </button> 
                                     </td>
                                 </tr>
                             </tbody>
@@ -42,6 +41,10 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div v-if="!$gate.isAdministrative()">
+            <not-found></not-found>
         </div>
 
         <div class="modal fade" id="addbuildingmodal" tabindex="-1" role="dialog" aria-labelledby="addbuildingmodalLabel" aria-hidden="true">

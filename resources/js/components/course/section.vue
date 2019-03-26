@@ -1,6 +1,6 @@
 <template>
     <div class="container mt-4">
-        <div class="row justify-content-center">
+        <div class="row justify-content-center" v-if="$gate.isRegistrar()">
             <div class="col-md-12">
                 <div class="card card-default">
                     <div class="card-header bgc-teal">
@@ -48,9 +48,9 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <a v-show="section.SectionStatus == 'Active'" href="#" @click="editModal(section)">
-                                            <i class="fas fa-edit text-blue"></i>    
-                                        </a>
+                                        <button class="btn btn-primary" v-show="section.SectionStatus == 'Active'" @click="editModal(section)">
+                                            <i class="fas fa-edit text-white"></i>    
+                                        </button>
                                         <!-- / 
                                         <a href="#" @click="deleteSection(section.SectionID)">
                                             <i class="fas fa-trash text-red"></i>    
@@ -62,6 +62,10 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div v-if="!$gate.isRegistrar()">
+            <not-found></not-found>
         </div>
 
         <div class="modal fade" id="addsectionmodal" tabindex="-1" role="dialog" aria-labelledby="addsectionmodalLabel" aria-hidden="true">

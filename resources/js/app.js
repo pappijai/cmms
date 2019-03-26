@@ -22,6 +22,8 @@ window.Form = Form;
 window.SM_Form1 = Form;
 window.SM_Form2 = Form;
 window.Subject_Course = Form;
+window.SMSched_Form1 = Form;
+window.SMSched_Form2 = Form;
 
 Vue.component(HasError.name, HasError);
 Vue.component(AlertError.name, AlertError);
@@ -43,6 +45,8 @@ let routes = [
     { path: '/floorplan', component: require('./components/floorplan/Floorplan.vue') },
     { path: '/profile', component: require('./components/Profile.vue') },
     { path: '/backup', component: require('./components/Backup.vue') },
+    { path: '/report', component: require('./components/Report.vue') },
+    { path: '/classroom_report', component: require('./components/ClassroomReport.vue') },
 
     { path: '/building', component: require('./components/classroom/building.vue') },
     { path: '/floor', component: require('./components/classroom/floor.vue') },

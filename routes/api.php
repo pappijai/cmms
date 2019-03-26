@@ -29,7 +29,7 @@ Route::apiResources(['professor' => 'API\ProfessorController']);
 Route::apiResources(['section' => 'API\SectionController']);
 Route::apiResources(['subjecttagging' => 'API\SubjectTaggingController']);
 Route::apiResources(['floorplan' => 'API\FloorplanController']);
-
+Route::apiResources(['report' => 'API\ReportController']);
 
 Route::get('get_floorplan', 'API\FloorplanController@get_floorplan');
 Route::get('buildingInfo', 'API\FloorController@buildinginfo');
@@ -54,6 +54,18 @@ Route::get('print_section_schedule/{id}', 'API\SubjectTaggingController@print_se
 Route::get('get_profile', 'API\UserController@get_profile');
 Route::get('get_backups', 'API\UserController@get_backups');
 Route::get('create_backup', 'API\UserController@create_backup');
+Route::get('subjecttaggingschedules/{id}', 'API\SubjectTaggingController@subjecttaggingschedules');
+Route::get('get_days', 'API\SubjectTaggingController@get_days');
+Route::get('get_schedules', 'API\SubjectTaggingController@get_schedules');
+Route::get('get_professor_schedule/{id}', 'API\ProfessorController@get_professor_schedule');
+Route::get('print_professor_schedule/{id}', 'API\ProfessorController@print_professor_schedule');
+Route::get('get_report/{year_from}/{semester}/{section_id}', 'API\ReportController@get_report');
+Route::get('print_report/{year_from}/{semester}/{section_id}', 'API\ReportController@print_report');
+Route::get('get_classrooms/{id}', 'API\ReportController@get_classrooms');
+Route::get('get_classroom_report/{bldg_id}/{bfid}/{day}', 'API\ReportController@get_classroom_report');
+Route::get('print_classroom_report/{bldg_id}/{bfid}/{day}', 'API\ReportController@print_classroom_report');
+Route::get('get_subjectmeeting_schedule/{id}', 'API\SubjectTaggingController@get_subjectmeeting_schedule');
+Route::get('get_classroom_type/{id}', 'API\SubjectTaggingController@get_classroom_type');
 // Route::get('download_backup/{file_name}', 'API\UserController@download_backup');
 
 Route::put('download_backup', 'API\UserController@download_backup');
@@ -61,8 +73,10 @@ Route::put('delete_backup', 'API\UserController@delete_backup');
 Route::put('updatesubjectmeetings1/{id}', 'API\SubjectController@updatesubjectmeetings1');
 Route::put('updatesubjectmeetings2/{id}', 'API\SubjectController@updatesubjectmeetings2');
 Route::put('update_profile/{id}', 'API\UserController@update_profile');
+Route::put('update_subjecttagging/{id}', 'API\SubjectTaggingController@update_subjecttagging');
 
 Route::post('create_course_subject_first', 'API\CourseController@create_course_subject_first');
+Route::post('classroom_report', 'API\ReportController@classroom_report');
 
 Route::delete('delete_course_subject/{id}', 'API\CourseController@delete_course_subject');
 Route::delete('delete_subject_schedule/{id}', 'API\SubjectTaggingController@delete_subject_schedule');

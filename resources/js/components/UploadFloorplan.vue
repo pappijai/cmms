@@ -1,6 +1,6 @@
 <template>
     <div class="container mt-4">
-        <div class="row mb-5">
+        <div class="row mb-5" v-if="$gate.isAdministrative()">
 
             <div class="col-md-6">
                 <div class="card card-primary">
@@ -40,6 +40,10 @@
                 <img style="width: 100%;" :src="getFloorplanPhoto()" class="img-fluid" alt="Responsive image">
             </div>
 
+        </div>
+
+        <div v-if="!$gate.isAdministrative()">
+            <not-found></not-found>
         </div>
     </div>
 </template>

@@ -62,7 +62,7 @@ class SubjectTaggingController extends Controller
 
 
 
-        return DB::select("SELECT md5(concat(a.SectionID)) SectionID, a.SectionName,a.SectionYear,a.CourseID,b.CourseDescription,b.CourseYears 
+        return DB::select("SELECT md5(concat(a.SectionID)) SectionID, a.SectionName,a.SectionYear,a.CourseID,b.CourseCode,b.CourseDescription,b.CourseYears 
                             FROM sections a INNER JOIN courses b ON a.CourseID = b.CourseID WHERE a.SectionStatus = 'Active' ORDER BY b.CourseDescription, a.SectionYear ASC");
     }   
 
@@ -77,6 +77,9 @@ class SubjectTaggingController extends Controller
         //
         $section = DB::select('SELECT * FROM sections WHERE md5(concat(SectionID)) = "'.$request->SectionID.'"');
         $section_id = $section['0']->SectionID;
+
+        $professor = DB::select('SELECT * FROM professors WHERE ProfessorID = "'.$request->ProfessorID.'"');
+        $professor_id = $professor['0']->ProfessorID;
 
         $this->validate($request, [            
             'ProfessorID' => 'required|integer',
@@ -158,8 +161,59 @@ class SubjectTaggingController extends Controller
 
                                 // check the schedule of section if empty
                                 if(empty($section_subject_schedule_save)){
-                                    $can_sched = true;
-                                    break 2;
+
+                                    // getting all the professor subject schedule that is active
+                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                    FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                    WHERE b.ProfessorID = "'.$professor_id.'" AND 
+                                                                    a.STSDay = "'.$sts_day.'" AND 
+                                                                    b.STStatus = "Active" AND 
+                                                                    a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                    ');
+
+                                    // check the schedule of professor if empty
+                                    if(empty($professor_subject_schedule_save)){
+                                        $can_sched = true;
+                                        break 2;
+                                    }// end of check the schedule of professor if empty
+                                    else{
+                                        // loop of the subject and schedule that this professor have
+                                        for($i = 0;$i < count($professor_subject_schedule_save);$i++){
+                                            $j = $i;
+
+                                            // check if the generated start time is available in the professor schedule
+                                            if($start_time >= $professor_subject_schedule_save[$i]->STSTimeEnd){
+                                                
+                                                $j++;
+
+                                                // check if the schedule subject of professor is empty
+                                                if(!isset($professor_subject_schedule_save[$j])){
+                                                    $can_sched = true;
+                                                    break 3;
+                                                }// end of check if the schedule subject of professor is empty
+                                                else{
+                                                    if($end_time <= $professor_subject_schedule_save[$j]->STSTimeStart){
+                                                        $can_sched = true;
+                                                        break 3;
+                                                    }
+                                                    else{
+                                                        $can_sched = false;
+                                                        break 1;
+                                                    }
+                                                }
+                                                
+                                            }// end of check if the generated start time is available in the professor schedule
+                                            else{
+                                                $can_sched = false;
+                                                break 1;
+                                            }
+                                        }// end of loop of the subject and schedule that this professor have                                                                
+                                    }
+
+                                    // $can_sched = true;
+                                    // break 2;
+
+
                                 }// end of check the schedule of section if empty
                                 else{
                                     // loop of the subject and schedule that this section have
@@ -173,14 +227,114 @@ class SubjectTaggingController extends Controller
 
                                             // check if the schedule subject of section is empty
                                             if(!isset($section_subject_schedule_save[$j])){
-                                                $can_sched = true;
-                                                $record_sched_start = $section_subject_schedule_save[$i]->STSTimeStart;      
-                                                break 3;
+
+                                                // getting all the professor subject schedule that is active
+                                                $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                WHERE b.ProfessorID = "'.$professor_id.'" AND 
+                                                                                a.STSDay = "'.$sts_day.'" AND 
+                                                                                b.STStatus = "Active" AND 
+                                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                ');
+
+                                                // check the schedule of professor if empty
+                                                if(empty($professor_subject_schedule_save)){
+                                                    $can_sched = true;
+                                                    break 3;
+                                                }// end of check the schedule of professor if empty
+                                                else{
+                                                    // loop of the subject and schedule that this professor have
+                                                    for($i_i = 0;$i_i < count($professor_subject_schedule_save);$i_i++){
+                                                        $j_j = $i_i;
+
+                                                        // check if the generated start time is available in the professor schedule
+                                                        if($start_time >= $professor_subject_schedule_save[$i_i]->STSTimeEnd){
+                                                            
+                                                            $j_j++;
+
+                                                            // check if the schedule subject of professor is empty
+                                                            if(!isset($professor_subject_schedule_save[$j_j])){
+                                                                $can_sched = true;
+                                                                break 4;
+                                                            }// end of check if the schedule subject of professor is empty
+                                                            else{
+                                                                if($end_time <= $professor_subject_schedule_save[$j_j]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 4;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    break 1;
+                                                                }
+                                                            }
+                                                            
+                                                        }// end of check if the generated start time is available in the professor schedule
+                                                        else{
+                                                            $can_sched = false;
+                                                            break 1;
+                                                        }
+                                                    }// end of loop of the subject and schedule that this professor have                                                                
+                                                }
+
+                                                // $can_sched = true;
+                                                // break 3;
+
+
                                             }// end of check if the schedule subject of section is empty
                                             else{
                                                 if($end_time <= $section_subject_schedule_save[$j]->STSTimeStart){
-                                                    $can_sched = true;
-                                                    break 3;
+                                                    
+                                                    // getting all the professor subject schedule that is active
+                                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                    FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                    WHERE b.ProfessorID = "'.$professor_id.'" AND 
+                                                                                    a.STSDay = "'.$sts_day.'" AND 
+                                                                                    b.STStatus = "Active" AND 
+                                                                                    a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                    ');
+
+                                                    // check the schedule of professor if empty
+                                                    if(empty($professor_subject_schedule_save)){
+                                                        $can_sched = true;
+                                                        break 3;
+                                                    }// end of check the schedule of professor if empty
+                                                    else{
+                                                        // loop of the subject and schedule that this professor have
+                                                        for($i_i = 0;$i_i < count($professor_subject_schedule_save);$i_i++){
+                                                            $j_j = $i_i;
+
+                                                            // check if the generated start time is available in the professor schedule
+                                                            if($start_time >= $professor_subject_schedule_save[$i_i]->STSTimeEnd){
+                                                                
+                                                                $j_j++;
+
+                                                                // check if the schedule subject of professor is empty
+                                                                if(!isset($professor_subject_schedule_save[$j_j])){
+                                                                    $can_sched = true;
+                                                                    break 4;
+                                                                }// end of check if the schedule subject of professor is empty
+                                                                else{
+                                                                    if($end_time <= $professor_subject_schedule_save[$j_j]->STSTimeStart){
+                                                                        $can_sched = true;
+                                                                        break 4;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched = false;
+                                                                        break 1;
+                                                                    }
+                                                                }
+                                                                
+                                                            }// end of check if the generated start time is available in the professor schedule
+                                                            else{
+                                                                $can_sched = false;
+                                                                break 1;
+                                                            }
+                                                        }// end of loop of the subject and schedule that this professor have                                                                
+                                                    }
+                                                    
+                                                    // $can_sched = true;
+                                                    // break 3;
+
                                                 }
                                                 else{
                                                     $can_sched = false;
@@ -223,8 +377,59 @@ class SubjectTaggingController extends Controller
 
                                             // check if the section subject schedule is empty
                                             if(empty($section_subject_schedule_save)){
-                                                $can_sched = true;
-                                                break 3;
+
+                                                // getting all the professor subject schedule that is active
+                                                $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                WHERE b.ProfessorID = "'.$professor_id.'" AND 
+                                                                                a.STSDay = "'.$sts_day.'" AND 
+                                                                                b.STStatus = "Active" AND 
+                                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                ');
+
+                                                // check the schedule of professor if empty
+                                                if(empty($professor_subject_schedule_save)){
+                                                    $can_sched = true;
+                                                    break 3;
+                                                }// end of check the schedule of professor if empty
+                                                else{
+                                                    // loop of the subject and schedule that this professor have
+                                                    for($i_i = 0;$i_i < count($professor_subject_schedule_save);$i_i++){
+                                                        $j_j = $i_i;
+
+                                                        // check if the generated start time is available in the professor schedule
+                                                        if($start_time >= $professor_subject_schedule_save[$i_i]->STSTimeEnd){
+                                                            
+                                                            $j_j++;
+
+                                                            // check if the schedule subject of professor is empty
+                                                            if(!isset($professor_subject_schedule_save[$j_j])){
+                                                                $can_sched = true;
+                                                                break 4;
+                                                            }// end of check if the schedule subject of professor is empty
+                                                            else{
+                                                                if($end_time <= $professor_subject_schedule_save[$j_j]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 4;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    break 1;
+                                                                }
+                                                            }
+                                                            
+                                                        }// end of check if the generated start time is available in the professor schedule
+                                                        else{
+                                                            $can_sched = false;
+                                                            break 1;
+                                                        }
+                                                    }// end of loop of the subject and schedule that this professor have                                                                
+                                                }
+
+                                                // $can_sched = true;
+                                                // break 3;
+
+
                                             }// end of check if the section subject schedule is empty
                                             else{
 
@@ -239,14 +444,114 @@ class SubjectTaggingController extends Controller
 
                                                         // check if the section subject schedule is empty
                                                         if(!isset($section_subject_schedule_save[$jj])){
-                                                            $can_sched = true;
-                                                            $record_sched_start = $section_subject_schedule_save[$ii]->STSTimeStart;      
-                                                            break 4;
+
+                                                            // getting all the professor subject schedule that is active
+                                                            $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                            WHERE b.ProfessorID = "'.$professor_id.'" AND 
+                                                                                            a.STSDay = "'.$sts_day.'" AND 
+                                                                                            b.STStatus = "Active" AND 
+                                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                            ');
+
+                                                            // check the schedule of professor if empty
+                                                            if(empty($professor_subject_schedule_save)){
+                                                                $can_sched = true;
+                                                                break 4;
+                                                            }// end of check the schedule of professor if empty
+                                                            else{
+                                                                // loop of the subject and schedule that this professor have
+                                                                for($ii_i = 0;$ii_i < count($professor_subject_schedule_save);$ii_i++){
+                                                                    $jj_j = $ii_i;
+
+                                                                    // check if the generated start time is available in the professor schedule
+                                                                    if($start_time >= $professor_subject_schedule_save[$ii_i]->STSTimeEnd){
+                                                                        
+                                                                        $jj_j++;
+
+                                                                        // check if the schedule subject of professor is empty
+                                                                        if(!isset($professor_subject_schedule_save[$jj_j])){
+                                                                            $can_sched = true;
+                                                                            break 5;
+                                                                        }// end of check if the schedule subject of professor is empty
+                                                                        else{
+                                                                            if($end_time <= $professor_subject_schedule_save[$jj_j]->STSTimeStart){
+                                                                                $can_sched = true;
+                                                                                break 5;
+                                                                            }
+                                                                            else{
+                                                                                $can_sched = false;
+                                                                                break 1;
+                                                                            }
+                                                                        }
+                                                                        
+                                                                    }// end of check if the generated start time is available in the professor schedule
+                                                                    else{
+                                                                        $can_sched = false;
+                                                                        break 1;
+                                                                    }
+                                                                }// end of loop of the subject and schedule that this professor have                                                                
+                                                            }
+
+
+                                                            // $can_sched = true;
+                                                            // break 4;
+
                                                         }// end of check if the section subject schedule is empty
                                                         else{
                                                             if($end_time <= $section_subject_schedule_save[$jj]->STSTimeStart){
-                                                                $can_sched = true;
-                                                                break 4;
+                                                                
+                                                                // getting all the professor subject schedule that is active
+                                                                $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                                WHERE b.ProfessorID = "'.$professor_id.'" AND 
+                                                                                                a.STSDay = "'.$sts_day.'" AND 
+                                                                                                b.STStatus = "Active" AND 
+                                                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                                ');
+
+                                                                // check the schedule of professor if empty
+                                                                if(empty($professor_subject_schedule_save)){
+                                                                    $can_sched = true;
+                                                                    break 4;
+                                                                }// end of check the schedule of professor if empty
+                                                                else{
+                                                                    // loop of the subject and schedule that this professor have
+                                                                    for($ii_i = 0;$ii_i < count($professor_subject_schedule_save);$ii_i++){
+                                                                        $jj_j = $ii_i;
+
+                                                                        // check if the generated start time is available in the professor schedule
+                                                                        if($start_time >= $professor_subject_schedule_save[$ii_i]->STSTimeEnd){
+                                                                            
+                                                                            $jj_j++;
+
+                                                                            // check if the schedule subject of professor is empty
+                                                                            if(!isset($professor_subject_schedule_save[$jj_j])){
+                                                                                $can_sched = true;
+                                                                                break 5;
+                                                                            }// end of check if the schedule subject of professor is empty
+                                                                            else{
+                                                                                if($end_time <= $professor_subject_schedule_save[$jj_j]->STSTimeStart){
+                                                                                    $can_sched = true;
+                                                                                    break 5;
+                                                                                }
+                                                                                else{
+                                                                                    $can_sched = false;
+                                                                                    break 1;
+                                                                                }
+                                                                            }
+                                                                            
+                                                                        }// end of check if the generated start time is available in the professor schedule
+                                                                        else{
+                                                                            $can_sched = false;
+                                                                            break 1;
+                                                                        }
+                                                                    }// end of loop of the subject and schedule that this professor have                                                                
+                                                                }                                                 
+                                                                
+                                                                // $can_sched = true;
+                                                                // break 4;
+
                                                             }
                                                             else{
                                                                 $can_sched = false;
@@ -277,8 +582,58 @@ class SubjectTaggingController extends Controller
 
                                                 // check if the section subject schedule is empty
                                                 if(empty($section_subject_schedule_save)){
-                                                    $can_sched = true;
-                                                    break 3;
+
+                                                    // getting all the professor subject schedule that is active
+                                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                    FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                    WHERE b.ProfessorID = "'.$professor_id.'" AND 
+                                                                                    a.STSDay = "'.$sts_day.'" AND 
+                                                                                    b.STStatus = "Active" AND 
+                                                                                    a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                    ');
+
+                                                    // check the schedule of professor if empty
+                                                    if(empty($professor_subject_schedule_save)){
+                                                        $can_sched = true;
+                                                        break 3;
+                                                    }// end of check the schedule of professor if empty
+                                                    else{
+                                                        // loop of the subject and schedule that this professor have
+                                                        for($ii_i = 0;$ii_i < count($professor_subject_schedule_save);$ii_i++){
+                                                            $jj_j = $ii_i;
+
+                                                            // check if the generated start time is available in the professor schedule
+                                                            if($start_time >= $professor_subject_schedule_save[$ii_i]->STSTimeEnd){
+                                                                
+                                                                $jj_j++;
+
+                                                                // check if the schedule subject of professor is empty
+                                                                if(!isset($professor_subject_schedule_save[$jj_j])){
+                                                                    $can_sched = true;
+                                                                    break 4;
+                                                                }// end of check if the schedule subject of professor is empty
+                                                                else{
+                                                                    if($end_time <= $professor_subject_schedule_save[$jj_j]->STSTimeStart){
+                                                                        $can_sched = true;
+                                                                        break 4;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched = false;
+                                                                        break 1;
+                                                                    }
+                                                                }
+                                                                
+                                                            }// end of check if the generated start time is available in the professor schedule
+                                                            else{
+                                                                $can_sched = false;
+                                                                break 1;
+                                                            }
+                                                        }// end of loop of the subject and schedule that this professor have                                                                
+                                                    }
+
+                                                    // $can_sched = true;
+                                                    // break 3;
+
                                                 }// end of check if the section subject schedule is empty
                                                 else{
 
@@ -291,14 +646,113 @@ class SubjectTaggingController extends Controller
                                                             
                                                             $jj++;
                                                             if(!isset($section_subject_schedule_save[$jj])){
-                                                                $can_sched = true;
-                                                                $record_sched_start = $section_subject_schedule_save[$ii]->STSTimeStart;      
-                                                                break 4;
+
+                                                                // getting all the professor subject schedule that is active
+                                                                $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                                WHERE b.ProfessorID = "'.$professor_id.'" AND 
+                                                                                                a.STSDay = "'.$sts_day.'" AND 
+                                                                                                b.STStatus = "Active" AND 
+                                                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                                ');
+
+                                                                // check the schedule of professor if empty
+                                                                if(empty($professor_subject_schedule_save)){
+                                                                    $can_sched = true;
+                                                                    break 4;
+                                                                }// end of check the schedule of professor if empty
+                                                                else{
+                                                                    // loop of the subject and schedule that this professor have
+                                                                    for($ii_i = 0;$ii_i < count($professor_subject_schedule_save);$ii_i++){
+                                                                        $jj_j = $ii_i;
+
+                                                                        // check if the generated start time is available in the professor schedule
+                                                                        if($start_time >= $professor_subject_schedule_save[$ii_i]->STSTimeEnd){
+                                                                            
+                                                                            $jj_j++;
+
+                                                                            // check if the schedule subject of professor is empty
+                                                                            if(!isset($professor_subject_schedule_save[$jj_j])){
+                                                                                $can_sched = true;
+                                                                                break 5;
+                                                                            }// end of check if the schedule subject of professor is empty
+                                                                            else{
+                                                                                if($end_time <= $professor_subject_schedule_save[$jj_j]->STSTimeStart){
+                                                                                    $can_sched = true;
+                                                                                    break 5;
+                                                                                }
+                                                                                else{
+                                                                                    $can_sched = false;
+                                                                                    break 1;
+                                                                                }
+                                                                            }
+                                                                            
+                                                                        }// end of check if the generated start time is available in the professor schedule
+                                                                        else{
+                                                                            $can_sched = false;
+                                                                            break 1;
+                                                                        }
+                                                                    }// end of loop of the subject and schedule that this professor have                                                                
+                                                                }
+
+                                                                // $can_sched = true;
+                                                                // break 4;
+
                                                             }
                                                             else{
                                                                 if($end_time <= $section_subject_schedule_save[$jj]->STSTimeStart){
-                                                                    $can_sched = true;
-                                                                    break 4;
+
+                                                                    // getting all the professor subject schedule that is active
+                                                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                                    FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                                    WHERE b.ProfessorID = "'.$professor_id.'" AND 
+                                                                                                    a.STSDay = "'.$sts_day.'" AND 
+                                                                                                    b.STStatus = "Active" AND 
+                                                                                                    a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                                    ');
+
+                                                                    // check the schedule of professor if empty
+                                                                    if(empty($professor_subject_schedule_save)){
+                                                                        $can_sched = true;
+                                                                        break 4;
+                                                                    }// end of check the schedule of professor if empty
+                                                                    else{
+                                                                        // loop of the subject and schedule that this professor have
+                                                                        for($ii_i = 0;$ii_i < count($professor_subject_schedule_save);$ii_i++){
+                                                                            $jj_j = $ii_i;
+
+                                                                            // check if the generated start time is available in the professor schedule
+                                                                            if($start_time >= $professor_subject_schedule_save[$ii_i]->STSTimeEnd){
+                                                                                
+                                                                                $jj_j++;
+
+                                                                                // check if the schedule subject of professor is empty
+                                                                                if(!isset($professor_subject_schedule_save[$jj_j])){
+                                                                                    $can_sched = true;
+                                                                                    break 5;
+                                                                                }// end of check if the schedule subject of professor is empty
+                                                                                else{
+                                                                                    if($end_time <= $professor_subject_schedule_save[$jj_j]->STSTimeStart){
+                                                                                        $can_sched = true;
+                                                                                        break 5;
+                                                                                    }
+                                                                                    else{
+                                                                                        $can_sched = false;
+                                                                                        break 1;
+                                                                                    }
+                                                                                }
+                                                                                
+                                                                            }// end of check if the generated start time is available in the professor schedule
+                                                                            else{
+                                                                                $can_sched = false;
+                                                                                break 1;
+                                                                            }
+                                                                        }// end of loop of the subject and schedule that this professor have                                                                
+                                                                    }
+
+                                                                    // $can_sched = true;
+                                                                    // break 4;
+
                                                                 }
                                                                 else{
                                                                     $can_sched = false;
@@ -395,7 +849,23 @@ class SubjectTaggingController extends Controller
     }
 
     public function tagged_subject_sections($section_id,$sem,$year,$year_from,$year_to){
-        return DB::select('SELECT md5(concat(a.STID)) STID, b.SubjectDescription,c.ProfessorName,GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
+        // return DB::select('SELECT md5(concat(a.STID)) STID, b.SubjectDescription,c.ProfessorName,GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
+        //                     FROM subject_taggings a 
+        //                     INNER JOIN subjects b ON a.SubjectID = b.SubjectID 
+        //                     INNER JOIN professors c ON a.ProfessorID = c.ProfessorID
+        //                     LEFT JOIN subject_tagging_schedules d ON a.STID = d.STID
+        //                     INNER JOIN classrooms e ON d.ClassroomID = e.ClassroomID
+        //                     WHERE md5(concat(a.SectionID)) = "'.$section_id.'" AND 
+        //                     a.STSem = "'.$sem.'" AND 
+        //                     a.STYear = "'.$year.'" AND
+        //                     a.STYearFrom = "'.$year_from.'" AND
+        //                     a.STYearTo = "'.$year_to.'" AND
+        //                     a.STStatus = "Active"
+        //                     GROUP BY b.SubjectDescription,a.STID,c.ProfessorName
+        //                 ');
+
+
+        return DB::select('SELECT md5(concat(a.STID)) STID, b.SubjectDescription,b.SubjectID,c.ProfessorID,c.ProfessorName,GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
                             FROM subject_taggings a 
                             INNER JOIN subjects b ON a.SubjectID = b.SubjectID 
                             INNER JOIN professors c ON a.ProfessorID = c.ProfessorID
@@ -407,7 +877,7 @@ class SubjectTaggingController extends Controller
                             a.STYearFrom = "'.$year_from.'" AND
                             a.STYearTo = "'.$year_to.'" AND
                             a.STStatus = "Active"
-                            GROUP BY b.SubjectDescription,a.STID,c.ProfessorName
+                            GROUP BY b.SubjectDescription,a.STID,c.ProfessorName,c.ProfessorID,b.SubjectID
                         ');
     }
 
@@ -546,5 +1016,107 @@ class SubjectTaggingController extends Controller
 
         return $output;        
 
+    }
+
+    public function subjecttaggingschedules($STID){
+        return DB::select('SELECT md5(concat(a.STSID)) STSID, a.STID, a.SMID, a.STSTimeStart, a.STSTimeEnd, a.STSDay,b.SubjectHours
+                        FROM subject_tagging_schedules a INNER JOIN subject_meetings b ON a.SMID = b.SMID WHERE md5(concat(a.STID)) = "'.$STID.'"');       
+    }
+
+    public function get_days(){
+        return DB::select('SELECT * FROM days');
+    }
+
+    public function get_schedules(){
+        return DB::select('SELECT * FROM schedules');
+    }
+
+    public function update_subjecttagging(Request $request, $STID){
+        $this->validate($request, [            
+            'ProfessorID' => 'required',
+            'SubjectID' => 'required',
+        ]);     
+
+        $tagged_subjects_schedule = DB::select('SELECT a.*,b.* FROM subject_taggings a INNER JOIN subject_tagging_schedules b ON a.STID = b.STID
+                                                WHERE md5(concat(a.STID)) = "'.$STID.'"');
+        
+        $can_sched = false;
+
+        if($request->ProfessorID == $tagged_subjects_schedule[0]->ProfessorID){
+            $can_sched = true;
+        }
+        else{
+            foreach($tagged_subjects_schedule as $row){
+                $professor_tagged_subjects_schedule = DB::select('SELECT a.*,b.* FROM subject_taggings a INNER JOIN subject_tagging_schedules b ON a.STID = b.STID 
+                                                    WHERE a.ProfessorID = "'.$request['ProfessorID'].'" AND 
+                                                    a.STStatus = "Active" AND 
+                                                    b.STSDay = "'.$row->STSDay.'" AND
+                                                    md5(concat(a.STID)) <> "'.$STID.'"');
+    
+                $count_professor_tagged_subjects_schedule = count($professor_tagged_subjects_schedule);
+                if($count_professor_tagged_subjects_schedule == 0){
+                    $can_sched = true;
+                }
+                else{
+                    // loop of the subject and schedule that this professor have
+                    for($i_i = 0;$i_i < count($professor_tagged_subjects_schedule);$i_i++){
+                        $j_j = $i_i;
+    
+                        // check if the generated start time is available in the professor schedule
+                        if($row->STSTimeStart >= $professor_tagged_subjects_schedule[$i_i]->STSTimeEnd){
+                            
+                            $j_j++;
+    
+                            // check if the schedule subject of professor is empty
+                            if(!isset($professor_tagged_subjects_schedule[$j_j])){
+                                $can_sched = true;
+                                break;
+                            }// end of check if the schedule subject of professor is empty
+                            else{
+                                if($row->STSTimeEnd <= $professor_tagged_subjects_schedule[$j_j]->STSTimeStart){
+                                    $can_sched = true;
+                                    break 1;
+                                }
+                                else{
+                                    $can_sched = false;
+                                    break 2;
+                                }
+                            }
+                            
+                        }// end of check if the generated start time is available in the professor schedule
+                        else{
+                            $can_sched = false;
+                            break 2;
+                        }
+                    }// end of loop of the subject and schedule that this professor have    
+                }
+            }
+        }
+        
+
+        if($can_sched == true){
+            $subject_taggings = DB::update('
+                UPDATE subject_taggings SET
+                    ProfessorID = "'.$request->ProfessorID.'",
+                    updated_at = now()
+                    WHERE md5(concat(STID)) = "'.$STID.'"      
+            ');
+            return ["type"=>"success","message"=>"Tagged Subjects Updated successfully"];
+        }
+        else{
+            return ["type"=>"error","message"=>"Professor is not available"];
+        }
+        
+    }
+
+    public function get_subjectmeeting_schedule($stid){
+        return DB::select('SELECT STSID,STID,SMID,STSTimeStart,STSTimeEnd,STSDay,ClassroomID FROM subject_tagging_schedules WHERE md5(concat(STID)) = "'.$stid.'"');
+    }
+
+    public function get_classroom_type($smid){
+        return DB::select('SELECT a.*,b.* 
+                    FROM classrooms a INNER JOIN classroom_types b ON a.ClassroomType = b.CTID 
+                    INNER JOIN subject_meetings c ON c.CTID = a.ClassroomType
+                    WHERE c.SMID = "'.$smid.'"');
     }
 }
