@@ -323,10 +323,17 @@ class ReportController extends Controller
             'BldgID' => 'required',
             'BFID' => 'required',
             'Day' => 'required',
+            'TimeIn' => 'required',
         ]); 
+
+        if($request->TimeIn != 'ALL'){
+            $this->validate($request, [            
+                'TimeOut' => 'required'
+            ]);
+        }
     }
 
-    public function get_classroom_report($bldg_id,$bfid,$day){
+    public function get_classroom_report($bldg_id,$bfid,$day,$time_in,$time_out){
         if($bldg_id == 'All'){
             $classrooms = DB::select('SELECT b.BldgName,c.BFName,a.ClassroomName,a.ClassroomID,a.ClassroomCode
                             FROM classrooms a INNER JOIN buildings b ON a.ClassroomBldg = b.BldgID
@@ -334,8 +341,17 @@ class ReportController extends Controller
                             ORDER BY b.BldgName,c.BFName,a.ClassroomName ASC
             ');
 
-            $schedules = DB::select('SELECT * FROM subject_tagging_schedules WHERE STSStatus = "Active"');
-            
+            if($time_in == "ALL"){
+                $schedules = DB::select('SELECT * FROM subject_tagging_schedules WHERE STSStatus = "Active"');
+            }
+            else{
+                $schedules = DB::select('SELECT * FROM subject_tagging_schedules 
+                                            WHERE STSTimeStart >= "'.$time_in.'" AND 
+                                            STSTimeStart <= "'.$time_out.'" AND
+                                            STSTimeStart <> "'.$time_out.'" AND
+                                            STSStatus = "Active"');
+            }
+
             $reports = array();
 
             foreach($classrooms as $row){
@@ -365,7 +381,17 @@ class ReportController extends Controller
                             ORDER BY b.BldgName,c.BFName,a.ClassroomName ASC
                 ');
 
-                $schedules = DB::select('SELECT * FROM subject_tagging_schedules WHERE STSStatus = "Active"');
+                if($time_in == "ALL"){
+                    $schedules = DB::select('SELECT * FROM subject_tagging_schedules WHERE STSStatus = "Active"');
+                }
+                else{
+                    $schedules = DB::select('SELECT * FROM subject_tagging_schedules 
+                                                WHERE STSTimeStart >= "'.$time_in.'" AND 
+                                                STSTimeStart <= "'.$time_out.'" AND
+                                                STSTimeStart <> "'.$time_out.'" AND
+                                                STSStatus = "Active"');
+                }
+    
 
                 $reports = array();
 
@@ -394,7 +420,17 @@ class ReportController extends Controller
                             ORDER BY b.BldgName,c.BFName,a.ClassroomName ASC
                 ');
 
-                $schedules = DB::select('SELECT * FROM subject_tagging_schedules WHERE STSStatus = "Active"');
+                if($time_in == "ALL"){
+                    $schedules = DB::select('SELECT * FROM subject_tagging_schedules WHERE STSStatus = "Active"');
+                }
+                else{
+                    $schedules = DB::select('SELECT * FROM subject_tagging_schedules 
+                                                WHERE STSTimeStart >= "'.$time_in.'" AND 
+                                                STSTimeStart <= "'.$time_out.'" AND
+                                                STSTimeStart <> "'.$time_out.'" AND
+                                                STSStatus = "Active"');
+                }
+    
 
                 $reports = array();
 
@@ -417,14 +453,14 @@ class ReportController extends Controller
         }
     }
 
-    public function print_classroom_report($bldg_id,$bfid,$day){
+    public function print_classroom_report($bldg_id,$bfid,$day,$time_in,$time_out){
         $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($this->convert_classroom_report_table_to_html($bldg_id,$bfid,$day));
+        $pdf->loadHTML($this->convert_classroom_report_table_to_html($bldg_id,$bfid,$day,$time_in,$time_out));
         $pdf->setPaper('A4', 'portrait');
         return $pdf->stream('professor_schedule.pdf');  
     }
 
-    public function convert_classroom_report_table_to_html($bldg_id,$bfid,$day){
+    public function convert_classroom_report_table_to_html($bldg_id,$bfid,$day,$time_in,$time_out){
         $output = '';
 
         if($bldg_id == 'All'){
@@ -434,7 +470,16 @@ class ReportController extends Controller
                             ORDER BY b.BldgName,c.BFName,a.ClassroomName ASC
             ');
 
-            $schedules = DB::select('SELECT * FROM subject_tagging_schedules WHERE STSStatus = "Active"');
+            if($time_in == "ALL"){
+                $schedules = DB::select('SELECT * FROM subject_tagging_schedules WHERE STSStatus = "Active"');
+            }
+            else{
+                $schedules = DB::select('SELECT * FROM subject_tagging_schedules 
+                                            WHERE STSTimeStart >= "'.$time_in.'" AND 
+                                            STSTimeStart <= "'.$time_out.'" AND
+                                            STSTimeStart <> "'.$time_out.'" AND
+                                            STSStatus = "Active"');
+            }
             
             $reports = array();
 
@@ -463,7 +508,16 @@ class ReportController extends Controller
                             ORDER BY b.BldgName,c.BFName,a.ClassroomName ASC
                 ');
 
-                $schedules = DB::select('SELECT * FROM subject_tagging_schedules WHERE STSStatus = "Active"');
+                if($time_in == "ALL"){
+                    $schedules = DB::select('SELECT * FROM subject_tagging_schedules WHERE STSStatus = "Active"');
+                }
+                else{
+                    $schedules = DB::select('SELECT * FROM subject_tagging_schedules 
+                                                WHERE STSTimeStart >= "'.$time_in.'" AND 
+                                                STSTimeStart <= "'.$time_out.'" AND
+                                                STSTimeStart <> "'.$time_out.'" AND
+                                                STSStatus = "Active"');
+                }
 
                 $reports = array();
 
@@ -491,7 +545,16 @@ class ReportController extends Controller
                             ORDER BY b.BldgName,c.BFName,a.ClassroomName ASC
                 ');
 
-                $schedules = DB::select('SELECT * FROM subject_tagging_schedules WHERE STSStatus = "Active"');
+                if($time_in == "ALL"){
+                    $schedules = DB::select('SELECT * FROM subject_tagging_schedules WHERE STSStatus = "Active"');
+                }
+                else{
+                    $schedules = DB::select('SELECT * FROM subject_tagging_schedules 
+                                                WHERE STSTimeStart >= "'.$time_in.'" AND 
+                                                STSTimeStart <= "'.$time_out.'" AND
+                                                STSTimeStart <> "'.$time_out.'" AND
+                                                STSStatus = "Active"');
+                }
 
                 $reports = array();
 

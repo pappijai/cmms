@@ -62,10 +62,14 @@ Route::get('print_professor_schedule/{id}', 'API\ProfessorController@print_profe
 Route::get('get_report/{year_from}/{semester}/{section_id}', 'API\ReportController@get_report');
 Route::get('print_report/{year_from}/{semester}/{section_id}', 'API\ReportController@print_report');
 Route::get('get_classrooms/{id}', 'API\ReportController@get_classrooms');
-Route::get('get_classroom_report/{bldg_id}/{bfid}/{day}', 'API\ReportController@get_classroom_report');
-Route::get('print_classroom_report/{bldg_id}/{bfid}/{day}', 'API\ReportController@print_classroom_report');
+Route::get('get_classroom_report/{bldg_id}/{bfid}/{day}/{time_in}/{time_out}', 'API\ReportController@get_classroom_report');
+Route::get('print_classroom_report/{bldg_id}/{bfid}/{day}/{time_in}/{time_out}', 'API\ReportController@print_classroom_report');
 Route::get('get_subjectmeeting_schedule/{id}', 'API\SubjectTaggingController@get_subjectmeeting_schedule');
 Route::get('get_classroom_type/{id}', 'API\SubjectTaggingController@get_classroom_type');
+Route::get('get_subject_meetings/{id}', 'API\SubjectTaggingController@get_subject_meetings');
+Route::get('tagged_subjects_schedule/{id}', 'API\SubjectTaggingController@tagged_subjects_schedule');
+Route::get('tagged_subjects_schedule/{id}', 'API\SubjectTaggingController@tagged_subjects_schedule');
+Route::get('get_classroom_options/{id}', 'API\SubjectTaggingController@get_classroom_options');
 // Route::get('download_backup/{file_name}', 'API\UserController@download_backup');
 
 Route::put('download_backup', 'API\UserController@download_backup');

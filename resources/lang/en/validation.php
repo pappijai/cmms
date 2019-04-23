@@ -163,6 +163,16 @@ return [
         'SectionID' => 'Section',
         'ClassroomID' => 'Classroom',
         'STSDay' => 'Day',
+        'Day1' => 'Day',
+        'Day2' => 'Day',
+        'TimeIn' => 'Time Start',
+        'TimeOut' => 'Time Out',
+        'Time_in1' => 'Time Start',
+        'Time_in2' => 'Time Start',
+        'hours1' => 'Total Hours',
+        'hours2' => 'Total Hours',
+        'ctid1' => 'Classroom Type',
+        'ctid2' => 'Classroom Type',
 
     ],
 

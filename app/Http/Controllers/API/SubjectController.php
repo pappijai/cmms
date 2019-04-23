@@ -21,7 +21,7 @@ class SubjectController extends Controller
         //
 
         return DB::select('SELECT concat(md5(SubjectID)) SubjectID,SubjectDescription,SubjectCode,
-                        SubjectMeetings,created_at FROM subjects ORDER BY created_at DESC');
+                         created_at FROM subjects ORDER BY created_at DESC');
     }
 
     /**
@@ -36,28 +36,26 @@ class SubjectController extends Controller
         $this->validate($request, [            
             'SubjectCode' => 'required|string|unique:subjects,SubjectCode',
             'SubjectDescription' => 'required|string|unique:subjects,SubjectDescription',
-            'SubjectMeetings' => 'required|integer|min:1|max:2',
         ]);   
         
         $subjects = DB::insert('
-            INSERT INTO subjects (SubjectCode,SubjectDescription,SubjectMeetings,created_at,updated_at) VALUES
-                                    ("'.$request['SubjectCode'].'","'.$request['SubjectDescription'].'",
-                                    "'.$request['SubjectMeetings'].'",now(),now())
+            INSERT INTO subjects (SubjectCode,SubjectDescription,created_at,updated_at) VALUES
+                                    ("'.$request['SubjectCode'].'","'.$request['SubjectDescription'].'",now(),now())
             
         ');
         
-        $subject_id = DB::getPdo()->lastInsertId();
+        // $subject_id = DB::getPdo()->lastInsertId();
 
-        for($i = 1;$i <= $request->SubjectMeetings;$i++){
-            DB::insert('
-                INSERT INTO subject_meetings (SubjectID,CTID,created_at,updated_at) VALUES ("'.$subject_id.'","",now(),now())
-            ');
-        }
-        $data = [
-            'subject_id' => md5($subject_id)
-        ];
+        // for($i = 1;$i <= $request->SubjectMeetings;$i++){
+        //     DB::insert('
+        //         INSERT INTO subject_meetings (SubjectID,CTID,created_at,updated_at) VALUES ("'.$subject_id.'","",now(),now())
+        //     ');
+        // }
+        // $data = [
+        //     'subject_id' => md5($subject_id)
+        // ];
 
-        return $data;       
+        return "okay";       
     }
 
     /**
@@ -87,37 +85,35 @@ class SubjectController extends Controller
         $this->validate($request, [            
             'SubjectCode' => 'required|string|unique:subjects,SubjectCode,'.$subjects_id.',SubjectID',
             'SubjectDescription' => 'required|string|unique:subjects,SubjectDescription,'.$subjects_id.',SubjectID',
-            'SubjectMeetings' => 'required|integer|min:1|max:2',
         ]); 
         
         $subjects = DB::update('
             UPDATE subjects SET
                 SubjectCode = "'.$request->SubjectCode.'",
                 SubjectDescription = "'.$request->SubjectDescription.'",
-                SubjectMeetings = "'.$request->SubjectMeetings.'",
                 updated_at = now()
                 WHERE md5(concat(SubjectID)) = "'.$id.'"
                 
         ');
 
-        $count_sub_meetings = count(DB::select('SELECT * FROM subject_meetings WHERE SubjectID = '.$subjects_id.''));
-        if($request->SubjectMeetings > $count_sub_meetings){
-            DB::insert('
-                INSERT INTO subject_meetings (SubjectID,CTID,created_at,updated_at) VALUES ("'.$subjects_id.'","",now(),now())
-            ');
-        }
-        elseif($request->SubjectMeetings < $count_sub_meetings){
-            DB::delete('DELETE FROM subject_meetings WHERE md5(concat(SubjectID)) = "'.$id.'" LIMIT 1');
-        }
-        else{
-            //none
-        }
+        // $count_sub_meetings = count(DB::select('SELECT * FROM subject_meetings WHERE SubjectID = '.$subjects_id.''));
+        // if($request->SubjectMeetings > $count_sub_meetings){
+        //     DB::insert('
+        //         INSERT INTO subject_meetings (SubjectID,CTID,created_at,updated_at) VALUES ("'.$subjects_id.'","",now(),now())
+        //     ');
+        // }
+        // elseif($request->SubjectMeetings < $count_sub_meetings){
+        //    DB::delete('DELETE FROM subject_meetings WHERE md5(concat(SubjectID)) = "'.$id.'" LIMIT 1');
+        // }
+        // else{
+        //     //none
+        // }
 
-        $data = [
-            'subject_id' => md5($subjects_id)
-        ];
+        // $data = [
+        //     'subject_id' => md5($subjects_id)
+        // ]; 
 
-        return $data;         
+        return "okay";         
     }
 
     /**
@@ -148,7 +144,7 @@ class SubjectController extends Controller
         else{
             
             $query = DB::delete('DELETE FROM subjects WHERE md5(concat(SubjectID)) = "'.$id.'"');
-            DB::delete('DELETE FROM subject_meetings WHERE md5(concat(SubjectID)) = "'.$id.'"');
+            // DB::delete('DELETE FROM subject_meetings WHERE md5(concat(SubjectID)) = "'.$id.'"');
             if($query){
                 return ["type"=>"success","message"=>"Subject Deleted Successfully"];
             }

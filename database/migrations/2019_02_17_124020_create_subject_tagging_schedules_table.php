@@ -16,8 +16,8 @@ class CreateSubjectTaggingSchedulesTable extends Migration
         Schema::create('subject_tagging_schedules', function (Blueprint $table) {
             $table->increments('STSID');
             $table->integer('STID');
-            $table->integer('SMID');
             $table->integer('ClassroomID');
+            $table->integer('STSHours');
             $table->time('STSTimeStart');
             $table->time('STSTimeEnd');
             $table->string('STSDay');

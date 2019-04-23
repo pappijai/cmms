@@ -17,7 +17,7 @@ class CreateSubjectsTable extends Migration
             $table->increments('SubjectID');
             $table->string('SubjectCode');
             $table->string('SubjectDescription');
-            $table->integer('SubjectMeetings');
+            // $table->integer('SubjectMeetings');
             $table->timestamps();
         });
     }

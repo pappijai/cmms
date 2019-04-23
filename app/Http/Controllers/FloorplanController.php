@@ -409,7 +409,8 @@ class FloorplanController extends Controller
         $year_today = date('Y');
         $month_today = date('m');
 
-        $subjects = DB::select('SELECT md5(concat(a.STID)) STID, b.SubjectDescription,c.ProfessorName,GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
+        $subjects = DB::select('SELECT md5(concat(a.STID)) STID, b.SubjectDescription,c.ProfessorName,a.STUnits,SUM(d.STSHours) AS TotalHours,
+                            GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
                             FROM subject_taggings a 
                             INNER JOIN subjects b ON a.SubjectID = b.SubjectID 
                             INNER JOIN professors c ON a.ProfessorID = c.ProfessorID
@@ -421,7 +422,7 @@ class FloorplanController extends Controller
                             a.STYearFrom = "'.$year_from.'" AND
                             a.STYearTo = "'.$year_to.'" AND
                             a.STStatus = "Active"
-                            GROUP BY b.SubjectDescription,a.STID,c.ProfessorName
+                            GROUP BY b.SubjectDescription,a.STID,c.ProfessorName,a.STUnits
                         ');
 
         $sections = DB::SELECT('SELECT a.*,b.* FROM sections a INNER JOIN courses b ON a.CourseID = b.CourseID WHERE md5(concat(a.SectionID)) = "'.$section_id.'"');
@@ -450,6 +451,8 @@ class FloorplanController extends Controller
                         <tr>
                             <th scope="col">Subject Name</th>
                             <th scope="col">Professor</th>
+                            <th scope="col">Units</th>
+                            <th scope="col">Hours</th>
                             <th scope="col">Schedule</th>
                         </tr>
                     </thead>
@@ -461,6 +464,8 @@ class FloorplanController extends Controller
                     <tr>
                         <td>'.$row->SubjectDescription.'</td>
                         <td>'.$row->ProfessorName.'</td>
+                        <td>'.$row->STUnits.'</td>
+                        <td>'.$row->TotalHours.'</td>
                         <td>'.$row->Schedule.'</td>
                     </tr>
                 ';
@@ -484,6 +489,8 @@ class FloorplanController extends Controller
                         <tr>
                             <th scope="col">Subject Name</th>
                             <th scope="col">Professor</th>
+                            <th scope="col">Units</th>
+                            <th scope="col">Hours</th>
                             <th scope="col">Schedule</th>
                         </tr>
                     </thead>
@@ -587,7 +594,8 @@ class FloorplanController extends Controller
         $year_today = date('Y');
         $month_today = date('m');
 
-        $subjects = DB::select('SELECT f.SectionName,f.SectionYear,i.CourseCode,b.SubjectDescription,GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
+        $subjects = DB::select('SELECT f.SectionName,f.SectionYear,i.CourseCode,b.SubjectDescription,a.STUnits,SUM(d.STSHours) AS TotalHours,
+                            GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
                             FROM subject_taggings a 
                             INNER JOIN subjects b ON a.SubjectID = b.SubjectID 
                             LEFT JOIN subject_tagging_schedules d ON a.STID = d.STID
@@ -599,7 +607,7 @@ class FloorplanController extends Controller
                             a.STYearFrom = "'.$year_from.'" AND
                             a.STYearTo = "'.$year_to.'" AND
                             a.STStatus = "Active"
-                            GROUP BY b.SubjectDescription,i.CourseCode,f.SectionName,f.SectionYear
+                            GROUP BY b.SubjectDescription,i.CourseCode,f.SectionName,f.SectionYear,a.STUnits
                             ORDER BY i.CourseCode,f.SectionYear ASC
                         ');
 
@@ -621,6 +629,8 @@ class FloorplanController extends Controller
                         <tr>
                             <th scope="col">Course Yr & Sec.</th>
                             <th scope="col">Subject Name</th>
+                            <th scope="col">Units</th>
+                            <th scope="col">Hours</th>
                             <th scope="col">Schedule</th>
                         </tr>
                     </thead>
@@ -641,6 +651,8 @@ class FloorplanController extends Controller
                     <tr>
                         <td>'.$row->CourseCode.' '.$section_name.'</td>
                         <td>'.$row->SubjectDescription.'</td>
+                        <td>'.$row->STUnits.'</td>
+                        <td>'.$row->TotalHours.'</td>
                         <td>'.$row->Schedule.'</td>
                     </tr>
                 ';
@@ -664,6 +676,8 @@ class FloorplanController extends Controller
                         <tr>
                             <th scope="col">Course Yr & Sec.</th>
                             <th scope="col">Subject Name</th>
+                            <th scope="col">Units</th>
+                            <th scope="col">Hours</th>
                             <th scope="col">Schedule</th>
                         </tr>
                     </thead>

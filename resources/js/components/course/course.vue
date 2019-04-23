@@ -19,7 +19,7 @@
                                     <th>Course Code</th>
                                     <th>Course Description</th>
                                     <th># of Years</th>
-                                    <th>Course Subjects Per year</th>
+                                    <!-- <th>Course Subjects Per year</th> -->
                                     <th>Modify</th>
                                 </tr>
                             </thead>
@@ -30,14 +30,14 @@
                                     <td>{{course.CourseCode}}</td>
                                     <td>{{course.CourseDescription}}</td>
                                     <td>{{course.CourseYears}} Years</td>
-                                    <td>
+                                    <!-- <td>
                                         <div>
                                             <button v-for="year in course.CourseYears" :key="year.id" style="margin: 2px;" @click="addsubjecttocoursemodal(year,course.CourseID)" class="btn btn-primary">
                                                 {{year | convert}}
                                             </button>
                                         </div>
 
-                                    </td>
+                                    </td> -->
                                     <td>
                                         <button class="btn btn-primary" @click="editModal(course)">
                                             <i class="fas fa-edit text-white"></i>    
@@ -360,35 +360,6 @@
                     this.$Progress.fail()
                 })
             },
-            // deleteCourse(id){
-            //     swal({
-            //         title: 'Are you sure?',
-            //         text: "You won't be able to revert this!",
-            //         type: 'warning',
-            //         showCancelButton: true,
-            //         confirmButtonColor: '#3085d6',
-            //         cancelButtonColor: '#d33',
-            //         confirmButtonText: 'Yes, delete it!'
-            //     }).then((result) => {
-            //         // Send ajax request to server
-            //         if(result.value){
-            //             this.form.delete('api/course/'+id).then(() => {
-            //                 toast({
-            //                     type: 'success',
-            //                     title: 'Course Deleted successfully'
-            //                 })
-            //                 Fire.$emit('AfterDelete');
-                            
-            //             }).catch(() =>{
-            //                 swal(
-            //                     'Error',
-            //                     'There was something wrong.',
-            //                     'error'
-            //                 )
-            //             })
-            //         }
-            //     })  
-            // },
             addsubjecttocoursemodal(year,CourseID){
                 
                 //reseting input fields
@@ -439,7 +410,7 @@
             },
             create_subject_second(){
                 if(this.getsizeofarray(this.Subjects_Second) == 9){
-                    alert('maximum of 9 subjects for First Semester!')
+                    alert('maximum of 9 subjects for Second Semester!')
                 }
                 else{
                     this.$Progress.start()
@@ -465,7 +436,7 @@
             },
             create_subject_summer(){
                 if(this.getsizeofarray(this.Subjects_Summer) == 9){
-                    alert('maximum of 9 subjects for First Semester!')
+                    alert('maximum of 9 subjects for Summer Semester!')
                 }
                 else{
                     this.$Progress.start()

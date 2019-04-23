@@ -80565,7 +80565,12 @@ var Gate = function () {
     }, {
         key: 'isRegistrarOnly',
         value: function isRegistrarOnly() {
-            return this.user.type == 'registrar';
+            return this.user.type == 'head of academics';
+        }
+    }, {
+        key: 'isHAFOnly',
+        value: function isHAFOnly() {
+            return this.user.type == 'head of academics';
         }
     }, {
         key: 'isAdminOnly',
@@ -80593,7 +80598,12 @@ var Gate = function () {
     }, {
         key: 'isRegistrar',
         value: function isRegistrar() {
-            return this.user.type == 'registrar' || this.user.type == 'admin' || this.user.type == 'super admin';
+            return this.user.type == 'head of academics' || this.user.type == 'admin' || this.user.type == 'super admin';
+        }
+    }, {
+        key: 'isHAF',
+        value: function isHAF() {
+            return this.user.type == 'head of academics' || this.user.type == 'admin' || this.user.type == 'super admin';
         }
     }, {
         key: 'isAdministrative',
@@ -87126,9 +87136,11 @@ var render = function() {
                               _vm._v("Admin")
                             ]),
                             _vm._v(" "),
-                            _c("option", { attrs: { value: "registrar" } }, [
-                              _vm._v("Registrar")
-                            ]),
+                            _c(
+                              "option",
+                              { attrs: { value: "head of academics" } },
+                              [_vm._v("Head of Academics")]
+                            ),
                             _vm._v(" "),
                             _c(
                               "option",
@@ -87402,6 +87414,10 @@ module.exports = Component.exports
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
 //
 //
 //
@@ -88113,6 +88129,14 @@ var render = function() {
                           ]),
                           _vm._v(" "),
                           _c("td", [
+                            _vm._v(_vm._s(professor_schedule.STUnits))
+                          ]),
+                          _vm._v(" "),
+                          _c("td", [
+                            _vm._v(_vm._s(professor_schedule.TotalHours))
+                          ]),
+                          _vm._v(" "),
+                          _c("td", [
                             _vm._v(
                               "\n                                " +
                                 _vm._s(professor_schedule.Schedule) +
@@ -88202,6 +88226,10 @@ var staticRenderFns = [
         _c("th", { attrs: { scope: "col" } }, [_vm._v("Course Yr & Sec.")]),
         _vm._v(" "),
         _c("th", { attrs: { scope: "col" } }, [_vm._v("Subject Name")]),
+        _vm._v(" "),
+        _c("th", { attrs: { scope: "col" } }, [_vm._v("Units")]),
+        _vm._v(" "),
+        _c("th", { attrs: { scope: "col" } }, [_vm._v("Hours")]),
         _vm._v(" "),
         _c("th", { attrs: { scope: "col" } }, [_vm._v("Schedule")])
       ])
@@ -91436,6 +91464,29 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     data: function data() {
@@ -91449,13 +91500,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             buildings: {},
             floors: {},
             days: {},
+            times: {},
             editmode: false,
+            show: false,
             form: new Form({
                 BldgID: '', //md5
                 BFID: '',
                 Day: '',
                 TimeIn: '',
-                TImeOut: ''
+                TimeOut: ''
             })
         };
     },
@@ -91464,11 +91517,18 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         loadReport: function loadReport() {
             var _this = this;
 
-            axios.get('api/get_classroom_report/' + this.form.BldgID + '/' + this.form.BFID + '/' + this.form.Day).then(function (_ref) {
-                var data = _ref.data;
-                return _this.reports = data;
-            });
-
+            if (this.form.TimeOut == '') {
+                this.form.TimeOut = '00:00:00';
+                axios.get('api/get_classroom_report/' + this.form.BldgID + '/' + this.form.BFID + '/' + this.form.Day + '/' + this.form.TimeIn + '/' + this.form.TimeOut).then(function (_ref) {
+                    var data = _ref.data;
+                    return _this.reports = data;
+                });
+            } else {
+                axios.get('api/get_classroom_report/' + this.form.BldgID + '/' + this.form.BFID + '/' + this.form.Day + '/' + this.form.TimeIn + '/' + this.form.TimeOut).then(function (_ref2) {
+                    var data = _ref2.data;
+                    return _this.reports = data;
+                });
+            }
             this.year_today = this.js_date.getFullYear();
             this.month_today = this.js_date.getMonth();
 
@@ -91544,29 +91604,33 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 this.year_to = this.year_today;
             }
 
-            axios.get('api/building').then(function (_ref2) {
-                var data = _ref2.data;
+            axios.get('api/building').then(function (_ref3) {
+                var data = _ref3.data;
                 return _this2.buildings = data;
             });
-            axios.get('api/get_days').then(function (_ref3) {
-                var data = _ref3.data;
+            axios.get('api/get_days').then(function (_ref4) {
+                var data = _ref4.data;
                 return _this2.days = data;
+            });
+            axios.get('api/get_schedules').then(function (_ref5) {
+                var data = _ref5.data;
+                return _this2.times = data;
             });
             $('#show_modal').modal('show');
         },
         getFloors: function getFloors() {
             var _this3 = this;
 
-            axios.get('api/get_floors/' + this.form.BldgID).then(function (_ref4) {
-                var data = _ref4.data;
+            axios.get('api/get_floors/' + this.form.BldgID).then(function (_ref6) {
+                var data = _ref6.data;
                 return _this3.floors = data;
             });
         },
         getClassrooms: function getClassrooms() {
             var _this4 = this;
 
-            axios.get('api/get_classrooms/' + this.form.BFID).then(function (_ref5) {
-                var data = _ref5.data;
+            axios.get('api/get_classrooms/' + this.form.BFID).then(function (_ref7) {
+                var data = _ref7.data;
                 return _this4.classrooms = data;
             });
         },
@@ -91585,6 +91649,13 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             }).catch(function () {
                 _this5.$Progress.fail();
             });
+        },
+        changetimein: function changetimein() {
+            if (this.form.TimeIn == 'ALL' || this.form.TimeIn == "") {
+                this.show = false;
+            } else {
+                this.show = true;
+            }
         }
     },
     created: function created() {
@@ -91662,9 +91733,10 @@ var render = function() {
                       value:
                         _vm.form.BldgID != "" &&
                         _vm.form.BFID != "" &&
-                        _vm.form.Day != "",
+                        _vm.form.Day != "" &&
+                        _vm.form.TimeIn != "",
                       expression:
-                        "form.BldgID != '' && form.BFID != '' && form.Day != ''"
+                        "form.BldgID != '' && form.BFID != '' && form.Day != '' && form.TimeIn != ''"
                     }
                   ],
                   staticClass: "btn btn-success text-white",
@@ -91676,7 +91748,11 @@ var render = function() {
                       "/" +
                       _vm.form.BFID +
                       "/" +
-                      _vm.form.Day
+                      _vm.form.Day +
+                      "/" +
+                      _vm.form.TimeIn +
+                      "/" +
+                      _vm.form.TimeOut
                   }
                 },
                 [_c("span", { staticClass: "fas fa-print fa-fw" })]
@@ -91985,6 +92061,163 @@ var render = function() {
                       ],
                       1
                     ),
+                    _vm._v(" "),
+                    _c(
+                      "div",
+                      { staticClass: "form-group" },
+                      [
+                        _c(
+                          "select",
+                          {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.form.TimeIn,
+                                expression: "form.TimeIn"
+                              }
+                            ],
+                            staticClass: "form-control",
+                            class: {
+                              "is-invalid": _vm.form.errors.has("TimeIn")
+                            },
+                            attrs: { name: "TimeIn", id: "TimeIn" },
+                            on: {
+                              change: [
+                                function($event) {
+                                  var $$selectedVal = Array.prototype.filter
+                                    .call($event.target.options, function(o) {
+                                      return o.selected
+                                    })
+                                    .map(function(o) {
+                                      var val =
+                                        "_value" in o ? o._value : o.value
+                                      return val
+                                    })
+                                  _vm.$set(
+                                    _vm.form,
+                                    "TimeIn",
+                                    $event.target.multiple
+                                      ? $$selectedVal
+                                      : $$selectedVal[0]
+                                  )
+                                },
+                                function($event) {
+                                  _vm.changetimein()
+                                }
+                              ]
+                            }
+                          },
+                          [
+                            _c("option", { attrs: { value: "" } }, [
+                              _vm._v("Select Time Start")
+                            ]),
+                            _vm._v(" "),
+                            _c("option", { attrs: { value: "ALL" } }, [
+                              _vm._v("ALL")
+                            ]),
+                            _vm._v(" "),
+                            _vm._l(_vm.times, function(time) {
+                              return _c(
+                                "option",
+                                {
+                                  key: time.id,
+                                  domProps: { value: time.SchedTime }
+                                },
+                                [
+                                  _vm._v(
+                                    "\n                                " +
+                                      _vm._s(time.SchedTime) +
+                                      "\n                            "
+                                  )
+                                ]
+                              )
+                            })
+                          ],
+                          2
+                        ),
+                        _vm._v(" "),
+                        _c("has-error", {
+                          attrs: { form: _vm.form, field: "TimeIn" }
+                        })
+                      ],
+                      1
+                    ),
+                    _vm._v(" "),
+                    _vm.show
+                      ? _c(
+                          "div",
+                          { staticClass: "form-group" },
+                          [
+                            _c(
+                              "select",
+                              {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.form.TimeOut,
+                                    expression: "form.TimeOut"
+                                  }
+                                ],
+                                staticClass: "form-control",
+                                class: {
+                                  "is-invalid": _vm.form.errors.has("TimeOut")
+                                },
+                                attrs: { name: "TimeOut", id: "TimeOut" },
+                                on: {
+                                  change: function($event) {
+                                    var $$selectedVal = Array.prototype.filter
+                                      .call($event.target.options, function(o) {
+                                        return o.selected
+                                      })
+                                      .map(function(o) {
+                                        var val =
+                                          "_value" in o ? o._value : o.value
+                                        return val
+                                      })
+                                    _vm.$set(
+                                      _vm.form,
+                                      "TimeOut",
+                                      $event.target.multiple
+                                        ? $$selectedVal
+                                        : $$selectedVal[0]
+                                    )
+                                  }
+                                }
+                              },
+                              [
+                                _c("option", { attrs: { value: "" } }, [
+                                  _vm._v("Select Time Out")
+                                ]),
+                                _vm._v(" "),
+                                _vm._l(_vm.times, function(time) {
+                                  return _c(
+                                    "option",
+                                    {
+                                      key: time.id,
+                                      domProps: { value: time.SchedTime }
+                                    },
+                                    [
+                                      _vm._v(
+                                        "\n                                " +
+                                          _vm._s(time.SchedTime) +
+                                          "\n                            "
+                                      )
+                                    ]
+                                  )
+                                })
+                              ],
+                              2
+                            ),
+                            _vm._v(" "),
+                            _c("has-error", {
+                              attrs: { form: _vm.form, field: "TimeOut" }
+                            })
+                          ],
+                          1
+                        )
+                      : _vm._e(),
                     _vm._v(" "),
                     _vm._m(3)
                   ])
@@ -95469,12 +95702,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
-//
-//
-//
-//
-//
-//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     data: function data() {
@@ -95532,7 +95759,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 _this2.subject_id = data;
                 Fire.$emit('AfterCreate');
                 $('#addsubjectmodal').modal('hide');
-                _this2.editMeetings(_this2.subject_id.data['subject_id']);
+                //this.editMeetings(this.subject_id.data['subject_id'])
                 toast({
                     type: 'success',
                     title: 'Subject Created successfully'
@@ -95555,7 +95782,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             this.form.put('api/subject/' + this.form.SubjectID).then(function (data) {
                 _this3.subject_id = data;
                 $('#addsubjectmodal').modal('hide');
-                _this3.editMeetings(_this3.subject_id.data['subject_id']);
+                //this.editMeetings(this.subject_id.data['subject_id'])
                 Fire.$emit('AfterUpdate');
                 toast({
                     type: 'success',
@@ -95737,28 +95964,6 @@ var render = function() {
                             _vm._v(" "),
                             _c("td", [
                               _vm._v(_vm._s(subject.SubjectDescription))
-                            ]),
-                            _vm._v(" "),
-                            _c("td", [
-                              _c(
-                                "button",
-                                {
-                                  staticClass: "btn btn-info text-white",
-                                  on: {
-                                    click: function($event) {
-                                      _vm.editMeetings(subject.SubjectID)
-                                    }
-                                  }
-                                },
-                                [
-                                  _c("i", {
-                                    staticClass: "fas fa-edit text-white"
-                                  }),
-                                  _vm._v(
-                                    " Modify Meetings Info\n                                    "
-                                  )
-                                ]
-                              )
                             ]),
                             _vm._v(" "),
                             _c("td", [
@@ -95951,50 +96156,6 @@ var render = function() {
                         _vm._v(" "),
                         _c("has-error", {
                           attrs: { form: _vm.form, field: "SubjectDescription" }
-                        })
-                      ],
-                      1
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "div",
-                      { staticClass: "form-group" },
-                      [
-                        _c("input", {
-                          directives: [
-                            {
-                              name: "model",
-                              rawName: "v-model",
-                              value: _vm.form.SubjectMeetings,
-                              expression: "form.SubjectMeetings"
-                            }
-                          ],
-                          staticClass: "form-control",
-                          class: {
-                            "is-invalid": _vm.form.errors.has("SubjectMeetings")
-                          },
-                          attrs: {
-                            type: "number",
-                            name: "SubjectMeetings",
-                            placeholder: "# of Meetings"
-                          },
-                          domProps: { value: _vm.form.SubjectMeetings },
-                          on: {
-                            input: function($event) {
-                              if ($event.target.composing) {
-                                return
-                              }
-                              _vm.$set(
-                                _vm.form,
-                                "SubjectMeetings",
-                                $event.target.value
-                              )
-                            }
-                          }
-                        }),
-                        _vm._v(" "),
-                        _c("has-error", {
-                          attrs: { form: _vm.form, field: "SubjectMeetings" }
                         })
                       ],
                       1
@@ -96521,8 +96682,6 @@ var staticRenderFns = [
         _c("th", [_vm._v("Subject Code")]),
         _vm._v(" "),
         _c("th", [_vm._v("Subject Description")]),
-        _vm._v(" "),
-        _c("th", [_vm._v("Meetings")]),
         _vm._v(" "),
         _c("th", [_vm._v("Created At")]),
         _vm._v(" "),
@@ -97062,36 +97221,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 _this4.$Progress.fail();
             });
         },
-
-        // deleteCourse(id){
-        //     swal({
-        //         title: 'Are you sure?',
-        //         text: "You won't be able to revert this!",
-        //         type: 'warning',
-        //         showCancelButton: true,
-        //         confirmButtonColor: '#3085d6',
-        //         cancelButtonColor: '#d33',
-        //         confirmButtonText: 'Yes, delete it!'
-        //     }).then((result) => {
-        //         // Send ajax request to server
-        //         if(result.value){
-        //             this.form.delete('api/course/'+id).then(() => {
-        //                 toast({
-        //                     type: 'success',
-        //                     title: 'Course Deleted successfully'
-        //                 })
-        //                 Fire.$emit('AfterDelete');
-
-        //             }).catch(() =>{
-        //                 swal(
-        //                     'Error',
-        //                     'There was something wrong.',
-        //                     'error'
-        //                 )
-        //             })
-        //         }
-        //     })  
-        // },
         addsubjecttocoursemodal: function addsubjecttocoursemodal(year, CourseID) {
 
             //reseting input fields
@@ -97143,7 +97272,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             var _this6 = this;
 
             if (this.getsizeofarray(this.Subjects_Second) == 9) {
-                alert('maximum of 9 subjects for First Semester!');
+                alert('maximum of 9 subjects for Second Semester!');
             } else {
                 this.$Progress.start();
                 this.subject_course_second.fill({
@@ -97168,7 +97297,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             var _this7 = this;
 
             if (this.getsizeofarray(this.Subjects_Summer) == 9) {
-                alert('maximum of 9 subjects for First Semester!');
+                alert('maximum of 9 subjects for Summer Semester!');
             } else {
                 this.$Progress.start();
                 this.subject_course_summer.fill({
@@ -97328,38 +97457,6 @@ var render = function() {
                             _vm._v(" "),
                             _c("td", [
                               _vm._v(_vm._s(course.CourseYears) + " Years")
-                            ]),
-                            _vm._v(" "),
-                            _c("td", [
-                              _c(
-                                "div",
-                                _vm._l(course.CourseYears, function(year) {
-                                  return _c(
-                                    "button",
-                                    {
-                                      key: year.id,
-                                      staticClass: "btn btn-primary",
-                                      staticStyle: { margin: "2px" },
-                                      on: {
-                                        click: function($event) {
-                                          _vm.addsubjecttocoursemodal(
-                                            year,
-                                            course.CourseID
-                                          )
-                                        }
-                                      }
-                                    },
-                                    [
-                                      _vm._v(
-                                        "\n                                            " +
-                                          _vm._s(_vm._f("convert")(year)) +
-                                          "\n                                        "
-                                      )
-                                    ]
-                                  )
-                                }),
-                                0
-                              )
                             ]),
                             _vm._v(" "),
                             _c("td", [
@@ -98137,8 +98234,6 @@ var staticRenderFns = [
         _c("th", [_vm._v("Course Description")]),
         _vm._v(" "),
         _c("th", [_vm._v("# of Years")]),
-        _vm._v(" "),
-        _c("th", [_vm._v("Course Subjects Per year")]),
         _vm._v(" "),
         _c("th", [_vm._v("Modify")])
       ])
@@ -99410,111 +99505,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     data: function data() {
@@ -99523,9 +99513,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             section_id: '',
             expired_schedule: {},
             days: {},
+            times: {},
             one_classrooms: {},
             two_classrooms: {},
-            times: {},
             section_tagged_subjects: {},
             js_date: new Date(),
             year_today: '',
@@ -99538,7 +99528,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             available_sections: {},
             tagged_subject_sections: {},
             schedule_per_subjects: {},
-            tagged_schedules: {},
+            subject_meetings: {},
+            CType_options: {},
+            tagged_subjects_schedule: {},
             editmode: false,
             form: new Form({
                 SectionID: '',
@@ -99553,6 +99545,22 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 STYearFrom: '',
                 STYearTo: '',
                 STSem: '',
+                STUnits: '',
+                Day1: '',
+                Day2: '',
+                Time_in1: '',
+                Time_out1: '',
+                Time_in2: '',
+                Time_out2: '',
+                hours1: '',
+                hours2: '',
+                ctid1: '',
+                ctid2: '',
+                smid1: '',
+                smid2: '',
+                classroom1: '',
+                classroom2: '',
+                SubjectMeetings: '',
                 STYear: 0,
                 STStatus: 'Active'
 
@@ -99601,6 +99609,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 var data = _ref4.data;
                 return _this.times = data;
             });
+            axios.get('api/classroomTypeInfo').then(function (_ref5) {
+                var data = _ref5.data;
+                return _this.CType_options = data;
+            });
             this.year_today = this.js_date.getFullYear();
             this.month_today = this.js_date.getMonth();
 
@@ -99637,24 +99649,24 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 this.year_to = this.year_today;
             }
 
-            axios.get('api/update_status_subject_schedule/' + this.sem + '/' + this.year_from + '/' + this.year_to).then(function (_ref5) {
-                var data = _ref5.data;
+            axios.get('api/update_status_subject_schedule/' + this.sem + '/' + this.year_from + '/' + this.year_to).then(function (_ref6) {
+                var data = _ref6.data;
                 return _this.expired_schedule = data;
             });
         },
         loadSubjectSection: function loadSubjectSection() {
             var _this2 = this;
 
-            axios.get('api/tagged_subject_sections/' + this.form.SectionID + '/' + this.form.STSem + '/' + this.form.STYear + '/' + this.form.STYearFrom + '/' + this.form.STYearTo).then(function (_ref6) {
-                var data = _ref6.data;
+            axios.get('api/tagged_subject_sections/' + this.form.SectionID + '/' + this.form.STSem + '/' + this.form.STYear + '/' + this.form.STYearFrom + '/' + this.form.STYearTo).then(function (_ref7) {
+                var data = _ref7.data;
                 return _this2.tagged_subject_sections = data;
             });
         },
         loadschedulepersubject: function loadschedulepersubject(id) {
             var _this3 = this;
 
-            axios.get('api/schedule_per_subject/' + id).then(function (_ref7) {
-                var data = _ref7.data;
+            axios.get('api/schedule_per_subject/' + id).then(function (_ref8) {
+                var data = _ref8.data;
                 return _this3.schedule_per_subjects = data;
             });
         },
@@ -99692,8 +99704,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 this.form.STYearTo = this.year_today;
             }
 
-            axios.get('api/subjects_per_course_year_sem/' + this.form.CourseID + '/' + this.form.STYear + '/' + this.form.STSem).then(function (_ref8) {
-                var data = _ref8.data;
+            axios.get('api/subjects_per_course_year_sem/' + this.form.CourseID + '/' + this.form.STYear + '/' + this.form.STSem).then(function (_ref9) {
+                var data = _ref9.data;
                 return _this4.offered_subjects = data;
             });
 
@@ -99738,8 +99750,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 this.form.STYearTo = this.year_today;
             }
 
-            axios.get('api/subjects_per_course_year_sem/' + this.form.CourseID + '/' + this.form.STYear + '/' + this.form.STSem).then(function (_ref9) {
-                var data = _ref9.data;
+            axios.get('api/subjects_per_course_year_sem/' + this.form.CourseID + '/' + this.form.STYear + '/' + this.form.STSem).then(function (_ref10) {
+                var data = _ref10.data;
                 return _this5.offered_subjects = data;
             });
 
@@ -99747,66 +99759,113 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         },
         showaddsubjects: function showaddsubjects() {
             this.editmode = false;
+            this.form.STID = '';
             this.form.SubjectID = '';
             this.form.ProfessorID = '';
+            this.form.SubjectMeetings = '';
+            this.form.STUnits = '';
+            this.form.hours1 = '';
+            this.form.hours2 = '';
+            this.form.ctid1 = '';
+            this.form.ctid2 = '';
+            this.form.Day1 = '';
+            this.form.Day2 = '';
+            this.form.Time_in1 = '';
+            this.form.Time_in2 = '';
             $('#taggedSubjectsSchedule').modal('show');
         },
         showupdatesubject: function showupdatesubject(tagged_subject_section) {
+            var _this6 = this;
+
             this.editmode = true;
+            // this.form.STID = tagged_subject_section.STID;
+            // //axios.get('api/subjecttaggingschedules/'+this.form.STID).then(({ data }) => (this.section_tagged_subjects = data));
             this.form.STID = tagged_subject_section.STID;
-            //axios.get('api/subjecttaggingschedules/'+this.form.STID).then(({ data }) => (this.section_tagged_subjects = data));
             this.form.SubjectID = tagged_subject_section.SubjectID;
             this.form.ProfessorID = tagged_subject_section.ProfessorID;
+            this.form.STUnits = tagged_subject_section.STUnits;
+            axios.get('api/tagged_subjects_schedule/' + this.form.STID).then(function (_ref11) {
+                var data = _ref11.data;
+                return _this6.tagged_subjects_schedule = data;
+            });
+
             $('#taggedSubjectsSchedule').modal('show');
         },
         create_tagged_subjects: function create_tagged_subjects() {
-            var _this6 = this;
-
-            this.$Progress.start();
-            this.form.post('api/subjecttagging').then(function () {
-                Fire.$emit('AfterCreateSubject');
-                toast({
-                    type: 'success',
-                    title: 'Tagged Subjects Created successfully'
-                });
-                _this6.form.SubjectID = '';
-                _this6.form.ProfessorID = '';
-                _this6.$Progress.finish();
-                $('#taggedSubjectsSchedule').modal('hide');
-            }).catch(function () {
-                _this6.$Progress.fail();
-            });
-        },
-        update_tagged_subjects: function update_tagged_subjects() {
             var _this7 = this;
 
-            this.$Progress.start();
-            this.form.put('api/update_subjecttagging/' + this.form.STID).then(function (_ref10) {
-                var data = _ref10.data;
+            if (this.getsizeofarray(this.tagged_subject_sections) == 10) {
+                alert('maximum of 10 subjects for ' + this.sem);
+            } else {
+                this.$Progress.start();
+                this.form.post('api/subjecttagging').then(function (_ref12) {
+                    var data = _ref12.data;
 
-                if (data.type == 'success') {
-                    toast({
-                        type: data.type,
-                        title: data.message
-                    });
-                    Fire.$emit('AfterCreateSubject');
-                    _this7.form.SubjectID = '';
-                    _this7.form.ProfessorID = '';
-                    $('#taggedSubjectsSchedule').modal('hide');
-                }
-                if (data.type == 'error') {
-                    toast({
-                        type: data.type,
-                        title: data.message
-                    });
-                }
-                _this7.$Progress.finish();
-            }).catch(function () {
-                _this7.$Progress.fail();
-            });
+
+                    if (data.type == 'success') {
+                        Fire.$emit('AfterCreateSubject');
+                        toast({
+                            type: data.type,
+                            title: data.message
+                        });
+                        _this7.$Progress.finish();
+                        $('#taggedSubjectsSchedule').modal('hide');
+                        // this.form.SubjectID = ''
+                        // this.form.ProfessorID = ''  
+                        // this.form.SubjectMeetings = '';
+                        // this.form.hours1 = '';
+                        // this.form.hours2 = '';
+                        // this.form.Day1 = '';
+                        // this.form.Day2 = '';
+                        // this.form.Time_in1 = '';
+                        // this.form.Time_in2 = '';
+                        // this.form.smid1 = '';
+                        // this.form.smid2 = '';
+                        // this.subject_meetings = {};      
+                    } else {
+                        toast({
+                            type: data.type,
+                            title: data.message
+                        });
+                        _this7.$Progress.finish();
+                    }
+                }).catch(function () {
+                    _this7.$Progress.fail();
+                });
+            }
+        },
+        update_tagged_subjects: function update_tagged_subjects() {
+            var _this8 = this;
+
+            if (this.getsizeofarray(this.tagged_subject_sections) == 10) {
+                alert('maximum of 10 subjects for ' + this.sem);
+            } else {
+                this.$Progress.start();
+                this.form.put('api/update_subjecttagging/' + this.form.STID).then(function (_ref13) {
+                    var data = _ref13.data;
+
+                    if (data.type == 'success') {
+                        toast({
+                            type: data.type,
+                            title: data.message
+                        });
+                        Fire.$emit('AfterCreateSubject');
+                        $('#taggedSubjectsSchedule').modal('hide');
+                    }
+                    if (data.type == 'error') {
+                        toast({
+                            type: data.type,
+                            title: data.message
+                        });
+                    }
+                    _this8.$Progress.finish();
+                }).catch(function () {
+                    _this8.$Progress.fail();
+                });
+            }
         },
         deleteSubject: function deleteSubject(id) {
-            var _this8 = this;
+            var _this9 = this;
 
             swal({
                 title: 'Are you sure?',
@@ -99819,7 +99878,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             }).then(function (result) {
                 // Send ajax request to server
                 if (result.value) {
-                    _this8.form.delete('api/delete_subject_schedule/' + id).then(function () {
+                    _this9.form.delete('api/delete_subject_schedule/' + id).then(function () {
                         toast({
                             type: 'success',
                             title: 'Subject Schedule Deleted successfully'
@@ -99846,110 +99905,55 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             }
             return size;
         },
-        show_tagged_schedule: function show_tagged_schedule(tagged_schedule) {
-            var _this9 = this;
+        get_subject_meetings: function get_subject_meetings() {
+            // axios.get('api/get_subject_meetings/'+this.form.SubjectID)
+            // .then(({ data }) => (this.subject_meetings = data));
 
-            this.SMSched_Form1.reset();
-            this.SMSched_Form2.reset();
-            axios.get('api/get_subjectmeeting_schedule/' + tagged_schedule.STID).then(function (_ref11) {
-                var data = _ref11.data;
-                return _this9.tagged_schedules = data;
-            });
-
-            $('#tagged_schedule_meetings').modal('show');
+            if (this.form.SubjectMeetings != 0 && this.form.SubjectMeetings <= 2) {
+                this.subject_meetings = this.form.SubjectMeetings;
+            }
         },
         get_classroom1: function get_classroom1(id) {
             var _this10 = this;
 
-            axios.get('api/get_classroom_type/' + id).then(function (_ref12) {
-                var data = _ref12.data;
+            axios.get('api/get_classroom_type/' + id).then(function (_ref14) {
+                var data = _ref14.data;
                 return _this10.one_classrooms = data;
             });
         },
         get_classroom2: function get_classroom2(id) {
             var _this11 = this;
 
-            axios.get('api/get_classroom_type/' + id).then(function (_ref13) {
-                var data = _ref13.data;
+            axios.get('api/get_classroom_type/' + id).then(function (_ref15) {
+                var data = _ref15.data;
                 return _this11.two_classrooms = data;
             });
         },
-        update_tagged_meetings1: function update_tagged_meetings1() {
-            var _this12 = this;
-
-            this.$Progress.start();
-            this.SMSched_Form1.put('api/update_tagged_meetings/' + this.SMSched_Form1.STSID).then(function (_ref14) {
-                var data = _ref14.data;
-
-                if (data.type == 'success') {
-                    toast({
-                        type: data.type,
-                        title: data.message
-                    });
-                    Fire.$emit('AfterCreateSubject');
-                    $('#tagged_schedule_meetings').modal('hide');
-                }
-                if (data.type == 'error') {
-                    toast({
-                        type: data.type,
-                        title: data.message
-                    });
-                }
-                _this12.$Progress.finish();
-            }).catch(function () {
-                _this12.$Progress.fail();
-            });
-        },
-        update_tagged_meetings2: function update_tagged_meetings2() {
-            var _this13 = this;
-
-            this.$Progress.start();
-            this.SMSched_Form2.put('api/update_tagged_meetings/' + this.SMSched_Form1.STSID).then(function (_ref15) {
-                var data = _ref15.data;
-
-                if (data.type == 'success') {
-                    toast({
-                        type: data.type,
-                        title: data.message
-                    });
-                    Fire.$emit('AfterCreateSubject');
-                    $('#tagged_schedule_meetings').modal('hide');
-                }
-                if (data.type == 'error') {
-                    toast({
-                        type: data.type,
-                        title: data.message
-                    });
-                }
-                _this13.$Progress.finish();
-            }).catch(function () {
-                _this13.$Progress.fail();
-            });
-        }
+        get_tagged_subjects_schedule: function get_tagged_subjects_schedule(id) {}
     },
     created: function created() {
-        var _this14 = this;
+        var _this12 = this;
 
         //this.loadSectionAvailable();
 
         Fire.$on('AfterCreateSubject', function () {
-            _this14.loadSubjectSection();
+            _this12.loadSubjectSection();
         });
 
         Fire.$on('AfterDeleteSubject', function () {
-            _this14.loadSubjectSection();
+            _this12.loadSubjectSection();
         });
 
         Fire.$on('AfterCreate', function () {
-            _this14.loadSectionAvailable();
+            _this12.loadSectionAvailable();
         });
 
         Fire.$on('AfterDelete', function () {
-            _this14.loadSectionAvailable();
+            _this12.loadSectionAvailable();
         });
 
         Fire.$on('AfterUpdate', function () {
-            _this14.loadSectionAvailable();
+            _this12.loadSectionAvailable();
         });
     },
     mounted: function mounted() {
@@ -99965,24 +99969,70 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     watch: {
         // detect all the changes in the table
         available_sections: function available_sections(val) {
-            var _this15 = this;
+            var _this13 = this;
 
             this.dt.destroy();
             this.$nextTick(function () {
-                _this15.dt = $('#section_available_table').DataTable();
+                _this13.dt = $('#section_available_table').DataTable();
             });
         },
-        tagged_schedules: function tagged_schedules(val) {
-            if (this.getsizeofarray(this.tagged_schedules) == 1) {
-                this.SMSched_Form1.fill(this.tagged_schedules[0]);
-                this.get_classroom1(this.SMSched_Form1.SMID);
-            }
 
-            if (this.getsizeofarray(this.tagged_schedules) == 2) {
-                this.SMSched_Form1.fill(this.tagged_schedules[0]);
-                this.SMSched_Form2.fill(this.tagged_schedules[1]);
-                this.get_classroom1(this.SMSched_Form1.SMID);
-                this.get_classroom2(this.SMSched_Form2.SMID);
+        // subject_meetings(val){
+        //     if(this.getsizeofarray(this.subject_meetings) == 1){
+        //         this.get_classroom1(this.subject_meetings[0].SMID);
+        //         this.form.SubjectMeetings = this.subject_meetings[0].SubjectMeetings;
+        //         this.form.hours1 = this.subject_meetings[0].SubjectHours;
+        //         this.form.ctid1 = this.subject_meetings[0].CTID;
+        //         this.form.smid1 = this.subject_meetings[0].SMID;
+        //     }
+        //     if(this.getsizeofarray(this.subject_meetings) == 2){
+        //         this.get_classroom1(this.subject_meetings[0].SMID);
+        //         this.get_classroom2(this.subject_meetings[1].SMID);
+        //         this.form.SubjectMeetings = this.subject_meetings[0].SubjectMeetings;
+        //         this.form.hours1 = this.subject_meetings[0].SubjectHours;
+        //         this.form.hours2 = this.subject_meetings[1].SubjectHours;
+        //         this.form.ctid1 = this.subject_meetings[0].CTID;
+        //         this.form.ctid2 = this.subject_meetings[1].CTID;
+        //         this.form.smid1 = this.subject_meetings[0].SMID;
+        //         this.form.smid2 = this.subject_meetings[1].SMID;
+        //     }                
+        // },
+        tagged_subjects_schedule: function tagged_subjects_schedule(val) {
+            var _this14 = this;
+
+            if (this.getsizeofarray(this.tagged_subjects_schedule) == 1) {
+                this.form.SubjectMeetings = 1;
+                this.form.ctid1 = this.tagged_subjects_schedule[0].ClassroomType;
+                this.form.Day1 = this.tagged_subjects_schedule[0].STSDay;
+                this.form.hours1 = this.tagged_subjects_schedule[0].STSHours;
+                this.form.Time_in1 = this.tagged_subjects_schedule[0].STSTimeStart;
+                this.form.classroom1 = this.tagged_subjects_schedule[0].ClassroomID;
+                axios.get('api/get_classroom_options/' + this.form.ctid1).then(function (_ref16) {
+                    var data = _ref16.data;
+                    return _this14.one_classrooms = data;
+                });
+            } else {
+                if (this.getsizeofarray(this.tagged_subjects_schedule) == 2) {
+                    this.form.SubjectMeetings = 2;
+                    this.form.ctid1 = this.tagged_subjects_schedule[0].ClassroomType;
+                    this.form.ctid2 = this.tagged_subjects_schedule[1].ClassroomType;
+                    this.form.Day1 = this.tagged_subjects_schedule[0].STSDay;
+                    this.form.Day2 = this.tagged_subjects_schedule[1].STSDay;
+                    this.form.hours1 = this.tagged_subjects_schedule[0].STSHours;
+                    this.form.hours2 = this.tagged_subjects_schedule[1].STSHours;
+                    this.form.Time_in1 = this.tagged_subjects_schedule[0].STSTimeStart;
+                    this.form.Time_in2 = this.tagged_subjects_schedule[1].STSTimeStart;
+                    this.form.classroom1 = this.tagged_subjects_schedule[0].ClassroomID;
+                    this.form.classroom2 = this.tagged_subjects_schedule[1].ClassroomID;
+                    axios.get('api/get_classroom_options/' + this.form.ctid1).then(function (_ref17) {
+                        var data = _ref17.data;
+                        return _this14.one_classrooms = data;
+                    });
+                    axios.get('api/get_classroom_options/' + this.form.ctid2).then(function (_ref18) {
+                        var data = _ref18.data;
+                        return _this14.two_classrooms = data;
+                    });
+                }
             }
         }
     }
@@ -100158,7 +100208,7 @@ var render = function() {
                   _c("h5", [
                     _vm._v(_vm._s(_vm.sem) + " "),
                     _c("small", { staticClass: "text-red" }, [
-                      _vm._v("(maximum of 9 subjects per sem)")
+                      _vm._v("(maximum of 10 subjects per sem)")
                     ])
                   ]),
                   _vm._v(" "),
@@ -100251,6 +100301,16 @@ var render = function() {
                                 ]),
                                 _vm._v(" "),
                                 _c("td", [
+                                  _vm._v(_vm._s(tagged_subject_section.STUnits))
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _vm._v(
+                                    _vm._s(tagged_subject_section.TotalHours)
+                                  )
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [
                                   _vm._v(
                                     "\n                                    " +
                                       _vm._s(tagged_subject_section.Schedule) +
@@ -100315,318 +100375,6 @@ var render = function() {
     _c(
       "div",
       {
-        staticClass: "modal fade bd-example-modal-lg",
-        attrs: {
-          id: "taggedsubjects",
-          tabindex: "-1",
-          role: "dialog",
-          "aria-labelledby": "taggedsubjectsLabel",
-          "aria-hidden": "true"
-        }
-      },
-      [
-        _c(
-          "div",
-          { staticClass: "modal-dialog modal-lg", attrs: { role: "document" } },
-          [
-            _c("div", { staticClass: "modal-content" }, [
-              _vm._m(3),
-              _vm._v(" "),
-              _c("div", { staticClass: "modal-body" }, [
-                _c("div", { staticClass: "row" }, [
-                  _c("div", { staticClass: "col-md-12 col-sm-12 col-xs-12" }, [
-                    _c("div", { staticClass: "form-group" }, [
-                      _c("h5", [
-                        _vm._v(
-                          "Sy " +
-                            _vm._s(_vm.year_from) +
-                            " - " +
-                            _vm._s(_vm.year_to)
-                        )
-                      ]),
-                      _vm._v(" "),
-                      _c("h5", [
-                        _vm._v(
-                          _vm._s(_vm._f("convert")(this.form.STYear)) + " year"
-                        )
-                      ]),
-                      _vm._v(" "),
-                      _c("h5", [
-                        _vm._v(_vm._s(_vm.sem) + " "),
-                        _c("small", { staticClass: "text-red" }, [
-                          _vm._v("(maximum of 9 subjects per sem)")
-                        ])
-                      ])
-                    ]),
-                    _vm._v(" "),
-                    _c(
-                      "form",
-                      {
-                        on: {
-                          submit: function($event) {
-                            $event.preventDefault()
-                            _vm.create_tagged_subjects()
-                          }
-                        }
-                      },
-                      [
-                        _c("div", { staticClass: "form-row" }, [
-                          _c(
-                            "div",
-                            { staticClass: "col" },
-                            [
-                              _c(
-                                "select",
-                                {
-                                  directives: [
-                                    {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value: _vm.form.SubjectID,
-                                      expression: "form.SubjectID"
-                                    }
-                                  ],
-                                  staticClass: "form-control",
-                                  class: {
-                                    "is-invalid": _vm.form.errors.has(
-                                      "SubjectID"
-                                    )
-                                  },
-                                  attrs: { id: "SubjectID", name: "SubjectID" },
-                                  on: {
-                                    change: function($event) {
-                                      var $$selectedVal = Array.prototype.filter
-                                        .call($event.target.options, function(
-                                          o
-                                        ) {
-                                          return o.selected
-                                        })
-                                        .map(function(o) {
-                                          var val =
-                                            "_value" in o ? o._value : o.value
-                                          return val
-                                        })
-                                      _vm.$set(
-                                        _vm.form,
-                                        "SubjectID",
-                                        $event.target.multiple
-                                          ? $$selectedVal
-                                          : $$selectedVal[0]
-                                      )
-                                    }
-                                  }
-                                },
-                                [
-                                  _c("option", { attrs: { value: "" } }, [
-                                    _vm._v("Select Subject")
-                                  ]),
-                                  _vm._v(" "),
-                                  _vm._l(_vm.offered_subjects, function(
-                                    offered_subject
-                                  ) {
-                                    return _c(
-                                      "option",
-                                      {
-                                        key: offered_subject.id,
-                                        domProps: {
-                                          value: offered_subject.SubjectID
-                                        }
-                                      },
-                                      [
-                                        _vm._v(
-                                          _vm._s(
-                                            offered_subject.SubjectDescription
-                                          )
-                                        )
-                                      ]
-                                    )
-                                  })
-                                ],
-                                2
-                              ),
-                              _vm._v(" "),
-                              _c("has-error", {
-                                attrs: { form: _vm.form, field: "SubjectID" }
-                              })
-                            ],
-                            1
-                          ),
-                          _vm._v(" "),
-                          _c(
-                            "div",
-                            { staticClass: "col" },
-                            [
-                              _c(
-                                "select",
-                                {
-                                  directives: [
-                                    {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value: _vm.form.ProfessorID,
-                                      expression: "form.ProfessorID"
-                                    }
-                                  ],
-                                  staticClass: "form-control",
-                                  class: {
-                                    "is-invalid": _vm.form.errors.has(
-                                      "ProfessorID"
-                                    )
-                                  },
-                                  attrs: {
-                                    id: "ProfessorID",
-                                    name: "ProfessorID"
-                                  },
-                                  on: {
-                                    change: function($event) {
-                                      var $$selectedVal = Array.prototype.filter
-                                        .call($event.target.options, function(
-                                          o
-                                        ) {
-                                          return o.selected
-                                        })
-                                        .map(function(o) {
-                                          var val =
-                                            "_value" in o ? o._value : o.value
-                                          return val
-                                        })
-                                      _vm.$set(
-                                        _vm.form,
-                                        "ProfessorID",
-                                        $event.target.multiple
-                                          ? $$selectedVal
-                                          : $$selectedVal[0]
-                                      )
-                                    }
-                                  }
-                                },
-                                [
-                                  _c("option", { attrs: { value: "" } }, [
-                                    _vm._v("Select Professor")
-                                  ]),
-                                  _vm._v(" "),
-                                  _vm._l(_vm.professors, function(professor) {
-                                    return _c(
-                                      "option",
-                                      {
-                                        key: professor.id,
-                                        domProps: {
-                                          value: professor.ProfessorID
-                                        }
-                                      },
-                                      [_vm._v(_vm._s(professor.ProfessorName))]
-                                    )
-                                  })
-                                ],
-                                2
-                              ),
-                              _vm._v(" "),
-                              _c("has-error", {
-                                attrs: { form: _vm.form, field: "ProfessorID" }
-                              })
-                            ],
-                            1
-                          ),
-                          _vm._v(" "),
-                          _vm._m(4)
-                        ])
-                      ]
-                    )
-                  ])
-                ]),
-                _vm._v(" "),
-                _c("div", { staticClass: "row" }, [
-                  _c(
-                    "div",
-                    { staticClass: "col-md-12 col-sm-12 col-xs-12 mt-3" },
-                    [
-                      _c("div", { staticClass: "table-responsive" }, [
-                        _c("table", { staticClass: "table table-hover" }, [
-                          _vm._m(5),
-                          _vm._v(" "),
-                          _c(
-                            "tbody",
-                            [
-                              _c("div", { attrs: { hidden: "" } }, [
-                                _vm._v(_vm._s((_vm.id = 1)))
-                              ]),
-                              _vm._v(" "),
-                              _vm._l(_vm.tagged_subject_sections, function(
-                                tagged_subject_section
-                              ) {
-                                return _c(
-                                  "tr",
-                                  { key: tagged_subject_section.id },
-                                  [
-                                    _c("td", [_vm._v(_vm._s(_vm.id++))]),
-                                    _vm._v(" "),
-                                    _c("td", [
-                                      _vm._v(
-                                        _vm._s(
-                                          tagged_subject_section.SubjectDescription
-                                        )
-                                      )
-                                    ]),
-                                    _vm._v(" "),
-                                    _c("td", [
-                                      _vm._v(
-                                        _vm._s(
-                                          tagged_subject_section.ProfessorName
-                                        )
-                                      )
-                                    ]),
-                                    _vm._v(" "),
-                                    _c("td", [
-                                      _vm._v(
-                                        "\n                                                " +
-                                          _vm._s(
-                                            tagged_subject_section.Schedule
-                                          ) +
-                                          "\n                                                \n                                            "
-                                      )
-                                    ]),
-                                    _vm._v(" "),
-                                    _c("td", [
-                                      _c(
-                                        "a",
-                                        {
-                                          attrs: { href: "#" },
-                                          on: {
-                                            click: function($event) {
-                                              _vm.deleteSubject(
-                                                tagged_subject_section.STID
-                                              )
-                                            }
-                                          }
-                                        },
-                                        [
-                                          _c("i", {
-                                            staticClass: "fas fa-trash text-red"
-                                          })
-                                        ]
-                                      )
-                                    ])
-                                  ]
-                                )
-                              })
-                            ],
-                            2
-                          )
-                        ])
-                      ])
-                    ]
-                  )
-                ])
-              ])
-            ])
-          ]
-        )
-      ]
-    ),
-    _vm._v(" "),
-    _c(
-      "div",
-      {
         staticClass: "modal fade",
         attrs: {
           id: "taggedSubjectsSchedule",
@@ -100639,10 +100387,10 @@ var render = function() {
       [
         _c(
           "div",
-          { staticClass: "modal-dialog", attrs: { role: "document" } },
+          { staticClass: "modal-dialog modal-lg", attrs: { role: "document" } },
           [
             _c("div", { staticClass: "modal-content" }, [
-              _vm._m(6),
+              _vm._m(3),
               _vm._v(" "),
               _c("div", { staticClass: "modal-body" }, [
                 _c(
@@ -100658,147 +100406,1031 @@ var render = function() {
                     }
                   },
                   [
-                    _c(
-                      "div",
-                      { staticClass: "form-group" },
-                      [
+                    _c("div", { staticClass: "row" }, [
+                      _c("div", { staticClass: "col-md-6" }, [
+                        _c("p", [_vm._v("Tagged Subject Information")]),
+                        _vm._v(" "),
                         _c(
-                          "select",
-                          {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.form.SubjectID,
-                                expression: "form.SubjectID"
-                              }
-                            ],
-                            staticClass: "form-control",
-                            class: {
-                              "is-invalid": _vm.form.errors.has("SubjectID")
-                            },
-                            attrs: {
-                              id: "SubjectID",
-                              name: "SubjectID",
-                              disabled: _vm.editmode == true
-                            },
-                            on: {
-                              change: function($event) {
-                                var $$selectedVal = Array.prototype.filter
-                                  .call($event.target.options, function(o) {
-                                    return o.selected
-                                  })
-                                  .map(function(o) {
-                                    var val = "_value" in o ? o._value : o.value
-                                    return val
-                                  })
-                                _vm.$set(
-                                  _vm.form,
-                                  "SubjectID",
-                                  $event.target.multiple
-                                    ? $$selectedVal
-                                    : $$selectedVal[0]
-                                )
-                              }
-                            }
-                          },
+                          "div",
+                          { staticClass: "form-group" },
                           [
-                            _c("option", { attrs: { value: "" } }, [
-                              _vm._v("Select Subject")
-                            ]),
-                            _vm._v(" "),
-                            _vm._l(_vm.offered_subjects, function(
-                              offered_subject
-                            ) {
-                              return _c(
-                                "option",
-                                {
-                                  key: offered_subject.id,
-                                  domProps: { value: offered_subject.SubjectID }
+                            _c(
+                              "select",
+                              {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.form.SubjectID,
+                                    expression: "form.SubjectID"
+                                  }
+                                ],
+                                staticClass: "form-control",
+                                class: {
+                                  "is-invalid": _vm.form.errors.has("SubjectID")
                                 },
-                                [
-                                  _vm._v(
-                                    _vm._s(offered_subject.SubjectDescription)
+                                attrs: {
+                                  id: "SubjectID",
+                                  name: "SubjectID",
+                                  disabled: _vm.editmode == true
+                                },
+                                on: {
+                                  change: function($event) {
+                                    var $$selectedVal = Array.prototype.filter
+                                      .call($event.target.options, function(o) {
+                                        return o.selected
+                                      })
+                                      .map(function(o) {
+                                        var val =
+                                          "_value" in o ? o._value : o.value
+                                        return val
+                                      })
+                                    _vm.$set(
+                                      _vm.form,
+                                      "SubjectID",
+                                      $event.target.multiple
+                                        ? $$selectedVal
+                                        : $$selectedVal[0]
+                                    )
+                                  }
+                                }
+                              },
+                              [
+                                _c("option", { attrs: { value: "" } }, [
+                                  _vm._v("Select Subject")
+                                ]),
+                                _vm._v(" "),
+                                _vm._l(_vm.offered_subjects, function(
+                                  offered_subject
+                                ) {
+                                  return _c(
+                                    "option",
+                                    {
+                                      key: offered_subject.id,
+                                      domProps: {
+                                        value: offered_subject.SubjectID
+                                      }
+                                    },
+                                    [
+                                      _vm._v(
+                                        _vm._s(
+                                          offered_subject.SubjectDescription
+                                        )
+                                      )
+                                    ]
                                   )
-                                ]
-                              )
-                            })
-                          ],
-                          2
-                        ),
-                        _vm._v(" "),
-                        _c("has-error", {
-                          attrs: { form: _vm.form, field: "SubjectID" }
-                        })
-                      ],
-                      1
-                    ),
-                    _vm._v(" "),
-                    _c(
-                      "div",
-                      { staticClass: "form-group" },
-                      [
-                        _c(
-                          "select",
-                          {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.form.ProfessorID,
-                                expression: "form.ProfessorID"
-                              }
-                            ],
-                            staticClass: "form-control",
-                            class: {
-                              "is-invalid": _vm.form.errors.has("ProfessorID")
-                            },
-                            attrs: { id: "ProfessorID", name: "ProfessorID" },
-                            on: {
-                              change: function($event) {
-                                var $$selectedVal = Array.prototype.filter
-                                  .call($event.target.options, function(o) {
-                                    return o.selected
-                                  })
-                                  .map(function(o) {
-                                    var val = "_value" in o ? o._value : o.value
-                                    return val
-                                  })
-                                _vm.$set(
-                                  _vm.form,
-                                  "ProfessorID",
-                                  $event.target.multiple
-                                    ? $$selectedVal
-                                    : $$selectedVal[0]
-                                )
-                              }
-                            }
-                          },
-                          [
-                            _c("option", { attrs: { value: "" } }, [
-                              _vm._v("Select Professor")
-                            ]),
+                                })
+                              ],
+                              2
+                            ),
                             _vm._v(" "),
-                            _vm._l(_vm.professors, function(professor) {
-                              return _c(
-                                "option",
-                                {
-                                  key: professor.id,
-                                  domProps: { value: professor.ProfessorID }
-                                },
-                                [_vm._v(_vm._s(professor.ProfessorName))]
-                              )
+                            _c("has-error", {
+                              attrs: { form: _vm.form, field: "SubjectID" }
                             })
                           ],
-                          2
+                          1
                         ),
                         _vm._v(" "),
-                        _c("has-error", {
-                          attrs: { form: _vm.form, field: "ProfessorID" }
-                        })
-                      ],
-                      1
-                    ),
+                        _c(
+                          "div",
+                          { staticClass: "form-group" },
+                          [
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.form.STUnits,
+                                  expression: "form.STUnits"
+                                }
+                              ],
+                              staticClass: "form-control",
+                              class: {
+                                "is-invalid": _vm.form.errors.has("STUnits")
+                              },
+                              attrs: {
+                                type: "number",
+                                name: "STUnits",
+                                placeholder: "# of Units"
+                              },
+                              domProps: { value: _vm.form.STUnits },
+                              on: {
+                                input: function($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.$set(
+                                    _vm.form,
+                                    "STUnits",
+                                    $event.target.value
+                                  )
+                                }
+                              }
+                            }),
+                            _vm._v(" "),
+                            _c("has-error", {
+                              attrs: { form: _vm.form, field: "STUnits" }
+                            })
+                          ],
+                          1
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "form-group" },
+                          [
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.form.SubjectMeetings,
+                                  expression: "form.SubjectMeetings"
+                                }
+                              ],
+                              staticClass: "form-control",
+                              class: {
+                                "is-invalid": _vm.form.errors.has(
+                                  "SubjectMeetings"
+                                )
+                              },
+                              attrs: {
+                                type: "number",
+                                name: "SubjectMeetings",
+                                placeholder: "# of Meetings",
+                                disabled: _vm.editmode == true
+                              },
+                              domProps: { value: _vm.form.SubjectMeetings },
+                              on: {
+                                input: function($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.$set(
+                                    _vm.form,
+                                    "SubjectMeetings",
+                                    $event.target.value
+                                  )
+                                }
+                              }
+                            }),
+                            _vm._v(" "),
+                            _c("has-error", {
+                              attrs: {
+                                form: _vm.form,
+                                field: "SubjectMeetings"
+                              }
+                            })
+                          ],
+                          1
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "form-group" },
+                          [
+                            _c(
+                              "select",
+                              {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.form.ProfessorID,
+                                    expression: "form.ProfessorID"
+                                  }
+                                ],
+                                staticClass: "form-control",
+                                class: {
+                                  "is-invalid": _vm.form.errors.has(
+                                    "ProfessorID"
+                                  )
+                                },
+                                attrs: {
+                                  id: "ProfessorID",
+                                  name: "ProfessorID"
+                                },
+                                on: {
+                                  change: function($event) {
+                                    var $$selectedVal = Array.prototype.filter
+                                      .call($event.target.options, function(o) {
+                                        return o.selected
+                                      })
+                                      .map(function(o) {
+                                        var val =
+                                          "_value" in o ? o._value : o.value
+                                        return val
+                                      })
+                                    _vm.$set(
+                                      _vm.form,
+                                      "ProfessorID",
+                                      $event.target.multiple
+                                        ? $$selectedVal
+                                        : $$selectedVal[0]
+                                    )
+                                  }
+                                }
+                              },
+                              [
+                                _c("option", { attrs: { value: "" } }, [
+                                  _vm._v("Select Professor")
+                                ]),
+                                _vm._v(" "),
+                                _vm._l(_vm.professors, function(professor) {
+                                  return _c(
+                                    "option",
+                                    {
+                                      key: professor.id,
+                                      domProps: { value: professor.ProfessorID }
+                                    },
+                                    [_vm._v(_vm._s(professor.ProfessorName))]
+                                  )
+                                })
+                              ],
+                              2
+                            ),
+                            _vm._v(" "),
+                            _c("has-error", {
+                              attrs: { form: _vm.form, field: "ProfessorID" }
+                            })
+                          ],
+                          1
+                        )
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "col-md-6" }, [
+                        _vm.form.SubjectMeetings == 1 ||
+                        _vm.form.SubjectMeetings == 2
+                          ? _c("div", [
+                              _c("p", [_vm._v("Meeting 1")]),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "form-group" },
+                                [
+                                  _c(
+                                    "select",
+                                    {
+                                      directives: [
+                                        {
+                                          name: "model",
+                                          rawName: "v-model",
+                                          value: _vm.form.ctid1,
+                                          expression: "form.ctid1"
+                                        }
+                                      ],
+                                      staticClass: "form-control",
+                                      class: {
+                                        "is-invalid": _vm.form.errors.has(
+                                          "ctid1"
+                                        )
+                                      },
+                                      attrs: { name: "ctid1", id: "ctid1" },
+                                      on: {
+                                        change: function($event) {
+                                          var $$selectedVal = Array.prototype.filter
+                                            .call(
+                                              $event.target.options,
+                                              function(o) {
+                                                return o.selected
+                                              }
+                                            )
+                                            .map(function(o) {
+                                              var val =
+                                                "_value" in o
+                                                  ? o._value
+                                                  : o.value
+                                              return val
+                                            })
+                                          _vm.$set(
+                                            _vm.form,
+                                            "ctid1",
+                                            $event.target.multiple
+                                              ? $$selectedVal
+                                              : $$selectedVal[0]
+                                          )
+                                        }
+                                      }
+                                    },
+                                    [
+                                      _c("option", { attrs: { value: "" } }, [
+                                        _vm._v("Select Classroom Type")
+                                      ]),
+                                      _vm._v(" "),
+                                      _vm._l(_vm.CType_options, function(
+                                        CType_option
+                                      ) {
+                                        return _c(
+                                          "option",
+                                          {
+                                            key: CType_option.id,
+                                            domProps: {
+                                              value: CType_option.CTID
+                                            }
+                                          },
+                                          [
+                                            _vm._v(
+                                              "\n                                                " +
+                                                _vm._s(CType_option.CTName) +
+                                                "\n                                            "
+                                            )
+                                          ]
+                                        )
+                                      })
+                                    ],
+                                    2
+                                  ),
+                                  _vm._v(" "),
+                                  _c("has-error", {
+                                    attrs: { form: _vm.form, field: "ctid1" }
+                                  })
+                                ],
+                                1
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "form-group" },
+                                [
+                                  _c(
+                                    "select",
+                                    {
+                                      directives: [
+                                        {
+                                          name: "model",
+                                          rawName: "v-model",
+                                          value: _vm.form.Day1,
+                                          expression: "form.Day1"
+                                        }
+                                      ],
+                                      staticClass: "form-control",
+                                      class: {
+                                        "is-invalid": _vm.form.errors.has(
+                                          "Day1"
+                                        )
+                                      },
+                                      attrs: { id: "Day1", name: "Day1" },
+                                      on: {
+                                        change: function($event) {
+                                          var $$selectedVal = Array.prototype.filter
+                                            .call(
+                                              $event.target.options,
+                                              function(o) {
+                                                return o.selected
+                                              }
+                                            )
+                                            .map(function(o) {
+                                              var val =
+                                                "_value" in o
+                                                  ? o._value
+                                                  : o.value
+                                              return val
+                                            })
+                                          _vm.$set(
+                                            _vm.form,
+                                            "Day1",
+                                            $event.target.multiple
+                                              ? $$selectedVal
+                                              : $$selectedVal[0]
+                                          )
+                                        }
+                                      }
+                                    },
+                                    [
+                                      _c("option", { attrs: { value: "" } }, [
+                                        _vm._v("Select Day")
+                                      ]),
+                                      _vm._v(" "),
+                                      _vm._l(_vm.days, function(day) {
+                                        return _c(
+                                          "option",
+                                          {
+                                            key: day.id,
+                                            domProps: { value: day.DayName }
+                                          },
+                                          [_vm._v(_vm._s(day.DayName))]
+                                        )
+                                      })
+                                    ],
+                                    2
+                                  ),
+                                  _vm._v(" "),
+                                  _c("has-error", {
+                                    attrs: { form: _vm.form, field: "Day1" }
+                                  })
+                                ],
+                                1
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "form-group" },
+                                [
+                                  _c("input", {
+                                    directives: [
+                                      {
+                                        name: "model",
+                                        rawName: "v-model",
+                                        value: _vm.form.hours1,
+                                        expression: "form.hours1"
+                                      }
+                                    ],
+                                    staticClass: "form-control",
+                                    class: {
+                                      "is-invalid": _vm.form.errors.has(
+                                        "hours1"
+                                      )
+                                    },
+                                    attrs: {
+                                      type: "number",
+                                      step: "0.1",
+                                      name: "hours1",
+                                      placeholder: "Total Hours"
+                                    },
+                                    domProps: { value: _vm.form.hours1 },
+                                    on: {
+                                      input: function($event) {
+                                        if ($event.target.composing) {
+                                          return
+                                        }
+                                        _vm.$set(
+                                          _vm.form,
+                                          "hours1",
+                                          $event.target.value
+                                        )
+                                      }
+                                    }
+                                  }),
+                                  _vm._v(" "),
+                                  _c("has-error", {
+                                    attrs: { form: _vm.form, field: "hours1" }
+                                  })
+                                ],
+                                1
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "form-group" },
+                                [
+                                  _c(
+                                    "select",
+                                    {
+                                      directives: [
+                                        {
+                                          name: "model",
+                                          rawName: "v-model",
+                                          value: _vm.form.Time_in1,
+                                          expression: "form.Time_in1"
+                                        }
+                                      ],
+                                      staticClass: "form-control",
+                                      class: {
+                                        "is-invalid": _vm.form.errors.has(
+                                          "Time_in1"
+                                        )
+                                      },
+                                      attrs: {
+                                        id: "Time_in1",
+                                        name: "Time_in1"
+                                      },
+                                      on: {
+                                        change: function($event) {
+                                          var $$selectedVal = Array.prototype.filter
+                                            .call(
+                                              $event.target.options,
+                                              function(o) {
+                                                return o.selected
+                                              }
+                                            )
+                                            .map(function(o) {
+                                              var val =
+                                                "_value" in o
+                                                  ? o._value
+                                                  : o.value
+                                              return val
+                                            })
+                                          _vm.$set(
+                                            _vm.form,
+                                            "Time_in1",
+                                            $event.target.multiple
+                                              ? $$selectedVal
+                                              : $$selectedVal[0]
+                                          )
+                                        }
+                                      }
+                                    },
+                                    [
+                                      _c("option", { attrs: { value: "" } }, [
+                                        _vm._v("Select Time Start")
+                                      ]),
+                                      _vm._v(" "),
+                                      _vm._l(_vm.times, function(time) {
+                                        return _c(
+                                          "option",
+                                          {
+                                            key: time.id,
+                                            domProps: { value: time.SchedTime }
+                                          },
+                                          [_vm._v(_vm._s(time.SchedTime))]
+                                        )
+                                      })
+                                    ],
+                                    2
+                                  ),
+                                  _vm._v(" "),
+                                  _c("has-error", {
+                                    attrs: { form: _vm.form, field: "Time_in1" }
+                                  })
+                                ],
+                                1
+                              ),
+                              _vm._v(" "),
+                              _vm.editmode
+                                ? _c(
+                                    "div",
+                                    { staticClass: "form-group" },
+                                    [
+                                      _c(
+                                        "select",
+                                        {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: _vm.form.classroom1,
+                                              expression: "form.classroom1"
+                                            }
+                                          ],
+                                          staticClass: "form-control",
+                                          class: {
+                                            "is-invalid": _vm.form.errors.has(
+                                              "classroom1"
+                                            )
+                                          },
+                                          attrs: {
+                                            id: "classroom1",
+                                            name: "classroom1"
+                                          },
+                                          on: {
+                                            change: function($event) {
+                                              var $$selectedVal = Array.prototype.filter
+                                                .call(
+                                                  $event.target.options,
+                                                  function(o) {
+                                                    return o.selected
+                                                  }
+                                                )
+                                                .map(function(o) {
+                                                  var val =
+                                                    "_value" in o
+                                                      ? o._value
+                                                      : o.value
+                                                  return val
+                                                })
+                                              _vm.$set(
+                                                _vm.form,
+                                                "classroom1",
+                                                $event.target.multiple
+                                                  ? $$selectedVal
+                                                  : $$selectedVal[0]
+                                              )
+                                            }
+                                          }
+                                        },
+                                        [
+                                          _c(
+                                            "option",
+                                            { attrs: { value: "" } },
+                                            [_vm._v("Select Classroom")]
+                                          ),
+                                          _vm._v(" "),
+                                          _vm._l(_vm.one_classrooms, function(
+                                            one_classroom
+                                          ) {
+                                            return _c(
+                                              "option",
+                                              {
+                                                key: one_classroom.id,
+                                                domProps: {
+                                                  value:
+                                                    one_classroom.ClassroomID
+                                                }
+                                              },
+                                              [
+                                                _vm._v(
+                                                  "\n                                                " +
+                                                    _vm._s(
+                                                      one_classroom.ClassroomName
+                                                    ) +
+                                                    "\n                                            "
+                                                )
+                                              ]
+                                            )
+                                          })
+                                        ],
+                                        2
+                                      ),
+                                      _vm._v(" "),
+                                      _c("has-error", {
+                                        attrs: {
+                                          form: _vm.form,
+                                          field: "classroom1"
+                                        }
+                                      })
+                                    ],
+                                    1
+                                  )
+                                : _vm._e()
+                            ])
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.form.SubjectMeetings == 2
+                          ? _c("div", [
+                              _c("p", [_vm._v("Meeting 2")]),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "form-group" },
+                                [
+                                  _c(
+                                    "select",
+                                    {
+                                      directives: [
+                                        {
+                                          name: "model",
+                                          rawName: "v-model",
+                                          value: _vm.form.ctid2,
+                                          expression: "form.ctid2"
+                                        }
+                                      ],
+                                      staticClass: "form-control",
+                                      class: {
+                                        "is-invalid": _vm.form.errors.has(
+                                          "ctid2"
+                                        )
+                                      },
+                                      attrs: { name: "ctid2", id: "ctid2" },
+                                      on: {
+                                        change: function($event) {
+                                          var $$selectedVal = Array.prototype.filter
+                                            .call(
+                                              $event.target.options,
+                                              function(o) {
+                                                return o.selected
+                                              }
+                                            )
+                                            .map(function(o) {
+                                              var val =
+                                                "_value" in o
+                                                  ? o._value
+                                                  : o.value
+                                              return val
+                                            })
+                                          _vm.$set(
+                                            _vm.form,
+                                            "ctid2",
+                                            $event.target.multiple
+                                              ? $$selectedVal
+                                              : $$selectedVal[0]
+                                          )
+                                        }
+                                      }
+                                    },
+                                    [
+                                      _c("option", { attrs: { value: "" } }, [
+                                        _vm._v("Select Classroom Type")
+                                      ]),
+                                      _vm._v(" "),
+                                      _vm._l(_vm.CType_options, function(
+                                        CType_option
+                                      ) {
+                                        return _c(
+                                          "option",
+                                          {
+                                            key: CType_option.id,
+                                            domProps: {
+                                              value: CType_option.CTID
+                                            }
+                                          },
+                                          [
+                                            _vm._v(
+                                              "\n                                                " +
+                                                _vm._s(CType_option.CTName) +
+                                                "\n                                            "
+                                            )
+                                          ]
+                                        )
+                                      })
+                                    ],
+                                    2
+                                  ),
+                                  _vm._v(" "),
+                                  _c("has-error", {
+                                    attrs: { form: _vm.form, field: "ctid2" }
+                                  })
+                                ],
+                                1
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "form-group" },
+                                [
+                                  _c(
+                                    "select",
+                                    {
+                                      directives: [
+                                        {
+                                          name: "model",
+                                          rawName: "v-model",
+                                          value: _vm.form.Day2,
+                                          expression: "form.Day2"
+                                        }
+                                      ],
+                                      staticClass: "form-control",
+                                      class: {
+                                        "is-invalid": _vm.form.errors.has(
+                                          "Day2"
+                                        )
+                                      },
+                                      attrs: { id: "Day2", name: "Day2" },
+                                      on: {
+                                        change: function($event) {
+                                          var $$selectedVal = Array.prototype.filter
+                                            .call(
+                                              $event.target.options,
+                                              function(o) {
+                                                return o.selected
+                                              }
+                                            )
+                                            .map(function(o) {
+                                              var val =
+                                                "_value" in o
+                                                  ? o._value
+                                                  : o.value
+                                              return val
+                                            })
+                                          _vm.$set(
+                                            _vm.form,
+                                            "Day2",
+                                            $event.target.multiple
+                                              ? $$selectedVal
+                                              : $$selectedVal[0]
+                                          )
+                                        }
+                                      }
+                                    },
+                                    [
+                                      _c("option", { attrs: { value: "" } }, [
+                                        _vm._v("Select Day")
+                                      ]),
+                                      _vm._v(" "),
+                                      _vm._l(_vm.days, function(day) {
+                                        return _c(
+                                          "option",
+                                          {
+                                            key: day.id,
+                                            domProps: { value: day.DayName }
+                                          },
+                                          [_vm._v(_vm._s(day.DayName))]
+                                        )
+                                      })
+                                    ],
+                                    2
+                                  ),
+                                  _vm._v(" "),
+                                  _c("has-error", {
+                                    attrs: { form: _vm.form, field: "Day2" }
+                                  })
+                                ],
+                                1
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "form-group" },
+                                [
+                                  _c("input", {
+                                    directives: [
+                                      {
+                                        name: "model",
+                                        rawName: "v-model",
+                                        value: _vm.form.hours2,
+                                        expression: "form.hours2"
+                                      }
+                                    ],
+                                    staticClass: "form-control",
+                                    class: {
+                                      "is-invalid": _vm.form.errors.has(
+                                        "hours2"
+                                      )
+                                    },
+                                    attrs: {
+                                      type: "number",
+                                      step: "0.1",
+                                      name: "hours2",
+                                      placeholder: "Total Hours"
+                                    },
+                                    domProps: { value: _vm.form.hours2 },
+                                    on: {
+                                      input: function($event) {
+                                        if ($event.target.composing) {
+                                          return
+                                        }
+                                        _vm.$set(
+                                          _vm.form,
+                                          "hours2",
+                                          $event.target.value
+                                        )
+                                      }
+                                    }
+                                  }),
+                                  _vm._v(" "),
+                                  _c("has-error", {
+                                    attrs: { form: _vm.form, field: "hours2" }
+                                  })
+                                ],
+                                1
+                              ),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "form-group" },
+                                [
+                                  _c(
+                                    "select",
+                                    {
+                                      directives: [
+                                        {
+                                          name: "model",
+                                          rawName: "v-model",
+                                          value: _vm.form.Time_in2,
+                                          expression: "form.Time_in2"
+                                        }
+                                      ],
+                                      staticClass: "form-control",
+                                      class: {
+                                        "is-invalid": _vm.form.errors.has(
+                                          "Time_in2"
+                                        )
+                                      },
+                                      attrs: {
+                                        id: "Time_in2",
+                                        name: "Time_in2"
+                                      },
+                                      on: {
+                                        change: function($event) {
+                                          var $$selectedVal = Array.prototype.filter
+                                            .call(
+                                              $event.target.options,
+                                              function(o) {
+                                                return o.selected
+                                              }
+                                            )
+                                            .map(function(o) {
+                                              var val =
+                                                "_value" in o
+                                                  ? o._value
+                                                  : o.value
+                                              return val
+                                            })
+                                          _vm.$set(
+                                            _vm.form,
+                                            "Time_in2",
+                                            $event.target.multiple
+                                              ? $$selectedVal
+                                              : $$selectedVal[0]
+                                          )
+                                        }
+                                      }
+                                    },
+                                    [
+                                      _c("option", { attrs: { value: "" } }, [
+                                        _vm._v("Select Time Start")
+                                      ]),
+                                      _vm._v(" "),
+                                      _vm._l(_vm.times, function(time) {
+                                        return _c(
+                                          "option",
+                                          {
+                                            key: time.id,
+                                            domProps: { value: time.SchedTime }
+                                          },
+                                          [_vm._v(_vm._s(time.SchedTime))]
+                                        )
+                                      })
+                                    ],
+                                    2
+                                  ),
+                                  _vm._v(" "),
+                                  _c("has-error", {
+                                    attrs: { form: _vm.form, field: "Time_in2" }
+                                  })
+                                ],
+                                1
+                              ),
+                              _vm._v(" "),
+                              _vm.editmode
+                                ? _c(
+                                    "div",
+                                    { staticClass: "form-group" },
+                                    [
+                                      _c(
+                                        "select",
+                                        {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: _vm.form.classroom2,
+                                              expression: "form.classroom2"
+                                            }
+                                          ],
+                                          staticClass: "form-control",
+                                          class: {
+                                            "is-invalid": _vm.form.errors.has(
+                                              "classroom2"
+                                            )
+                                          },
+                                          attrs: {
+                                            id: "classroom2",
+                                            name: "classroom2"
+                                          },
+                                          on: {
+                                            change: function($event) {
+                                              var $$selectedVal = Array.prototype.filter
+                                                .call(
+                                                  $event.target.options,
+                                                  function(o) {
+                                                    return o.selected
+                                                  }
+                                                )
+                                                .map(function(o) {
+                                                  var val =
+                                                    "_value" in o
+                                                      ? o._value
+                                                      : o.value
+                                                  return val
+                                                })
+                                              _vm.$set(
+                                                _vm.form,
+                                                "classroom2",
+                                                $event.target.multiple
+                                                  ? $$selectedVal
+                                                  : $$selectedVal[0]
+                                              )
+                                            }
+                                          }
+                                        },
+                                        [
+                                          _c(
+                                            "option",
+                                            { attrs: { value: "" } },
+                                            [_vm._v("Select Classroom")]
+                                          ),
+                                          _vm._v(" "),
+                                          _vm._l(_vm.two_classrooms, function(
+                                            two_classroom
+                                          ) {
+                                            return _c(
+                                              "option",
+                                              {
+                                                key: two_classroom.id,
+                                                domProps: {
+                                                  value:
+                                                    two_classroom.ClassroomID
+                                                }
+                                              },
+                                              [
+                                                _vm._v(
+                                                  "\n                                                " +
+                                                    _vm._s(
+                                                      two_classroom.ClassroomName
+                                                    ) +
+                                                    "\n                                            "
+                                                )
+                                              ]
+                                            )
+                                          })
+                                        ],
+                                        2
+                                      ),
+                                      _vm._v(" "),
+                                      _c("has-error", {
+                                        attrs: {
+                                          form: _vm.form,
+                                          field: "classroom2"
+                                        }
+                                      })
+                                    ],
+                                    1
+                                  )
+                                : _vm._e()
+                            ])
+                          : _vm._e()
+                      ])
+                    ]),
                     _vm._v(" "),
                     _c("div", { staticClass: "modal-footer" }, [
                       _c(
@@ -100851,420 +101483,6 @@ var render = function() {
           ]
         )
       ]
-    ),
-    _vm._v(" "),
-    _c(
-      "div",
-      {
-        staticClass: "modal fade",
-        attrs: {
-          id: "tagged_schedule_meetings",
-          tabindex: "-1",
-          role: "dialog",
-          "aria-labelledby": "taggedSubjectsScheduleLabel",
-          "aria-hidden": "true"
-        }
-      },
-      [
-        _c(
-          "div",
-          { staticClass: "modal-dialog", attrs: { role: "document" } },
-          [
-            _c("div", { staticClass: "modal-content" }, [
-              _vm._m(7),
-              _vm._v(" "),
-              _c(
-                "div",
-                { staticClass: "modal-body" },
-                [
-                  _c("div", { attrs: { hidden: "" } }, [
-                    _vm._v(_vm._s((_vm.ii = 1)))
-                  ]),
-                  _vm._v(" "),
-                  _vm._l(_vm.tagged_schedules, function(tagged_schedule) {
-                    return _c("div", { key: tagged_schedule.id }, [
-                      _vm.ii == 1
-                        ? _c(
-                            "form",
-                            {
-                              on: {
-                                submit: function($event) {
-                                  $event.preventDefault()
-                                  _vm.update_tagged_meetings1()
-                                }
-                              }
-                            },
-                            [
-                              _c(
-                                "div",
-                                { staticClass: "form-group" },
-                                [
-                                  _c(
-                                    "select",
-                                    {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.SMSched_Form1.STSDay,
-                                          expression: "SMSched_Form1.STSDay"
-                                        }
-                                      ],
-                                      staticClass: "form-control",
-                                      class: {
-                                        "is-invalid": _vm.SMSched_Form1.errors.has(
-                                          "STSDay"
-                                        )
-                                      },
-                                      attrs: { id: "STSDay", name: "STSDay" },
-                                      on: {
-                                        change: function($event) {
-                                          var $$selectedVal = Array.prototype.filter
-                                            .call(
-                                              $event.target.options,
-                                              function(o) {
-                                                return o.selected
-                                              }
-                                            )
-                                            .map(function(o) {
-                                              var val =
-                                                "_value" in o
-                                                  ? o._value
-                                                  : o.value
-                                              return val
-                                            })
-                                          _vm.$set(
-                                            _vm.SMSched_Form1,
-                                            "STSDay",
-                                            $event.target.multiple
-                                              ? $$selectedVal
-                                              : $$selectedVal[0]
-                                          )
-                                        }
-                                      }
-                                    },
-                                    [
-                                      _c("option", { attrs: { value: "" } }, [
-                                        _vm._v("Select Day")
-                                      ]),
-                                      _vm._v(" "),
-                                      _vm._l(_vm.days, function(day) {
-                                        return _c(
-                                          "option",
-                                          {
-                                            key: day.id,
-                                            domProps: { value: day.DayName }
-                                          },
-                                          [_vm._v(_vm._s(day.DayName))]
-                                        )
-                                      })
-                                    ],
-                                    2
-                                  ),
-                                  _vm._v(" "),
-                                  _c("has-error", {
-                                    attrs: {
-                                      form: _vm.SMSched_Form1,
-                                      field: "STSDay"
-                                    }
-                                  })
-                                ],
-                                1
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "form-group" },
-                                [
-                                  _c(
-                                    "select",
-                                    {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.SMSched_Form1.ClassroomID,
-                                          expression:
-                                            "SMSched_Form1.ClassroomID"
-                                        }
-                                      ],
-                                      staticClass: "form-control",
-                                      class: {
-                                        "is-invalid": _vm.SMSched_Form1.errors.has(
-                                          "ClassroomID"
-                                        )
-                                      },
-                                      attrs: {
-                                        id: "ClassroomID",
-                                        name: "ClassroomID"
-                                      },
-                                      on: {
-                                        change: function($event) {
-                                          var $$selectedVal = Array.prototype.filter
-                                            .call(
-                                              $event.target.options,
-                                              function(o) {
-                                                return o.selected
-                                              }
-                                            )
-                                            .map(function(o) {
-                                              var val =
-                                                "_value" in o
-                                                  ? o._value
-                                                  : o.value
-                                              return val
-                                            })
-                                          _vm.$set(
-                                            _vm.SMSched_Form1,
-                                            "ClassroomID",
-                                            $event.target.multiple
-                                              ? $$selectedVal
-                                              : $$selectedVal[0]
-                                          )
-                                        }
-                                      }
-                                    },
-                                    [
-                                      _c("option", { attrs: { value: "" } }, [
-                                        _vm._v("Select Day")
-                                      ]),
-                                      _vm._v(" "),
-                                      _vm._l(_vm.one_classrooms, function(
-                                        one_classroom
-                                      ) {
-                                        return _c(
-                                          "option",
-                                          {
-                                            key: one_classroom.id,
-                                            domProps: {
-                                              value: one_classroom.ClassroomID
-                                            }
-                                          },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                one_classroom.ClassroomName
-                                              )
-                                            )
-                                          ]
-                                        )
-                                      })
-                                    ],
-                                    2
-                                  ),
-                                  _vm._v(" "),
-                                  _c("has-error", {
-                                    attrs: {
-                                      form: _vm.SMSched_Form1,
-                                      field: "ClassroomID"
-                                    }
-                                  })
-                                ],
-                                1
-                              ),
-                              _vm._v(" "),
-                              _vm._m(8, true)
-                            ]
-                          )
-                        : _vm._e(),
-                      _vm._v(" "),
-                      _vm.ii == 2
-                        ? _c(
-                            "form",
-                            {
-                              on: {
-                                submit: function($event) {
-                                  $event.preventDefault()
-                                  _vm.update_tagged_meetings2()
-                                }
-                              }
-                            },
-                            [
-                              _c(
-                                "div",
-                                { staticClass: "form-group" },
-                                [
-                                  _c(
-                                    "select",
-                                    {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.SMSched_Form2.STSDay,
-                                          expression: "SMSched_Form2.STSDay"
-                                        }
-                                      ],
-                                      staticClass: "form-control",
-                                      class: {
-                                        "is-invalid": _vm.SMSched_Form2.errors.has(
-                                          "STSDay"
-                                        )
-                                      },
-                                      attrs: { id: "STSDay", name: "STSDay" },
-                                      on: {
-                                        change: function($event) {
-                                          var $$selectedVal = Array.prototype.filter
-                                            .call(
-                                              $event.target.options,
-                                              function(o) {
-                                                return o.selected
-                                              }
-                                            )
-                                            .map(function(o) {
-                                              var val =
-                                                "_value" in o
-                                                  ? o._value
-                                                  : o.value
-                                              return val
-                                            })
-                                          _vm.$set(
-                                            _vm.SMSched_Form2,
-                                            "STSDay",
-                                            $event.target.multiple
-                                              ? $$selectedVal
-                                              : $$selectedVal[0]
-                                          )
-                                        }
-                                      }
-                                    },
-                                    [
-                                      _c("option", { attrs: { value: "" } }, [
-                                        _vm._v("Select Day")
-                                      ]),
-                                      _vm._v(" "),
-                                      _vm._l(_vm.days, function(day) {
-                                        return _c(
-                                          "option",
-                                          {
-                                            key: day.id,
-                                            domProps: { value: day.DayName }
-                                          },
-                                          [_vm._v(_vm._s(day.DayName))]
-                                        )
-                                      })
-                                    ],
-                                    2
-                                  ),
-                                  _vm._v(" "),
-                                  _c("has-error", {
-                                    attrs: {
-                                      form: _vm.SMSched_Form2,
-                                      field: "STSDay"
-                                    }
-                                  })
-                                ],
-                                1
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "form-group" },
-                                [
-                                  _c(
-                                    "select",
-                                    {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.SMSched_Form2.ClassroomID,
-                                          expression:
-                                            "SMSched_Form2.ClassroomID"
-                                        }
-                                      ],
-                                      staticClass: "form-control",
-                                      class: {
-                                        "is-invalid": _vm.SMSched_Form2.errors.has(
-                                          "ClassroomID"
-                                        )
-                                      },
-                                      attrs: {
-                                        id: "ClassroomID",
-                                        name: "ClassroomID"
-                                      },
-                                      on: {
-                                        change: function($event) {
-                                          var $$selectedVal = Array.prototype.filter
-                                            .call(
-                                              $event.target.options,
-                                              function(o) {
-                                                return o.selected
-                                              }
-                                            )
-                                            .map(function(o) {
-                                              var val =
-                                                "_value" in o
-                                                  ? o._value
-                                                  : o.value
-                                              return val
-                                            })
-                                          _vm.$set(
-                                            _vm.SMSched_Form2,
-                                            "ClassroomID",
-                                            $event.target.multiple
-                                              ? $$selectedVal
-                                              : $$selectedVal[0]
-                                          )
-                                        }
-                                      }
-                                    },
-                                    [
-                                      _c("option", { attrs: { value: "" } }, [
-                                        _vm._v("Select Day")
-                                      ]),
-                                      _vm._v(" "),
-                                      _vm._l(_vm.two_classrooms, function(
-                                        two_classroom
-                                      ) {
-                                        return _c(
-                                          "option",
-                                          {
-                                            key: two_classroom.id,
-                                            domProps: {
-                                              value: two_classroom.ClassroomID
-                                            }
-                                          },
-                                          [
-                                            _vm._v(
-                                              _vm._s(
-                                                two_classroom.ClassroomName
-                                              )
-                                            )
-                                          ]
-                                        )
-                                      })
-                                    ],
-                                    2
-                                  ),
-                                  _vm._v(" "),
-                                  _c("has-error", {
-                                    attrs: {
-                                      form: _vm.SMSched_Form2,
-                                      field: "ClassroomID"
-                                    }
-                                  })
-                                ],
-                                1
-                              ),
-                              _vm._v(" "),
-                              _vm._m(9, true)
-                            ]
-                          )
-                        : _vm._e(),
-                      _vm._v(" "),
-                      _c("div", { attrs: { hidden: "" } }, [
-                        _vm._v(_vm._s(_vm.ii++))
-                      ])
-                    ])
-                  })
-                ],
-                2
-              )
-            ])
-          ]
-        )
-      ]
     )
   ])
 }
@@ -101308,6 +101526,10 @@ var staticRenderFns = [
         _vm._v(" "),
         _c("th", [_vm._v("Professor")]),
         _vm._v(" "),
+        _c("th", [_vm._v("Units")]),
+        _vm._v(" "),
+        _c("th", [_vm._v("Hours")]),
+        _vm._v(" "),
         _c("th", { attrs: { width: "40%" } }, [_vm._v("Schedule")]),
         _vm._v(" "),
         _c("th", { attrs: { width: "15%" } }, [_vm._v("Modify")])
@@ -101323,67 +101545,6 @@ var staticRenderFns = [
         "h5",
         {
           staticClass: "modal-title text-white",
-          attrs: { id: "taggedsubjectsLabel" }
-        },
-        [_vm._v("Tagged Subjects")]
-      ),
-      _vm._v(" "),
-      _c(
-        "button",
-        {
-          staticClass: "close",
-          attrs: {
-            type: "button",
-            "data-dismiss": "modal",
-            "aria-label": "Close"
-          }
-        },
-        [_c("span", { attrs: { "aria-hidden": "true" } }, [_vm._v("×")])]
-      )
-    ])
-  },
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "col" }, [
-      _c(
-        "button",
-        {
-          staticClass: "btn btn-primary",
-          attrs: { type: "submit", id: "tagged_button" }
-        },
-        [_c("i", { staticClass: "fas fa-plus" }), _vm._v(" Add")]
-      )
-    ])
-  },
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("thead", [
-      _c("tr", [
-        _c("th", { attrs: { scope: "col" } }, [_vm._v("No.")]),
-        _vm._v(" "),
-        _c("th", { attrs: { scope: "col" } }, [_vm._v("Subject Name")]),
-        _vm._v(" "),
-        _c("th", { attrs: { scope: "col" } }, [_vm._v("Professor")]),
-        _vm._v(" "),
-        _c("th", { attrs: { scope: "col" } }, [_vm._v("Schedule")]),
-        _vm._v(" "),
-        _c("th", { attrs: { scope: "col" } }, [_vm._v("Modify")])
-      ])
-    ])
-  },
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "modal-header bgc-teal" }, [
-      _c(
-        "h5",
-        {
-          staticClass: "modal-title text-white",
           attrs: { id: "taggedSubjectsScheduleLabel" }
         },
         [_vm._v("Tagged Subjects")]
@@ -101400,76 +101561,6 @@ var staticRenderFns = [
           }
         },
         [_c("span", { attrs: { "aria-hidden": "true" } }, [_vm._v("×")])]
-      )
-    ])
-  },
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "modal-header bgc-teal" }, [
-      _c(
-        "h5",
-        {
-          staticClass: "modal-title text-white",
-          attrs: { id: "taggedSubjectsScheduleLabel" }
-        },
-        [_vm._v("Schedule")]
-      ),
-      _vm._v(" "),
-      _c(
-        "button",
-        {
-          staticClass: "close",
-          attrs: {
-            type: "button",
-            "data-dismiss": "modal",
-            "aria-label": "Close"
-          }
-        },
-        [_c("span", { attrs: { "aria-hidden": "true" } }, [_vm._v("×")])]
-      )
-    ])
-  },
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "modal-footer" }, [
-      _c(
-        "button",
-        {
-          staticClass: "btn btn-danger",
-          attrs: { type: "button", "data-dismiss": "modal" }
-        },
-        [_vm._v("Close")]
-      ),
-      _vm._v(" "),
-      _c(
-        "button",
-        { staticClass: "btn btn-success", attrs: { type: "submit" } },
-        [_vm._v("Update")]
-      )
-    ])
-  },
-  function() {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "modal-footer" }, [
-      _c(
-        "button",
-        {
-          staticClass: "btn btn-danger",
-          attrs: { type: "button", "data-dismiss": "modal" }
-        },
-        [_vm._v("Close")]
-      ),
-      _vm._v(" "),
-      _c(
-        "button",
-        { staticClass: "btn btn-success", attrs: { type: "submit" } },
-        [_vm._v("Update")]
       )
     ])
   }

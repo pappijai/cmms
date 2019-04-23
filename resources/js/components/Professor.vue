@@ -105,6 +105,8 @@
                             <tr>
                                 <th scope="col">Course Yr & Sec.</th>
                                 <th scope="col">Subject Name</th>
+                                <th scope="col">Units</th>
+                                <th scope="col">Hours</th>
                                 <th scope="col">Schedule</th>
                             </tr>
                         </thead>
@@ -119,6 +121,8 @@
                                 </td>
 
                                 <td>{{professor_schedule.SubjectDescription}}</td>
+                                <td>{{professor_schedule.STUnits}}</td>
+                                <td>{{professor_schedule.TotalHours}}</td>
                                 <td>
                                     {{professor_schedule.Schedule}}
                                 </td>

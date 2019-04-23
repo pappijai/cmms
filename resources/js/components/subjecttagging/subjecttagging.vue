@@ -55,7 +55,7 @@
                 <div class="card">
                     <div class="card-header bgc-teal text-white">
                         <h5>{{this.form.CourseCode}} {{this.form.STYear}} - {{this.form.SectionName}}</h5>
-                        <h5>{{sem}} <small class="text-red">(maximum of 9 subjects per sem)</small></h5>
+                        <h5>{{sem}} <small class="text-red">(maximum of 10 subjects per sem)</small></h5>
                         <h5>Sy {{year_from}} - {{year_to}}</h5>
                          <div class="card-tools">
                             <button class="btn btn-success" @click="showaddsubjects()">
@@ -73,6 +73,8 @@
                                 <tr>
                                     <th>Subject Name</th>
                                     <th>Professor</th>
+                                    <th>Units</th>
+                                    <th>Hours</th>
                                     <th width="40%">Schedule</th>
                                     <th width="15%">Modify</th>
                                 </tr>
@@ -82,6 +84,8 @@
                                 <tr v-for="tagged_subject_section in tagged_subject_sections" :key="tagged_subject_section.id">
                                     <td>{{tagged_subject_section.SubjectDescription}}</td>
                                     <td>{{tagged_subject_section.ProfessorName}}</td>
+                                    <td>{{tagged_subject_section.STUnits}}</td>
+                                    <td>{{tagged_subject_section.TotalHours}}</td>
                                     <td>
                                         <!-- <a @click="show_tagged_schedule(tagged_subject_section)">
                                             <i class="fas fa-edit text-blue"></i>    
@@ -108,93 +112,9 @@
         <div v-else>
             <not-found></not-found>
         </div>
-        
-        <div class="modal fade bd-example-modal-lg" id="taggedsubjects" tabindex="-1" role="dialog" aria-labelledby="taggedsubjectsLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header bgc-teal">
-                        <h5 class="modal-title text-white" id="taggedsubjectsLabel">Tagged Subjects</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-12 col-sm-12 col-xs-12">
-                                <div class="form-group">
-                                    <h5>Sy {{year_from}} - {{year_to}}</h5>
-                                    <h5>{{this.form.STYear | convert}} year</h5>
-                                    <h5>{{sem}} <small class="text-red">(maximum of 9 subjects per sem)</small></h5>
-                                </div>     
-                                <form @submit.prevent="create_tagged_subjects()">
-                                    <div class="form-row">
-                                        <div class="col">
-                                            <select v-model="form.SubjectID" id="SubjectID" name="SubjectID" 
-                                                class="form-control" :class="{ 'is-invalid': form.errors.has('SubjectID') }">
-                                                <option value="">Select Subject</option>
-                                                <option v-for="offered_subject in offered_subjects" :key="offered_subject.id" v-bind:value="offered_subject.SubjectID">{{offered_subject.SubjectDescription}}</option>                  
-                                            </select>
-                                            <has-error :form="form" field="SubjectID"></has-error>
-                                        </div>
-
-                                        <div class="col">
-                                            <select v-model="form.ProfessorID" id="ProfessorID" name="ProfessorID" 
-                                                class="form-control" :class="{ 'is-invalid': form.errors.has('ProfessorID') }">
-                                                <option value="">Select Professor</option>
-                                                <option v-for="professor in professors" :key="professor.id" v-bind:value="professor.ProfessorID">{{professor.ProfessorName}}</option>                  
-                                            </select>
-                                            <has-error :form="form" field="ProfessorID"></has-error>
-                                        </div>
-                                        <div class="col">
-                                            <button type="submit" class="btn btn-primary" id="tagged_button"><i class="fas fa-plus"></i> Add</button>                                                   
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>                        
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12 col-sm-12 col-xs-12 mt-3">
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">No.</th>
-                                                <th scope="col">Subject Name</th>
-                                                <th scope="col">Professor</th>
-                                                <th scope="col">Schedule</th>
-                                                <th scope="col">Modify</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <div hidden>{{id = 1}}</div>
-                                            <tr v-for="tagged_subject_section in tagged_subject_sections" :key="tagged_subject_section.id">
-                                                <td>{{id++}}</td>
-                                                <td>{{tagged_subject_section.SubjectDescription}}</td>
-                                                <td>{{tagged_subject_section.ProfessorName}}</td>
-                                                <td>
-                                                    {{tagged_subject_section.Schedule}}
-                                                    
-                                                </td>
-                                                <td>
-                                                    <a href="#" @click="deleteSubject(tagged_subject_section.STID)">
-                                                        <i class="fas fa-trash text-red"></i>    
-                                                    </a> 
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>                                        
-                                </div>
-                            </div>    
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
 
         <div class="modal fade" id="taggedSubjectsSchedule" tabindex="-1" role="dialog" aria-labelledby="taggedSubjectsScheduleLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
+            <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header bgc-teal">
                         <h5 class="modal-title text-white" id="taggedSubjectsScheduleLabel">Tagged Subjects</h5>
@@ -205,100 +125,148 @@
 
                     <div class="modal-body">
                         <form @submit.prevent="editmode ? update_tagged_subjects() : create_tagged_subjects()">
-                            <div class="form-group">
-                                <select v-model="form.SubjectID" id="SubjectID" name="SubjectID" 
-                                    class="form-control" :class="{ 'is-invalid': form.errors.has('SubjectID') }"
-                                    :disabled="editmode == true">
-                                    <option value="">Select Subject</option>
-                                    <option v-for="offered_subject in offered_subjects" :key="offered_subject.id" v-bind:value="offered_subject.SubjectID">{{offered_subject.SubjectDescription}}</option>                  
-                                </select>
-                                <has-error :form="form" field="SubjectID"></has-error>
-                            </div>
-                            <div class="form-group">
-                                <select v-model="form.ProfessorID" id="ProfessorID" name="ProfessorID" 
-                                    class="form-control" :class="{ 'is-invalid': form.errors.has('ProfessorID') }">
-                                    <option value="">Select Professor</option>
-                                    <option v-for="professor in professors" :key="professor.id" v-bind:value="professor.ProfessorID">{{professor.ProfessorName}}</option>                  
-                                </select>
-                                <has-error :form="form" field="ProfessorID"></has-error>
-                            </div>
-
-                            <!-- <div v-if="editmode == true">
-                                <div hidden>{{id = 1}}</div>
-                                <div v-for="section_tagged_subject in section_tagged_subjects" :key="section_tagged_subject.id">
-                                    <div v-if="id == 1">
-                                        <hr>
-                                        {{SMSched_Form1.fill(section_tagged_subject)}}
-                                        Meeting 1
-
-                                        <div class="row">
-                                            <div class="col-md-6 col-xs-12 col-sm-12 mb-3">
-                                                <div class="form-inline">
-                                                    <label for="inlineFor" class="mr-2">Time Start : </label>
-                                                    <select v-model="SMSched_Form1.STSTimeStart" name="STSTimeStart" id="STSTimeStart"
-                                                        class="form-control" :class="{ 'is-invalid': SMSched_Form1.errors.has('STSTimeStart') }">
-                                                        <option value="">Select time</option>
-                                                        <option v-for="time in times" :key="time.id" v-bind:value="time.SchedTime">
-                                                            {{ time.SchedTime }}
-                                                        </option>
-                                                    </select>
-                                                    <has-error :form="SMSched_Form1" field="STSTimeStart"></has-error>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6 col-xs-12 col-sm-12 mb-3">
-                                                <div class="form-inline">
-                                                    <label for="inlineFor" class="mr-2">Day : </label>
-                                                    <select v-model="SMSched_Form1.STSDay" name="STSDay" id="STSDay"
-                                                        class="form-control" :class="{ 'is-invalid': SMSched_Form1.errors.has('STSDay') }">
-                                                        <option value="">Select day</option>
-                                                        <option v-for="day in days" :key="day.id" v-bind:value="day.DayName">
-                                                            {{ day.DayName }}
-                                                        </option>
-                                                    </select>
-                                                    <has-error :form="SMSched_Form1" field="STSDay"></has-error>
-                                                </div>
-                                            </div>
-                                        </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p>Tagged Subject Information</p>
+                                    <div class="form-group">
+                                        <select v-model="form.SubjectID" id="SubjectID" name="SubjectID" 
+                                            class="form-control" :class="{ 'is-invalid': form.errors.has('SubjectID') }"
+                                            :disabled="editmode == true">
+                                            <option value="">Select Subject</option>
+                                            <option v-for="offered_subject in offered_subjects" :key="offered_subject.id" v-bind:value="offered_subject.SubjectID">{{offered_subject.SubjectDescription}}</option>                  
+                                        </select>
+                                        <has-error :form="form" field="SubjectID"></has-error>
                                     </div>
+                                    
+                                    <div class="form-group">
+                                        <input v-model="form.STUnits" type="number" name="STUnits" placeholder="# of Units"
+                                            class="form-control" :class="{ 'is-invalid': form.errors.has('STUnits') }">
+                                        <has-error :form="form" field="STUnits"></has-error>
+                                    </div>    
 
-                                    <div v-if="id == 2">
-                                        <hr>
-                                        {{SMSched_Form2.fill(section_tagged_subject)}}
-                                        Meeting 2
-
-                                        <div class="row mb-2">
-                                            <div class="col-md-6 col-xs-12 col-sm-12">
-                                                <div class="form-inline">
-                                                    <label for="inlineFor" class="mr-2">Time Start : </label>
-                                                    <select v-model="SMSched_Form2.STSTimeStart" name="STSTimeStart" id="STSTimeStart"
-                                                        class="form-control" :class="{ 'is-invalid': SMSched_Form2.errors.has('STSTimeStart') }">
-                                                        <option value="">Select time</option>
-                                                        <option v-for="time in times" :key="time.id" v-bind:value="time.SchedTime">
-                                                            {{ time.SchedTime }}
-                                                        </option>
-                                                    </select>
-                                                    <has-error :form="SMSched_Form2" field="STSTimeStart"></has-error>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6 col-xs-12 col-sm-12">
-                                                <div class="form-inline">
-                                                    <label for="inlineFor" class="mr-2">Day : </label>
-                                                    <select v-model="SMSched_Form2.STSDay" name="STSDay" id="STSDay"
-                                                        class="form-control" :class="{ 'is-invalid': SMSched_Form2.errors.has('STSDay') }">
-                                                        <option value="">Select day</option>
-                                                        <option v-for="day in days" :key="day.id" v-bind:value="day.DayName">
-                                                            {{ day.DayName }}
-                                                        </option>
-                                                    </select>
-                                                    <has-error :form="SMSched_Form2" field="STSDay"></has-error>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <div class="form-group">
+                                        <input v-model="form.SubjectMeetings" type="number" name="SubjectMeetings" placeholder="# of Meetings"
+                                            class="form-control" :class="{ 'is-invalid': form.errors.has('SubjectMeetings') }"
+                                            :disabled="editmode == true">
+                                        <has-error :form="form" field="SubjectMeetings"></has-error>
+                                    </div>    
+                                                            
+                                    <div class="form-group">
+                                        <select v-model="form.ProfessorID" id="ProfessorID" name="ProfessorID" 
+                                            class="form-control" :class="{ 'is-invalid': form.errors.has('ProfessorID') }">
+                                            <option value="">Select Professor</option>
+                                            <option v-for="professor in professors" :key="professor.id" v-bind:value="professor.ProfessorID">{{professor.ProfessorName}}</option>                  
+                                        </select>
+                                        <has-error :form="form" field="ProfessorID"></has-error>
                                     </div>
-
-                                    <div hidden>{{id++}}</div>
                                 </div>
-                            </div> -->
+                                <div class="col-md-6">
+                                    <div v-if="form.SubjectMeetings == 1 || form.SubjectMeetings == 2">
+                                        <p>Meeting 1</p>
+
+                                        <div class="form-group">
+                                            <select v-model="form.ctid1" name="ctid1" id="ctid1"
+                                                class="form-control" :class="{ 'is-invalid': form.errors.has('ctid1') }">
+                                                <option value="">Select Classroom Type</option>
+                                                <option v-for="CType_option in CType_options" :key="CType_option.id" v-bind:value="CType_option.CTID">
+                                                    {{ CType_option.CTName }}
+                                                </option>
+                                            </select>
+                                            <has-error :form="form" field="ctid1"></has-error>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <select v-model="form.Day1" id="Day1" name="Day1" 
+                                                class="form-control" :class="{ 'is-invalid': form.errors.has('Day1') }">
+                                                <option value="">Select Day</option>
+                                                <option v-for="day in days" :key="day.id" v-bind:value="day.DayName">{{day.DayName}}</option>                  
+                                            </select>
+                                            <has-error :form="form" field="Day1"></has-error>
+                                        </div>     
+
+                                        <div class="form-group">
+                                            <input v-model="form.hours1" type="number" step="0.1" name="hours1" placeholder="Total Hours"
+                                                class="form-control" :class="{ 'is-invalid': form.errors.has('hours1') }">
+                                            <has-error :form="form" field="hours1"></has-error>
+                                        </div>    
+
+                                        <div class="form-group">
+                                            <select v-model="form.Time_in1" id="Time_in1" name="Time_in1" 
+                                                class="form-control" :class="{ 'is-invalid': form.errors.has('Time_in1') }">
+                                                <option value="">Select Time Start</option>
+                                                <option v-for="time in times" :key="time.id" v-bind:value="time.SchedTime">{{time.SchedTime}}</option>                  
+                                            </select>
+                                            <has-error :form="form" field="Time_in1"></has-error>  
+                                        </div> 
+
+                                        <div class="form-group" v-if="editmode">
+                                            <select v-model="form.classroom1" id="classroom1" name="classroom1" 
+                                                class="form-control" :class="{ 'is-invalid': form.errors.has('classroom1') }">
+                                                <option value="">Select Classroom</option>
+                                                <option v-for="one_classroom in one_classrooms" :key="one_classroom.id" v-bind:value="one_classroom.ClassroomID">
+                                                    {{one_classroom.ClassroomName}}
+                                                </option>                  
+                                            </select>
+                                            <has-error :form="form" field="classroom1"></has-error>  
+                                        </div>                               
+                                    </div>
+
+                                    <div v-if="form.SubjectMeetings == 2">
+                                        <p>Meeting 2</p>
+
+                                        <div class="form-group">
+                                            <select v-model="form.ctid2" name="ctid2" id="ctid2"
+                                                class="form-control" :class="{ 'is-invalid': form.errors.has('ctid2') }">
+                                                <option value="">Select Classroom Type</option>
+                                                <option v-for="CType_option in CType_options" :key="CType_option.id" v-bind:value="CType_option.CTID">
+                                                    {{ CType_option.CTName }}
+                                                </option>
+                                            </select>
+                                            <has-error :form="form" field="ctid2"></has-error>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <select v-model="form.Day2" id="Day2" name="Day2" 
+                                                class="form-control" :class="{ 'is-invalid': form.errors.has('Day2') }">
+                                                <option value="">Select Day</option>
+                                                <option v-for="day in days" :key="day.id" v-bind:value="day.DayName">{{day.DayName}}</option>                  
+                                            </select>
+                                            <has-error :form="form" field="Day2"></has-error>
+                                        </div>      
+
+                                        <div class="form-group">
+                                            <input v-model="form.hours2" type="number" step="0.1" name="hours2" placeholder="Total Hours"
+                                                class="form-control" :class="{ 'is-invalid': form.errors.has('hours2') }">
+                                            <has-error :form="form" field="hours2"></has-error>
+                                        </div>  
+
+                                        <div class="form-group">
+                                            <select v-model="form.Time_in2" id="Time_in2" name="Time_in2" 
+                                                class="form-control" :class="{ 'is-invalid': form.errors.has('Time_in2') }">
+                                                <option value="">Select Time Start</option>
+                                                <option v-for="time in times" :key="time.id" v-bind:value="time.SchedTime">{{time.SchedTime}}</option>                  
+                                            </select>
+                                            <has-error :form="form" field="Time_in2"></has-error>  
+                                        </div> 
+
+                                        <div class="form-group" v-if="editmode">
+                                            <select v-model="form.classroom2" id="classroom2" name="classroom2" 
+                                                class="form-control" :class="{ 'is-invalid': form.errors.has('classroom2') }">
+                                                <option value="">Select Classroom</option>
+                                                <option v-for="two_classroom in two_classrooms" :key="two_classroom.id" v-bind:value="two_classroom.ClassroomID">
+                                                    {{two_classroom.ClassroomName}}
+                                                </option>                  
+                                            </select>
+                                            <has-error :form="form" field="classroom2"></has-error>  
+                                        </div>   
+
+                                    </div>
+
+                                </div>
+                            </div>
+
+
+
 
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
@@ -306,79 +274,6 @@
                                 <button v-show="!editmode" type="submit" class="btn btn-primary">Create</button>                                                 
                             </div>
                         </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal fade" id="tagged_schedule_meetings" tabindex="-1" role="dialog" aria-labelledby="taggedSubjectsScheduleLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header bgc-teal">
-                        <h5 class="modal-title text-white" id="taggedSubjectsScheduleLabel">Schedule</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-
-                    <div class="modal-body">
-                        <div hidden>{{ii = 1}}</div>
-                        <div v-for="tagged_schedule in tagged_schedules" :key="tagged_schedule.id">
-
-                            <form @submit.prevent="update_tagged_meetings1()" v-if="ii == 1">
-                                <!-- {{SMSched_Form1.fill(tagged_schedule)}} -->
-
-                                <div class="form-group">
-                                    <select v-model="SMSched_Form1.STSDay" id="STSDay" name="STSDay" 
-                                        class="form-control" :class="{ 'is-invalid': SMSched_Form1.errors.has('STSDay') }">
-                                        <option value="">Select Day</option>
-                                        <option v-for="day in days" :key="day.id" v-bind:value="day.DayName">{{day.DayName}}</option>                  
-                                    </select>
-                                    <has-error :form="SMSched_Form1" field="STSDay"></has-error>
-                                </div>
-                                <div class="form-group">
-                                    <select v-model="SMSched_Form1.ClassroomID" id="ClassroomID" name="ClassroomID" 
-                                        class="form-control" :class="{ 'is-invalid': SMSched_Form1.errors.has('ClassroomID') }">
-                                        <option value="">Select Day</option>
-                                        <option v-for="one_classroom in one_classrooms" :key="one_classroom.id" v-bind:value="one_classroom.ClassroomID">{{one_classroom.ClassroomName}}</option>                  
-                                    </select>
-                                    <has-error :form="SMSched_Form1" field="ClassroomID"></has-error>
-                                </div>
-
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-                                    <button type="submit" class="btn btn-success">Update</button>
-                                </div>
-                            </form>
-
-                            <form @submit.prevent="update_tagged_meetings2()" v-if="ii == 2">
-                                <!-- {{SMSched_Form2.fill(tagged_schedule)}} -->
-                                <!-- {{get_classroom2(tagged_schedule.SMID)}} -->
-                                <div class="form-group">
-                                    <select v-model="SMSched_Form2.STSDay" id="STSDay" name="STSDay" 
-                                        class="form-control" :class="{ 'is-invalid': SMSched_Form2.errors.has('STSDay') }">
-                                        <option value="">Select Day</option>
-                                        <option v-for="day in days" :key="day.id" v-bind:value="day.DayName">{{day.DayName}}</option>                  
-                                    </select>
-                                    <has-error :form="SMSched_Form2" field="STSDay"></has-error>
-                                </div>
-
-                                <div class="form-group">
-                                    <select v-model="SMSched_Form2.ClassroomID" id="ClassroomID" name="ClassroomID" 
-                                        class="form-control" :class="{ 'is-invalid': SMSched_Form2.errors.has('ClassroomID') }">
-                                        <option value="">Select Day</option>
-                                        <option v-for="two_classroom in two_classrooms" :key="two_classroom.id" v-bind:value="two_classroom.ClassroomID">{{two_classroom.ClassroomName}}</option>                  
-                                    </select>
-                                    <has-error :form="SMSched_Form2" field="ClassroomID"></has-error>
-                                </div>
-
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-                                    <button type="submit" class="btn btn-success">Update</button>
-                                </div>
-                            </form>
-                            <div hidden>{{ii++}}</div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -395,9 +290,9 @@
                 section_id: '',
                 expired_schedule: {},
                 days: {},
+                times: {},
                 one_classrooms: {},
                 two_classrooms: {},
-                times: {},
                 section_tagged_subjects: {},
                 js_date: new Date(),
                 year_today: '',
@@ -410,7 +305,9 @@
                 available_sections: {},
                 tagged_subject_sections: {},
                 schedule_per_subjects: {},
-                tagged_schedules: {},
+                subject_meetings: {},
+                CType_options: {},
+                tagged_subjects_schedule: {},
                 editmode: false,
                 form: new Form({
                     SectionID: '',
@@ -425,6 +322,22 @@
                     STYearFrom: '',
                     STYearTo: '',
                     STSem: '',
+                    STUnits: '',
+                    Day1: '',
+                    Day2: '',
+                    Time_in1: '',
+                    Time_out1: '',
+                    Time_in2: '',
+                    Time_out2: '',
+                    hours1: '',
+                    hours2: '',
+                    ctid1: '',
+                    ctid2: '',
+                    smid1: '',
+                    smid2: '',
+                    classroom1: '',
+                    classroom2: '',
+                    SubjectMeetings: '',
                     STYear: 0,
                     STStatus: 'Active',
                     
@@ -458,6 +371,7 @@
                 axios.get('api/get_professor').then(({ data }) => (this.professors = data));
                 axios.get('api/get_days').then(({ data }) => (this.days = data));
                 axios.get('api/get_schedules').then(({ data }) => (this.times = data));
+                axios.get('api/classroomTypeInfo').then(({ data }) => (this.CType_options = data));
                 this.year_today = this.js_date.getFullYear();
                 this.month_today = this.js_date.getMonth();
 
@@ -589,63 +503,106 @@
             },
             showaddsubjects(){
                 this.editmode = false;
+                this.form.STID = '';
                 this.form.SubjectID = '';
                 this.form.ProfessorID = '';
+                this.form.SubjectMeetings = '';
+                this.form.STUnits = '';
+                this.form.hours1 = '';
+                this.form.hours2 = '';
+                this.form.ctid1 = '';
+                this.form.ctid2 = '';
+                this.form.Day1 = '';
+                this.form.Day2 = '';
+                this.form.Time_in1 = '';
+                this.form.Time_in2 = '';
                 $('#taggedSubjectsSchedule').modal('show');
             },
             showupdatesubject(tagged_subject_section){
                 this.editmode = true;
+                // this.form.STID = tagged_subject_section.STID;
+                // //axios.get('api/subjecttaggingschedules/'+this.form.STID).then(({ data }) => (this.section_tagged_subjects = data));
                 this.form.STID = tagged_subject_section.STID;
-                //axios.get('api/subjecttaggingschedules/'+this.form.STID).then(({ data }) => (this.section_tagged_subjects = data));
                 this.form.SubjectID = tagged_subject_section.SubjectID;
                 this.form.ProfessorID = tagged_subject_section.ProfessorID;
+                this.form.STUnits = tagged_subject_section.STUnits;
+                axios.get('api/tagged_subjects_schedule/'+this.form.STID).then(({ data }) => (this.tagged_subjects_schedule = data));
+
                 $('#taggedSubjectsSchedule').modal('show');
             },
             create_tagged_subjects(){
-                this.$Progress.start()
-                this.form.post('api/subjecttagging')
-                .then(() => {
-                    Fire.$emit('AfterCreateSubject');
-                    toast({
-                        type: 'success',
-                        title: 'Tagged Subjects Created successfully'
-                    })              
-                    this.form.SubjectID = ''
-                    this.form.ProfessorID = ''        
-                    this.$Progress.finish()
-                    $('#taggedSubjectsSchedule').modal('hide');
-                })
-                .catch(() => {
-                    this.$Progress.fail()
-                })                
+                if(this.getsizeofarray(this.tagged_subject_sections) == 10){
+                    alert('maximum of 10 subjects for '+this.sem)
+                }
+                else{
+                    this.$Progress.start()
+                    this.form.post('api/subjecttagging')
+                    .then(({data}) => {
+    
+                        if(data.type == 'success'){
+                            Fire.$emit('AfterCreateSubject');
+                            toast({
+                                type: data.type,
+                                title: data.message
+                            })              
+                            this.$Progress.finish()
+                            $('#taggedSubjectsSchedule').modal('hide');
+                            // this.form.SubjectID = ''
+                            // this.form.ProfessorID = ''  
+                            // this.form.SubjectMeetings = '';
+                            // this.form.hours1 = '';
+                            // this.form.hours2 = '';
+                            // this.form.Day1 = '';
+                            // this.form.Day2 = '';
+                            // this.form.Time_in1 = '';
+                            // this.form.Time_in2 = '';
+                            // this.form.smid1 = '';
+                            // this.form.smid2 = '';
+                            // this.subject_meetings = {};      
+                        }
+                        else{
+                            toast({
+                                type: data.type,
+                                title: data.message
+                            })              
+                            this.$Progress.finish()
+                        }
+                    })
+                    .catch(() => {
+                        this.$Progress.fail()
+                    })                
+                }
             },
             update_tagged_subjects(){
-                this.$Progress.start()
-                this.form.put('api/update_subjecttagging/'+this.form.STID)
-                .then(({data}) => {
-                    if(data.type == 'success'){
-                        toast({
-                            type: data.type,
-                            title: data.message
-                        })              
-                        Fire.$emit('AfterCreateSubject');
-                        this.form.SubjectID = ''
-                        this.form.ProfessorID = ''        
-                        $('#taggedSubjectsSchedule').modal('hide');
-                    }
-                    if(data.type == 'error'){
-                        toast({
-                            type: data.type,
-                            title: data.message
-                        }) 
-                    }
-                    this.$Progress.finish()
-
-
-                })
-                .catch(() => {
-                    this.$Progress.fail()
-                })                
+                if(this.getsizeofarray(this.tagged_subject_sections) == 10){
+                    alert('maximum of 10 subjects for '+this.sem)
+                }
+                else{               
+                    this.$Progress.start()
+                    this.form.put('api/update_subjecttagging/'+this.form.STID)
+                    .then(({data}) => {
+                        if(data.type == 'success'){
+                            toast({
+                                type: data.type,
+                                title: data.message
+                            })              
+                            Fire.$emit('AfterCreateSubject') 
+                            $('#taggedSubjectsSchedule').modal('hide')
+                        }
+                        if(data.type == 'error'){
+                            toast({
+                                type: data.type,
+                                title: data.message
+                            }) 
+                        }
+                        this.$Progress.finish()
+    
+    
+                    })
+                    .catch(() => {
+                        this.$Progress.fail()
+                    })                
+                }
             },
             deleteSubject(id){
                 swal({
@@ -690,13 +647,13 @@
                 }
                 return size;                
             },
-            show_tagged_schedule(tagged_schedule){
-                this.SMSched_Form1.reset();
-                this.SMSched_Form2.reset();
-                axios.get('api/get_subjectmeeting_schedule/'+tagged_schedule.STID).then(({ data }) => (this.tagged_schedules = data));
+            get_subject_meetings(){
+                // axios.get('api/get_subject_meetings/'+this.form.SubjectID)
+                // .then(({ data }) => (this.subject_meetings = data));
 
-
-                $('#tagged_schedule_meetings').modal('show');              
+                if(this.form.SubjectMeetings != 0 && this.form.SubjectMeetings <= 2){
+                    this.subject_meetings = this.form.SubjectMeetings
+                }
             },
             get_classroom1(id){
                 axios.get('api/get_classroom_type/'+id).then(({ data }) => (this.one_classrooms = data));
@@ -705,58 +662,9 @@
             get_classroom2(id){
                 axios.get('api/get_classroom_type/'+id).then(({ data }) => (this.two_classrooms = data));
             },
-            update_tagged_meetings1(){
-                this.$Progress.start()
-                this.SMSched_Form1.put('api/update_tagged_meetings/'+this.SMSched_Form1.STSID)
-                .then(({data}) => {
-                    if(data.type == 'success'){
-                        toast({
-                            type: data.type,
-                            title: data.message
-                        })              
-                        Fire.$emit('AfterCreateSubject');   
-                        $('#tagged_schedule_meetings').modal('hide');  
-                    }
-                    if(data.type == 'error'){
-                        toast({
-                            type: data.type,
-                            title: data.message
-                        }) 
-                    }
-                    this.$Progress.finish()
+            get_tagged_subjects_schedule(id){
 
-
-                })
-                .catch(() => {
-                    this.$Progress.fail()
-                })                    
             },
-            update_tagged_meetings2(){
-                this.$Progress.start()
-                this.SMSched_Form2.put('api/update_tagged_meetings/'+this.SMSched_Form1.STSID)
-                .then(({data}) => {
-                    if(data.type == 'success'){
-                        toast({
-                            type: data.type,
-                            title: data.message
-                        })              
-                        Fire.$emit('AfterCreateSubject');   
-                        $('#tagged_schedule_meetings').modal('hide');  
-                    }
-                    if(data.type == 'error'){
-                        toast({
-                            type: data.type,
-                            title: data.message
-                        }) 
-                    }
-                    this.$Progress.finish()
-
-
-                })
-                .catch(() => {
-                    this.$Progress.fail()
-                })                    
-            }
         },
         created(){
             //this.loadSectionAvailable();
@@ -799,18 +707,53 @@
                 this.dt = $('#section_available_table').DataTable()
                 });
             },
-            tagged_schedules(val){
-                if(this.getsizeofarray(this.tagged_schedules) == 1){
-                    this.SMSched_Form1.fill(this.tagged_schedules[0]);
-                    this.get_classroom1(this.SMSched_Form1.SMID);
+            // subject_meetings(val){
+            //     if(this.getsizeofarray(this.subject_meetings) == 1){
+            //         this.get_classroom1(this.subject_meetings[0].SMID);
+            //         this.form.SubjectMeetings = this.subject_meetings[0].SubjectMeetings;
+            //         this.form.hours1 = this.subject_meetings[0].SubjectHours;
+            //         this.form.ctid1 = this.subject_meetings[0].CTID;
+            //         this.form.smid1 = this.subject_meetings[0].SMID;
+            //     }
+            //     if(this.getsizeofarray(this.subject_meetings) == 2){
+            //         this.get_classroom1(this.subject_meetings[0].SMID);
+            //         this.get_classroom2(this.subject_meetings[1].SMID);
+            //         this.form.SubjectMeetings = this.subject_meetings[0].SubjectMeetings;
+            //         this.form.hours1 = this.subject_meetings[0].SubjectHours;
+            //         this.form.hours2 = this.subject_meetings[1].SubjectHours;
+            //         this.form.ctid1 = this.subject_meetings[0].CTID;
+            //         this.form.ctid2 = this.subject_meetings[1].CTID;
+            //         this.form.smid1 = this.subject_meetings[0].SMID;
+            //         this.form.smid2 = this.subject_meetings[1].SMID;
+            //     }                
+            // },
+            tagged_subjects_schedule(val){
+                if(this.getsizeofarray(this.tagged_subjects_schedule) == 1){
+                    this.form.SubjectMeetings = 1;
+                    this.form.ctid1 = this.tagged_subjects_schedule[0].ClassroomType;
+                    this.form.Day1 = this.tagged_subjects_schedule[0].STSDay;
+                    this.form.hours1 = this.tagged_subjects_schedule[0].STSHours;
+                    this.form.Time_in1 = this.tagged_subjects_schedule[0].STSTimeStart;
+                    this.form.classroom1 = this.tagged_subjects_schedule[0].ClassroomID;
+                    axios.get('api/get_classroom_options/'+this.form.ctid1).then(({ data }) => (this.one_classrooms = data));
                 }
-
-                if(this.getsizeofarray(this.tagged_schedules) == 2){
-                    this.SMSched_Form1.fill(this.tagged_schedules[0]);
-                    this.SMSched_Form2.fill(this.tagged_schedules[1]);
-                    this.get_classroom1(this.SMSched_Form1.SMID);
-                    this.get_classroom2(this.SMSched_Form2.SMID);
-                }
+                else{
+                    if(this.getsizeofarray(this.tagged_subjects_schedule) == 2){
+                        this.form.SubjectMeetings = 2;
+                        this.form.ctid1 = this.tagged_subjects_schedule[0].ClassroomType;
+                        this.form.ctid2 = this.tagged_subjects_schedule[1].ClassroomType;
+                        this.form.Day1 = this.tagged_subjects_schedule[0].STSDay;
+                        this.form.Day2 = this.tagged_subjects_schedule[1].STSDay;
+                        this.form.hours1 = this.tagged_subjects_schedule[0].STSHours;
+                        this.form.hours2 = this.tagged_subjects_schedule[1].STSHours;
+                        this.form.Time_in1 = this.tagged_subjects_schedule[0].STSTimeStart;
+                        this.form.Time_in2 = this.tagged_subjects_schedule[1].STSTimeStart;
+                        this.form.classroom1 = this.tagged_subjects_schedule[0].ClassroomID;
+                        this.form.classroom2 = this.tagged_subjects_schedule[1].ClassroomID;
+                        axios.get('api/get_classroom_options/'+this.form.ctid1).then(({ data }) => (this.one_classrooms = data));
+                        axios.get('api/get_classroom_options/'+this.form.ctid2).then(({ data }) => (this.two_classrooms = data));
+                    }
+                }                
             }
         },
     }

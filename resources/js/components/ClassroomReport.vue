@@ -8,7 +8,7 @@
                         <div class="card-tools">
                             <!-- call a function on click to the button -->
                             <button class="btn btn-light text-teal" @click="showmodal()">Generate Report <span class="fas fa-print fa-fw"></span></button>
-                            <a class="btn btn-success text-white" target="_blank" v-show="form.BldgID != '' && form.BFID != '' && form.Day != ''" v-bind:href="'api/print_classroom_report/'+form.BldgID+'/'+form.BFID+'/'+form.Day" >
+                            <a class="btn btn-success text-white" target="_blank" v-show="form.BldgID != '' && form.BFID != '' && form.Day != '' && form.TimeIn != ''" v-bind:href="'api/print_classroom_report/'+form.BldgID+'/'+form.BFID+'/'+form.Day+'/'+form.TimeIn+'/'+form.TimeOut">
                                 <span class="fas fa-print fa-fw"></span>
                             </a>
                         </div>
@@ -91,6 +91,29 @@
                                 </option>
                             </select>
                             <has-error :form="form" field="Day"></has-error>
+                        </div>  
+
+                        <div class="form-group">
+                            <select @change="changetimein()" v-model="form.TimeIn" name="TimeIn" id="TimeIn"
+                                class="form-control" :class="{ 'is-invalid': form.errors.has('TimeIn') }">
+                                <option value="">Select Time Start</option>
+                                <option value="ALL">ALL</option>
+                                <option v-for="time in times" :key="time.id" v-bind:value="time.SchedTime">
+                                    {{time.SchedTime}}
+                                </option>
+                            </select>
+                            <has-error :form="form" field="TimeIn"></has-error>
+                        </div>     
+
+                        <div class="form-group" v-if="show">
+                            <select v-model="form.TimeOut" name="TimeOut" id="TimeOut"
+                                class="form-control" :class="{ 'is-invalid': form.errors.has('TimeOut') }">
+                                <option value="">Select Time Out</option>
+                                <option v-for="time in times" :key="time.id" v-bind:value="time.SchedTime">
+                                    {{time.SchedTime}}
+                                </option>
+                            </select>
+                            <has-error :form="form" field="TimeOut"></has-error>
                         </div>                        
 
                         <!-- <div class="form-group">
@@ -126,20 +149,27 @@
                 buildings: {},
                 floors: {},
                 days: {},
+                times: {},
                 editmode: false,
+                show: false,
                 form: new Form({
                     BldgID: '',//md5
                     BFID: '',
                     Day: '',
                     TimeIn: '',
-                    TImeOut: '',
+                    TimeOut: '',
                 })
             }
         },
         methods:{
             loadReport(){
-                axios.get('api/get_classroom_report/'+this.form.BldgID+'/'+this.form.BFID+'/'+this.form.Day).then(({ data }) => (this.reports = data));
-                
+                if(this.form.TimeOut == ''){
+                    this.form.TimeOut = '00:00:00';
+                    axios.get('api/get_classroom_report/'+this.form.BldgID+'/'+this.form.BFID+'/'+this.form.Day+'/'+this.form.TimeIn+'/'+this.form.TimeOut).then(({ data }) => (this.reports = data));
+                }
+                else{
+                    axios.get('api/get_classroom_report/'+this.form.BldgID+'/'+this.form.BFID+'/'+this.form.Day+'/'+this.form.TimeIn+'/'+this.form.TimeOut).then(({ data }) => (this.reports = data));
+                }
                 this.year_today = this.js_date.getFullYear();
                 this.month_today = this.js_date.getMonth();
 
@@ -216,6 +246,7 @@
 
                 axios.get('api/building').then(({ data }) => (this.buildings = data));
                 axios.get('api/get_days').then(({ data }) => (this.days = data));
+                axios.get('api/get_schedules').then(({ data }) => (this.times = data));
                 $('#show_modal').modal('show');
             },
             getFloors(){
@@ -239,6 +270,14 @@
                 .catch(() => {
                     this.$Progress.fail()
                 })                
+            },
+            changetimein(){
+                if(this.form.TimeIn == 'ALL' || this.form.TimeIn == ""){
+                    this.show = false;
+                }
+                else{
+                    this.show = true;
+                }
             }
 
         },

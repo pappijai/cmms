@@ -85,7 +85,7 @@
                                 <option value="">Select User Role</option>
                                 <!-- <option value="super admin">Super Admin</option> -->
                                 <option value="admin">Admin</option>
-                                <option value="registrar">Registrar</option>
+                                <option value="head of academics">Head of Academics</option>
                                 <option value="administrative">Administrative</option>
                             </select>
                             <has-error :form="form" field="type"></has-error>

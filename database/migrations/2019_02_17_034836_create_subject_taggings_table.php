@@ -18,6 +18,7 @@ class CreateSubjectTaggingsTable extends Migration
             $table->integer('SubjectID');
             $table->integer('ProfessorID');
             $table->integer('SectionID');
+            $table->integer('STUnits');
             $table->string('STSem');
             $table->integer('STYear');
             $table->year('STYearFrom');

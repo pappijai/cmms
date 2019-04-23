@@ -9,8 +9,13 @@ export default class Gate{
         return this.user.type == 'super admin';
     }
     isRegistrarOnly(){
-        return this.user.type == 'registrar';
+        return this.user.type == 'head of academics';
     }
+
+    isHAFOnly(){
+        return this.user.type == 'head of academics';
+    }
+
     isAdminOnly(){
         return this.user.type == 'admin';
     }
@@ -28,7 +33,11 @@ export default class Gate{
     }
 
     isRegistrar(){
-        return this.user.type == 'registrar' || this.user.type == 'admin' || this.user.type == 'super admin';
+        return this.user.type == 'head of academics' || this.user.type == 'admin' || this.user.type == 'super admin';
+    }
+
+    isHAF(){
+        return this.user.type == 'head of academics' || this.user.type == 'admin' || this.user.type == 'super admin';
     }
 
     isAdministrative(){

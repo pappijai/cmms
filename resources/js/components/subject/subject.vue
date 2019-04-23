@@ -18,7 +18,6 @@
                                     <th>No.</th>
                                     <th>Subject Code</th>
                                     <th>Subject Description</th>
-                                    <th>Meetings</th>
                                     <th>Created At</th>
                                     <th>Modify</th>
                                 </tr>
@@ -29,11 +28,6 @@
                                     <td>{{id++}}</td>
                                     <td>{{subject.SubjectCode}}</td>
                                     <td>{{subject.SubjectDescription}}</td>
-                                    <td>
-                                        <button @click="editMeetings(subject.SubjectID)" class="btn btn-info text-white">
-                                            <i class="fas fa-edit text-white"></i> Modify Meetings Info
-                                        </button>                                        
-                                    </td>
                                     <td>{{subject.created_at | myDate}}</td>
                                     <td>
                                         <button class="btn btn-primary" @click="editModal(subject)">
@@ -79,11 +73,11 @@
                             <has-error :form="form" field="SubjectDescription"></has-error>
                         </div>
 
-                        <div class="form-group">
+                        <!-- <div class="form-group">
                             <input v-model="form.SubjectMeetings" type="number" name="SubjectMeetings" placeholder="# of Meetings"
                                 class="form-control" :class="{ 'is-invalid': form.errors.has('SubjectMeetings') }">
                             <has-error :form="form" field="SubjectMeetings"></has-error>
-                        </div>
+                        </div> -->
 
                         <!-- <div class="form-group">
                             <select @change="getFloors()" v-model="form.BldgID" name="BldgID" id="BldgID"
@@ -271,7 +265,7 @@
                     this.subject_id = data     
                     Fire.$emit('AfterCreate')
                     $('#addsubjectmodal').modal('hide')
-                    this.editMeetings(this.subject_id.data['subject_id'])
+                    //this.editMeetings(this.subject_id.data['subject_id'])
                     toast({
                         type: 'success',
                         title: 'Subject Created successfully'
@@ -295,7 +289,7 @@
                 .then((data) => {
                     this.subject_id = data
                     $('#addsubjectmodal').modal('hide')
-                    this.editMeetings(this.subject_id.data['subject_id'])
+                    //this.editMeetings(this.subject_id.data['subject_id'])
                     Fire.$emit('AfterUpdate')
                     toast({
                         type: 'success',

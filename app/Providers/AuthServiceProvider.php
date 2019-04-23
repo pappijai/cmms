@@ -39,7 +39,11 @@ class AuthServiceProvider extends ServiceProvider
         });
 
         Gate::define('isRegistrar', function($user){
-            return $user->type == 'registrar' || $user->type == 'admin' || $user->type == 'super admin';
+            return $user->type == 'head of academics' || $user->type == 'admin' || $user->type == 'super admin';
+        });
+
+        Gate::define('isHAF', function($user){
+            return $user->type == 'head of academics' || $user->type == 'admin' || $user->type == 'super admin';
         });
 
         Gate::define('isAdministrative', function($user){

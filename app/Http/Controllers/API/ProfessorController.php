@@ -131,7 +131,8 @@ class ProfessorController extends Controller
     }
 
     public function get_professor_schedule($professor_id){
-        return DB::select('SELECT f.SectionName,f.SectionYear,i.CourseCode,b.SubjectDescription,GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
+        return DB::select('SELECT f.SectionName,f.SectionYear,i.CourseCode,b.SubjectDescription,a.STUnits,SUM(d.STSHours) AS TotalHours,
+                            GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
                             FROM subject_taggings a 
                             INNER JOIN subjects b ON a.SubjectID = b.SubjectID 
                             LEFT JOIN subject_tagging_schedules d ON a.STID = d.STID
@@ -140,7 +141,7 @@ class ProfessorController extends Controller
                             INNER JOIN courses i ON f.CourseID = i.CourseID
                             WHERE md5(concat(a.ProfessorID)) = "'.$professor_id.'" AND 
                             a.STStatus = "Active"
-                            GROUP BY b.SubjectDescription,i.CourseCode,f.SectionName,f.SectionYear
+                            GROUP BY b.SubjectDescription,i.CourseCode,f.SectionName,f.SectionYear,a.STUnits
                             ORDER BY i.CourseCode,f.SectionYear ASC
                         ');
 
@@ -160,7 +161,8 @@ class ProfessorController extends Controller
 
         $professor = DB::select('SELECT * FROM professors WHERE md5(concat(ProfessorID)) = "'.$professor_id.'"');
 
-        $data = DB::select('SELECT f.SectionName,f.SectionYear,i.CourseCode,b.SubjectDescription,GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
+        $data = DB::select('SELECT f.SectionName,f.SectionYear,i.CourseCode,b.SubjectDescription,a.STUnits,SUM(d.STSHours) AS TotalHours,
+                            GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
                             FROM subject_taggings a 
                             INNER JOIN subjects b ON a.SubjectID = b.SubjectID 
                             LEFT JOIN subject_tagging_schedules d ON a.STID = d.STID
@@ -169,7 +171,7 @@ class ProfessorController extends Controller
                             INNER JOIN courses i ON f.CourseID = i.CourseID
                             WHERE md5(concat(a.ProfessorID)) = "'.$professor_id.'" AND 
                             a.STStatus = "Active"
-                            GROUP BY b.SubjectDescription,i.CourseCode,f.SectionName,f.SectionYear
+                            GROUP BY b.SubjectDescription,i.CourseCode,f.SectionName,f.SectionYear,a.STUnits
                             ORDER BY i.CourseCode,f.SectionYear ASC
                         ');
 
@@ -213,8 +215,10 @@ class ProfessorController extends Controller
                 <table width="100%" style="border-collapse: collapse; border 0px;">
                     <thead style="background-color:black;color: #fff;">
                         <tr>
-                            <th style="border: 1px solid;padding: 12px;width:25%;">Course Yr & Sec</th>
-                            <th style="border: 1px solid;padding: 12px;width:25%;">Subject Name</th>
+                            <th style="border: 1px solid;padding: 12px;width:20%;">Course Yr & Sec</th>
+                            <th style="border: 1px solid;padding: 12px;width:20%;">Subject Name</th>
+                            <th style="border: 1px solid;padding: 12px;width:5%;">Units</th>
+                            <th style="border: 1px solid;padding: 12px;width:5%;">Hours</th>
                             <th style="border: 1px solid;padding: 12px;width:50%;">Schedule</th>
                         </tr>                        
                     </thead>
@@ -235,8 +239,10 @@ class ProfessorController extends Controller
                 <table width="100%" style="border-collapse: collapse; border 0px;">
                     <thead style="background-color:black;color: #fff;">
                         <tr>
-                            <th style="border: 1px solid;padding: 12px;width:25%;">Course Yr & Sec</th>
-                            <th style="border: 1px solid;padding: 12px;width:25%;">Subject Name</th>
+                            <th style="border: 1px solid;padding: 12px;width:20%;">Course Yr & Sec</th>
+                            <th style="border: 1px solid;padding: 12px;width:20%;">Subject Name</th>
+                            <th style="border: 1px solid;padding: 12px;width:5%;">Units</th>
+                            <th style="border: 1px solid;padding: 12px;width:5%;">Hours</th>
                             <th style="border: 1px solid;padding: 12px;width:50%;">Schedule</th>
                         </tr>                        
                     </thead>
@@ -257,6 +263,8 @@ class ProfessorController extends Controller
                     <tr>
                         <td style="border: 1px solid;padding: 5px;">'.$row->CourseCode.' '.$section_name.'</td>
                         <td style="border: 1px solid;padding: 5px;">'.$row->SubjectDescription.'</td>
+                        <td style="border: 1px solid;padding: 5px;">'.$row->STUnits.'</td>
+                        <td style="border: 1px solid;padding: 5px;">'.$row->TotalHours.'</td>
                         <td style="border: 1px solid;padding: 5px;">'.$row->Schedule.'</td>
                     </tr>
                 ';
