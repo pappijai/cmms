@@ -44,7 +44,7 @@ class SubjectTaggingController extends Controller
                     WHERE md5(concat(SectionID)) = "'.$row->SectionID.'"         
                 ');             
             }
-            elseif ($year_today - $row->SectionYear == 0){
+            elseif ($year_today - $row->SectionYear == 0 && $month_today < 4){
                 DB::update('
                 UPDATE sections SET
                     SectionStatus = "Inactive"
@@ -3760,7 +3760,7 @@ class SubjectTaggingController extends Controller
                 $subject_taggings_id = DB::getPdo()->lastInsertId();              
 
                 DB::insert('INSERT INTO subject_tagging_schedules (STID,ClassroomID,STSHours,STSTimeStart,STSTimeEnd,STSDay,STSStatus,created_at,updated_at) VALUES
-                    ("'.$subject_taggings_id.'","'.$row->ClassroomID.'","'.$request->hours1.'",
+                    ("'.$subject_taggings_id.'","'.$classroom_1.'","'.$request->hours1.'",
                     "'.$request->Time_in1.'","'.$Time_Out1.'","'.$request->Day1.'","Active",now(),now())');
 
                 DB::insert('INSERT INTO subject_tagging_schedules (STID,ClassroomID,STSHours,STSTimeStart,STSTimeEnd,STSDay,STSStatus,created_at,updated_at) VALUES
@@ -4108,5 +4108,3736 @@ class SubjectTaggingController extends Controller
             
         $professor = DB::select('SELECT * FROM professors WHERE ProfessorID = "'.$request->ProfessorID.'"');
         $professor_id = $professor['0']->ProfessorID;        
+
+        if($request->SubjectMeetings == 1){
+            $this->validate($request, [
+                'Day1' => 'required',
+                'Time_in1' => 'required',    
+                'ctid1' => 'required',   
+                'hours1' => 'required',
+                'classroom1' => 'required',
+            ]);
+
+            $total_hours = $request->hours1 * (60*60);
+            $timestamps = strtotime($request->Time_in1) + $total_hours;
+            $Time_Out1 = date('H:i', $timestamps);
+            $subject_taggings_id = 0;
+
+            $can_sched = false;
+            $and_di_pwede = '';
+
+            $classroom = DB::select('SELECT * FROM classrooms WHERE ClassroomID = "'.$request->classroom1.'"');
+            $classroomName = $classroom['0']->ClassroomName;
+            $classroomOut = $classroom['0']->ClassroomOut;
+
+            $subject_tagged_schedule = DB::select('SELECT * FROM subject_tagging_schedules WHERE 
+                                        STID <> "'.$st_id.'" AND
+                                        ClassroomID = "'.$request->classroom1.'" AND 
+                                        STSStatus = "Active" AND
+                                        STSDay = "'.$request->Day1.'" ORDER BY STSTimeStart ASC');
+
+            // check if the classroom selected is available
+            if($Time_Out1 > $classroomOut){
+                $can_sched = false;
+            }
+            else{
+
+                // check if no subject tagged in the classroom
+                if(empty($subject_tagged_schedule)){
+
+                    $section_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                            WHERE md5(concat(b.SectionID)) = "'.$request->SectionID.'" AND
+                                                            b.STID <> "'.$st_id.'" AND 
+                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                            b.STStatus = "Active" AND 
+                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                            ');
+
+                    // check if no schedule of section on the same day
+                    if(empty($section_subject_schedule_save)){
+                        $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                b.STID <> "'.$st_id.'" AND 
+                                                                a.STSDay = "'.$request->Day1.'" AND 
+                                                                b.STStatus = "Active" AND 
+                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                ');
+                        
+                        // check if the professor is available for the given day
+                        if(empty($professor_subject_schedule_save)){
+                            $can_sched = true;
+                        }
+                        else{
+                            for($i = 0;$i < count($professor_subject_schedule_save);$i++){
+                                $j = $i;
+
+                                // check if the generated start time is available in the professor schedule
+                                if($request->Time_in1 >= $professor_subject_schedule_save[$i]->STSTimeEnd){
+                                    
+                                    $j++;
+
+                                    // check if the schedule subject of professor is empty
+                                    if(!isset($professor_subject_schedule_save[$j])){
+                                        $can_sched = true;
+                                        break 1;
+                                    }// end of check if the schedule subject of professor is empty
+                                    else{
+                                        if($Time_Out1 <= $professor_subject_schedule_save[$j]->STSTimeStart){
+                                            $can_sched = true;
+                                            break 1;
+                                        }
+                                        else{
+                                            $can_sched = false;
+                                            // break;
+                                            $and_di_pwede ='Professor is not Available';
+                                        }
+                                    }
+                                    
+                                }// end of check if the generated start time is available in the professor schedule
+                                else{
+                                    if($Time_Out1 <= $professor_subject_schedule_save[$i]->STSTimeStart){
+                                        $can_sched = true;
+                                        break 1;
+                                    }
+                                    else{
+                                        $can_sched = false;
+                                        $and_di_pwede ='Professor is not Availablee';
+                                        break 1;
+                                    }
+                                    
+                                }
+                            }// end of loop of the subject and schedule that this professor have     
+                        }
+
+                    }
+                    else{
+                        for($i = 0;$i < count($section_subject_schedule_save);$i++){
+                            $j = $i;
+                            // check if the generated start time is available in the professor schedule
+                            if($request->Time_in1 >= $section_subject_schedule_save[$i]->STSTimeEnd){
+                                
+                                $j++;
+
+                                // check if the schedule subject of professor is empty
+                                if(!isset($section_subject_schedule_save[$j])){
+
+
+                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND
+                                                                            b.STID <> "'.$st_id.'" AND 
+                                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                                            b.STStatus = "Active" AND 
+                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                            ');
+
+                                    // check if the professor is available for the given day
+                                    if(empty($professor_subject_schedule_save)){
+                                        $can_sched = true;
+                                        break 1;
+                                    }
+                                    else{
+                                        for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                            $jj = $ii;
+
+                                            // check if the generated start time is available in the professor schedule
+                                            if($request->Time_in1 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                
+                                                $jj++;
+
+                                                // check if the schedule subject of professor is empty
+                                                if(!isset($professor_subject_schedule_save[$jj])){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }// end of check if the schedule subject of professor is empty
+                                                else{
+                                                    if($Time_Out1 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched = false;
+                                                        // break;
+                                                        $and_di_pwede ='Professor is not Available';
+                                                        
+                                                        
+                                                    }
+                                                }
+                                                
+                                            }// end of check if the generated start time is available in the professor schedule
+                                            else{
+                                                if($Time_Out1 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    $can_sched = false;
+                                                    $and_di_pwede ='Professor is not Availablee';
+                                                    break 2;
+                                                }
+                                                
+                                            }
+                                        }// end of loop of the subject and schedule that this professor have     
+                                    }
+
+
+                                    // $can_sched = true;
+                                    // break 1;
+                                }// end of check if the schedule subject of professor is empty
+                                else{
+                                    if($Time_Out1 <= $section_subject_schedule_save[$j]->STSTimeStart){
+
+                                        $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND
+                                                                                b.STID <> "'.$st_id.'" AND 
+                                                                                a.STSDay = "'.$request->Day1.'" AND 
+                                                                                b.STStatus = "Active" AND 
+                                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                ');
+
+                                        // check if the professor is available for the given day
+                                        if(empty($professor_subject_schedule_save)){
+                                            $can_sched = true;
+                                            break 1;
+                                        }
+                                        else{
+                                            for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                                $jj = $ii;
+
+                                                // check if the generated start time is available in the professor schedule
+                                                if($request->Time_in1 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                    
+                                                    $jj++;
+
+                                                    // check if the schedule subject of professor is empty
+                                                    if(!isset($professor_subject_schedule_save[$jj])){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }// end of check if the schedule subject of professor is empty
+                                                    else{
+                                                        if($Time_Out1 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                            $can_sched = true;
+                                                            break 2;
+                                                        }
+                                                        else{
+                                                            $can_sched = false;
+                                                            // break;
+                                                            $and_di_pwede ='Professor is not Available';
+                                                            
+                                                            
+                                                        }
+                                                    }
+                                                    
+                                                }// end of check if the generated start time is available in the professor schedule
+                                                else{
+                                                    if($Time_Out1 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched = false;
+                                                        $and_di_pwede ='Professor is not Availablee';
+                                                        break 2;
+                                                    }
+                                                    
+                                                }
+                                            }// end of loop of the subject and schedule that this professor have     
+                                        }
+
+                                        // $can_sched = true;
+                                        // break 1;
+                                    }
+                                    else{
+                                        $can_sched = false;
+                                        // break;
+                                        $and_di_pwede ='Section is not Available';
+                                    }
+                                }
+                                
+                            }// end of check if the generated start time is available in the professor schedule
+                            else{
+
+                                if($Time_Out1 <= $section_subject_schedule_save[$i]->STSTimeStart){
+                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND
+                                                                            b.STID <> "'.$st_id.'" AND 
+                                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                                            b.STStatus = "Active" AND 
+                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                            ');
+
+                                    // check if the professor is available for the given day
+                                    if(empty($professor_subject_schedule_save)){
+                                        $can_sched = true;
+                                        break 1;
+                                    }
+                                    else{
+                                        for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                            $jj = $ii;
+
+                                            // check if the generated start time is available in the professor schedule
+                                            if($request->Time_in1 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                
+                                                $jj++;
+
+                                                // check if the schedule subject of professor is empty
+                                                if(!isset($professor_subject_schedule_save[$jj])){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }// end of check if the schedule subject of professor is empty
+                                                else{
+                                                    if($Time_Out1 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched = false;
+                                                        // break;
+                                                        $and_di_pwede ='Professor is not Available';
+                                                        
+                                                        
+                                                    }
+                                                }
+                                                
+                                            }// end of check if the generated start time is available in the professor schedule
+                                            else{
+                                                if($Time_Out1 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    $can_sched = false;
+                                                    $and_di_pwede ='Professor is not Availablee';
+                                                    break 2;
+                                                }
+                                                
+                                            }
+                                        }// end of loop of the subject and schedule that this professor have     
+                                    }
+                                }
+                                else{
+                                    $can_sched = false;
+                                    $and_di_pwede ='Section is not Available';
+                                    break 1;
+                                }
+                                
+                                
+                            }
+                        }// end of loop of the subject and schedule that this professor have     
+                    }
+                    
+                }   
+                else{
+                    // loop of the subject that is scheduled in the classroom generated
+                    for($i = 0;$i < count($subject_tagged_schedule);$i++){
+                        $j = $i;
+
+                        // check if the generated start time is available
+                        if($request->Time_in1 >= $subject_tagged_schedule[$i]->STSTimeEnd){
+
+                            $j++;
+
+                            // check if the subject schedule in generate classroom is empty
+                            if(!isset($subject_tagged_schedule[$j])){
+
+                                $section_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                WHERE md5(concat(b.SectionID)) = "'.$request->SectionID.'" AND 
+                                                                a.STSDay = "'.$request->Day1.'" AND 
+                                                                b.STStatus = "Active" AND 
+                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                ');
+
+                                // check if no schedule of section on the same day
+                                if(empty($section_subject_schedule_save)){
+                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                                            b.STStatus = "Active" AND 
+                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                            ');
+
+                                    // check if the professor is available for the given day
+                                    if(empty($professor_subject_schedule_save)){
+                                        $can_sched = true;
+                                        break 1;
+                                    }
+                                    else{
+                                        for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                            $jj = $ii;
+
+                                            // check if the generated start time is available in the professor schedule
+                                            if($request->Time_in1 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                
+                                                $jj++;
+
+                                                // check if the schedule subject of professor is empty
+                                                if(!isset($professor_subject_schedule_save[$jj])){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }// end of check if the schedule subject of professor is empty
+                                                else{
+                                                    if($Time_Out1 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched = false;
+                                                        // break;
+                                                        $and_di_pwede ='Professor is not Available';
+                                                        
+                                                        
+                                                    }
+                                                }
+                                                
+                                            }// end of check if the generated start time is available in the professor schedule
+                                            else{
+                                                if($Time_Out1 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    $can_sched = false;
+                                                    //break;
+                                                    $and_di_pwede ='Professor is not Availablee';
+                                                }
+                                                
+                                            }
+                                        }// end of loop of the subject and schedule that this professor have     
+                                    }
+
+                                }
+                                else{
+                                    for($ii = 0;$ii < count($section_subject_schedule_save);$ii++){
+                                        $jj = $ii;
+                                        // check if the generated start time is available in the professor schedule
+                                        if($request->Time_in1 >= $section_subject_schedule_save[$ii]->STSTimeEnd){
+                                            
+                                            $jj++;
+
+                                            // check if the schedule subject of professor is empty
+                                            if(!isset($section_subject_schedule_save[$jj])){
+
+
+                                                $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                        FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                        WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                        a.STSDay = "'.$request->Day1.'" AND 
+                                                                                        b.STStatus = "Active" AND 
+                                                                                        a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                        ');
+
+                                                // check if the professor is available for the given day
+                                                if(empty($professor_subject_schedule_save)){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                        $jjj = $iii;
+
+                                                        // check if the generated start time is available in the professor schedule
+                                                        if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                            
+                                                            $jjj++;
+
+                                                            // check if the schedule subject of professor is empty
+                                                            if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                $can_sched = true;
+                                                                break 3;
+                                                            }// end of check if the schedule subject of professor is empty
+                                                            else{
+                                                                if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    // break;
+                                                                    $and_di_pwede ='Professor is not Available';
+                                                                    
+                                                                    
+                                                                }
+                                                            }
+                                                            
+                                                        }// end of check if the generated start time is available in the professor schedule
+                                                        else{
+                                                            if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                $can_sched = true;
+                                                                break 3;
+                                                            }
+                                                            else{
+                                                                $can_sched = false;
+                                                                //break;
+                                                                $and_di_pwede ='Professor is not Availablee';
+                                                            }
+                                                            
+                                                        }
+                                                    }// end of loop of the subject and schedule that this professor have     
+                                                }
+
+
+                                                // $can_sched = true;
+                                                // break 1;
+                                            }// end of check if the schedule subject of professor is empty
+                                            else{
+                                                if($Time_Out1 <= $section_subject_schedule_save[$jj]->STSTimeStart){
+
+                                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                                                            b.STStatus = "Active" AND 
+                                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                            ');
+
+                                                    // check if the professor is available for the given day
+                                                    if(empty($professor_subject_schedule_save)){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                            $jjj = $iii;
+
+                                                            // check if the generated start time is available in the professor schedule
+                                                            if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                                
+                                                                $jjj++;
+
+                                                                // check if the schedule subject of professor is empty
+                                                                if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }// end of check if the schedule subject of professor is empty
+                                                                else{
+                                                                    if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                        $can_sched = true;
+                                                                        break 3;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched = false;
+                                                                        // break;
+                                                                        $and_di_pwede ='Professor is not Available';
+                                                                        
+                                                                        
+                                                                    }
+                                                                }
+                                                                
+                                                            }// end of check if the generated start time is available in the professor schedule
+                                                            else{
+                                                                if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    //break;
+                                                                    $and_di_pwede ='Professor is not Availablee';
+                                                                }
+                                                                
+                                                            }
+                                                        }// end of loop of the subject and schedule that this professor have     
+                                                    }
+
+                                                    // $can_sched = true;
+                                                    // break 1;
+                                                }
+                                                else{
+                                                    $can_sched = false;
+                                                    // break;
+                                                    $and_di_pwede ='Section is not Available';
+                                                }
+                                            }
+                                            
+                                        }// end of check if the generated start time is available in the professor schedule
+                                        else{
+
+                                            if($Time_Out1 <= $section_subject_schedule_save[$ii]->STSTimeStart){
+                                                $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                        FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                        WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                        a.STSDay = "'.$request->Day1.'" AND 
+                                                                                        b.STStatus = "Active" AND 
+                                                                                        a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                        ');
+
+                                                // check if the professor is available for the given day
+                                                if(empty($professor_subject_schedule_save)){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                        $jjj = $iii;
+
+                                                        // check if the generated start time is available in the professor schedule
+                                                        if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                            
+                                                            $jjj++;
+
+                                                            // check if the schedule subject of professor is empty
+                                                            if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                $can_sched = true;
+                                                                break 3;
+                                                            }// end of check if the schedule subject of professor is empty
+                                                            else{
+                                                                if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    // break;
+                                                                    $and_di_pwede ='Professor is not Available';
+                                                                    
+                                                                    
+                                                                }
+                                                            }
+                                                            
+                                                        }// end of check if the generated start time is available in the professor schedule
+                                                        else{
+                                                            if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                $can_sched = true;
+                                                                break 3;
+                                                            }
+                                                            else{
+                                                                $can_sched = false;
+                                                                //break;
+                                                                $and_di_pwede ='Professor is not Availablee';
+                                                            }
+                                                            
+                                                        }
+                                                    }// end of loop of the subject and schedule that this professor have     
+                                                }
+                                            }
+                                            else{
+                                                $can_sched = false;
+                                                //break;
+                                                $and_di_pwede ='Section is not Available';
+                                            }
+
+                                            
+                                        }
+                                    }// end of loop of the subject and schedule that this professor have     
+                                }
+
+
+                            }// end of check if the subject schedule in generate classroom is empty
+                            else{
+                                if($Time_out1 <= $subject_tagged_schedule[$j]->STSTimeStart){
+
+
+                                    $section_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                    FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                    WHERE md5(concat(b.SectionID)) = "'.$request->SectionID.'" AND 
+                                                                    a.STSDay = "'.$request->Day1.'" AND 
+                                                                    b.STStatus = "Active" AND 
+                                                                    a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                    ');
+
+                                    // check if no schedule of section on the same day
+                                    if(empty($section_subject_schedule_save)){
+                                        $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                a.STSDay = "'.$request->Day1.'" AND 
+                                                                                b.STStatus = "Active" AND 
+                                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                ');
+
+                                        // check if the professor is available for the given day
+                                        if(empty($professor_subject_schedule_save)){
+                                            $can_sched = true;
+                                            break 1;
+                                        }
+                                        else{
+                                            for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                                $jj = $ii;
+
+                                                // check if the generated start time is available in the professor schedule
+                                                if($request->Time_in1 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                    
+                                                    $jj++;
+
+                                                    // check if the schedule subject of professor is empty
+                                                    if(!isset($professor_subject_schedule_save[$jj])){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }// end of check if the schedule subject of professor is empty
+                                                    else{
+                                                        if($Time_Out1 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                            $can_sched = true;
+                                                            break 2;
+                                                        }
+                                                        else{
+                                                            $can_sched = false;
+                                                            // break;
+                                                            $and_di_pwede ='Professor is not Available';
+                                                            
+                                                            
+                                                        }
+                                                    }
+                                                    
+                                                }// end of check if the generated start time is available in the professor schedule
+                                                else{
+                                                    if($Time_Out1 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched = false;
+                                                        //break;
+                                                        $and_di_pwede ='Professor is not Availablee';
+                                                    }
+                                                    
+                                                }
+                                            }// end of loop of the subject and schedule that this professor have     
+                                        }
+
+                                    }
+                                    else{
+                                        for($ii = 0;$ii < count($section_subject_schedule_save);$ii++){
+                                            $jj = $ii;
+                                            // check if the generated start time is available in the professor schedule
+                                            if($request->Time_in1 >= $section_subject_schedule_save[$ii]->STSTimeEnd){
+                                                
+                                                $jj++;
+
+                                                // check if the schedule subject of professor is empty
+                                                if(!isset($section_subject_schedule_save[$jj])){
+
+
+                                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                                                            b.STStatus = "Active" AND 
+                                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                            ');
+
+                                                    // check if the professor is available for the given day
+                                                    if(empty($professor_subject_schedule_save)){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                            $jjj = $iii;
+
+                                                            // check if the generated start time is available in the professor schedule
+                                                            if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                                
+                                                                $jjj++;
+
+                                                                // check if the schedule subject of professor is empty
+                                                                if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }// end of check if the schedule subject of professor is empty
+                                                                else{
+                                                                    if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                        $can_sched = true;
+                                                                        break 3;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched = false;
+                                                                        // break;
+                                                                        $and_di_pwede ='Professor is not Available';
+                                                                        
+                                                                        
+                                                                    }
+                                                                }
+                                                                
+                                                            }// end of check if the generated start time is available in the professor schedule
+                                                            else{
+                                                                if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    //break;
+                                                                    $and_di_pwede ='Professor is not Availablee';
+                                                                }
+                                                                
+                                                            }
+                                                        }// end of loop of the subject and schedule that this professor have     
+                                                    }
+
+
+                                                    // $can_sched = true;
+                                                    // break 1;
+                                                }// end of check if the schedule subject of professor is empty
+                                                else{
+                                                    if($Time_Out1 <= $section_subject_schedule_save[$jj]->STSTimeStart){
+
+                                                        $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                                WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                                a.STSDay = "'.$request->Day1.'" AND 
+                                                                                                b.STStatus = "Active" AND 
+                                                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                                ');
+
+                                                        // check if the professor is available for the given day
+                                                        if(empty($professor_subject_schedule_save)){
+                                                            $can_sched = true;
+                                                            break 2;
+                                                        }
+                                                        else{
+                                                            for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                                $jjj = $iii;
+
+                                                                // check if the generated start time is available in the professor schedule
+                                                                if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                                    
+                                                                    $jjj++;
+
+                                                                    // check if the schedule subject of professor is empty
+                                                                    if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                        $can_sched = true;
+                                                                        break 3;
+                                                                    }// end of check if the schedule subject of professor is empty
+                                                                    else{
+                                                                        if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                            $can_sched = true;
+                                                                            break 3;
+                                                                        }
+                                                                        else{
+                                                                            $can_sched = false;
+                                                                            // break;
+                                                                            $and_di_pwede ='Professor is not Available';
+                                                                            
+                                                                            
+                                                                        }
+                                                                    }
+                                                                    
+                                                                }// end of check if the generated start time is available in the professor schedule
+                                                                else{
+                                                                    if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                        $can_sched = true;
+                                                                        break 3;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched = false;
+                                                                        //break;
+                                                                        $and_di_pwede ='Professor is not Availablee';
+                                                                    }
+                                                                    
+                                                                }
+                                                            }// end of loop of the subject and schedule that this professor have     
+                                                        }
+
+                                                        // $can_sched = true;
+                                                        // break 1;
+                                                    }
+                                                    else{
+                                                        $can_sched = false;
+                                                        // break;
+                                                        $and_di_pwede ='Section is not Available';
+                                                    }
+                                                }
+                                                
+                                            }// end of check if the generated start time is available in the professor schedule
+                                            else{
+
+                                                if($Time_Out1 <= $section_subject_schedule_save[$ii]->STSTimeStart){
+                                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                                                            b.STStatus = "Active" AND 
+                                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                            ');
+
+                                                    // check if the professor is available for the given day
+                                                    if(empty($professor_subject_schedule_save)){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                            $jjj = $iii;
+
+                                                            // check if the generated start time is available in the professor schedule
+                                                            if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                                
+                                                                $jjj++;
+
+                                                                // check if the schedule subject of professor is empty
+                                                                if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }// end of check if the schedule subject of professor is empty
+                                                                else{
+                                                                    if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                        $can_sched = true;
+                                                                        break 3;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched = false;
+                                                                        // break;
+                                                                        $and_di_pwede ='Professor is not Available';
+                                                                        
+                                                                        
+                                                                    }
+                                                                }
+                                                                
+                                                            }// end of check if the generated start time is available in the professor schedule
+                                                            else{
+                                                                if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    //break;
+                                                                    $and_di_pwede ='Professor is not Availablee';
+                                                                }
+                                                                
+                                                            }
+                                                        }// end of loop of the subject and schedule that this professor have     
+                                                    }
+                                                }
+                                                else{
+                                                    $can_sched = false;
+                                                    //break;
+                                                    $and_di_pwede ='Section is not Available';
+                                                }
+
+                                                
+                                            }
+                                        }// end of loop of the subject and schedule that this professor have     
+                                    }
+
+                                }
+                                else{
+                                    $can_sched = false;
+                                    $and_di_pwede = "No classroom is Available";
+                                }
+                            }
+                            
+                        }// end of check if the generated start time is available
+                        else{
+                            
+                            if($Time_Out1 <= $subject_tagged_schedule[$i]->STSTimeStart){
+                                $section_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                WHERE md5(concat(b.SectionID)) = "'.$request->SectionID.'" AND 
+                                                                a.STSDay = "'.$request->Day1.'" AND 
+                                                                b.STStatus = "Active" AND 
+                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                ');
+
+                                // check if no schedule of section on the same day
+                                if(empty($section_subject_schedule_save)){
+                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                                            b.STStatus = "Active" AND 
+                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                            ');
+
+                                    // check if the professor is available for the given day
+                                    if(empty($professor_subject_schedule_save)){
+                                        $can_sched = true;
+                                        break 1;
+                                    }
+                                    else{
+                                        for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                            $jj = $ii;
+
+                                            // check if the generated start time is available in the professor schedule
+                                            if($request->Time_in1 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                
+                                                $jj++;
+
+                                                // check if the schedule subject of professor is empty
+                                                if(!isset($professor_subject_schedule_save[$jj])){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }// end of check if the schedule subject of professor is empty
+                                                else{
+                                                    if($Time_Out1 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched = false;
+                                                        // break;
+                                                        $and_di_pwede ='Professor is not Available';
+                                                        
+                                                        
+                                                    }
+                                                }
+                                                
+                                            }// end of check if the generated start time is available in the professor schedule
+                                            else{
+                                                if($Time_Out1 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    $can_sched = false;
+                                                    $and_di_pwede ='Professor is not Availablee';
+                                                    break 2;
+                                                }
+                                                
+                                            }
+                                        }// end of loop of the subject and schedule that this professor have     
+                                    }
+
+                                }
+                                else{
+                                    for($ii = 0;$ii < count($section_subject_schedule_save);$ii++){
+                                        $jj = $ii;
+                                        // check if the generated start time is available in the professor schedule
+                                        if($request->Time_in1 >= $section_subject_schedule_save[$ii]->STSTimeEnd){
+                                            
+                                            $jj++;
+
+                                            // check if the schedule subject of professor is empty
+                                            if(!isset($section_subject_schedule_save[$jj])){
+
+
+                                                $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                        FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                        WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                        a.STSDay = "'.$request->Day1.'" AND 
+                                                                                        b.STStatus = "Active" AND 
+                                                                                        a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                        ');
+
+                                                // check if the professor is available for the given day
+                                                if(empty($professor_subject_schedule_save)){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                        $jjj = $iii;
+
+                                                        // check if the generated start time is available in the professor schedule
+                                                        if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                            
+                                                            $jjj++;
+
+                                                            // check if the schedule subject of professor is empty
+                                                            if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                $can_sched = true;
+                                                                break 3;
+                                                            }// end of check if the schedule subject of professor is empty
+                                                            else{
+                                                                if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    // break;
+                                                                    $and_di_pwede ='Professor is not Available';
+                                                                    
+                                                                    
+                                                                }
+                                                            }
+                                                            
+                                                        }// end of check if the generated start time is available in the professor schedule
+                                                        else{
+                                                            if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                $can_sched = true;
+                                                                break 3;
+                                                            }
+                                                            else{
+                                                                $can_sched = false;
+                                                                $and_di_pwede ='Professor is not Availablee';
+                                                                break 3;
+                                                            }
+                                                            
+                                                        }
+                                                    }// end of loop of the subject and schedule that this professor have     
+                                                }
+
+
+                                                // $can_sched = true;
+                                                // break 1;
+                                            }// end of check if the schedule subject of professor is empty
+                                            else{
+                                                if($Time_Out1 <= $section_subject_schedule_save[$jj]->STSTimeStart){
+
+                                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                                                            b.STStatus = "Active" AND 
+                                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                            ');
+
+                                                    // check if the professor is available for the given day
+                                                    if(empty($professor_subject_schedule_save)){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                            $jjj = $iii;
+
+                                                            // check if the generated start time is available in the professor schedule
+                                                            if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                                
+                                                                $jjj++;
+
+                                                                // check if the schedule subject of professor is empty
+                                                                if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }// end of check if the schedule subject of professor is empty
+                                                                else{
+                                                                    if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                        $can_sched = true;
+                                                                        break 3;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched = false;
+                                                                        // break;
+                                                                        $and_di_pwede ='Professor is not Available';
+                                                                        
+                                                                        
+                                                                    }
+                                                                }
+                                                                
+                                                            }// end of check if the generated start time is available in the professor schedule
+                                                            else{
+                                                                if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    $and_di_pwede ='Professor is not Availablee';
+                                                                    break 3;
+                                                                }
+                                                                
+                                                            }
+                                                        }// end of loop of the subject and schedule that this professor have     
+                                                    }
+
+                                                    // $can_sched = true;
+                                                    // break 1;
+                                                }
+                                                else{
+                                                    $can_sched = false;
+                                                    // break;
+                                                    $and_di_pwede ='Section is not Available';
+                                                }
+                                            }
+                                            
+                                        }// end of check if the generated start time is available in the professor schedule
+                                        else{
+
+                                            if($Time_Out1 <= $section_subject_schedule_save[$ii]->STSTimeStart){
+                                                $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                        FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                        WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                        a.STSDay = "'.$request->Day1.'" AND 
+                                                                                        b.STStatus = "Active" AND 
+                                                                                        a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                        ');
+
+                                                // check if the professor is available for the given day
+                                                if(empty($professor_subject_schedule_save)){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                        $jjj = $iii;
+
+                                                        // check if the generated start time is available in the professor schedule
+                                                        if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                            
+                                                            $jjj++;
+
+                                                            // check if the schedule subject of professor is empty
+                                                            if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                $can_sched = true;
+                                                                break 3;
+                                                            }// end of check if the schedule subject of professor is empty
+                                                            else{
+                                                                if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    // break;
+                                                                    $and_di_pwede ='Professor is not Available';
+                                                                    
+                                                                    
+                                                                }
+                                                            }
+                                                            
+                                                        }// end of check if the generated start time is available in the professor schedule
+                                                        else{
+                                                            if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                $can_sched = true;
+                                                                break 3;
+                                                            }
+                                                            else{
+                                                                $can_sched = false;
+                                                                $and_di_pwede ='Professor is not Availablee';
+                                                                break 3;
+                                                            }
+                                                            
+                                                        }
+                                                    }// end of loop of the subject and schedule that this professor have     
+                                                }
+                                            }
+                                            else{
+                                                $can_sched = false;
+                                                $and_di_pwede ='Section is not Available';
+                                                break 2;
+                                            }
+
+                                            
+                                        }
+                                    }// end of loop of the subject and schedule that this professor have     
+                                }
+                            }
+                            else{
+                                $can_sched = false;
+                                $and_di_pwede = "Classroom is Not Available";
+                                break 1;
+                            }
+                        }
+                    }// end loop of the subject that is scheduled in the classroom generated                        
+                }
+            }
+            
+            $classroom_1 = $classroomName;
+            if($can_sched == true){
+
+                DB::update('
+                    UPDATE subject_taggings SET
+                        ProfessorID = "'.$request->ProfessorID.'",
+                        STUnits = "'.$request->STUnits.'"
+                        WHERE STID = "'.$st_id.'"
+                ');
+
+                DB::update('
+                    UPDATE subject_tagging_schedules SET
+                        ClassroomID = "'.$request->classroom1.'",
+                        STSHours = "'.$request->hours1.'",
+                        STSTimeStart = "'.$request->Time_in1.'",
+                        STSTimeEnd = "'.$Time_Out1.'",
+                        STSDay = "'.$request->Day1.'"
+                        WHERE STID = "'.$st_id.'"
+                ');
+
+            }
+
+            if($can_sched == true){
+                return ["type"=>"success","room"=>$classroom_1, "message" => "Schedule generated successfully","time_out" => $Time_Out1];
+            }
+            else{
+                return ["type"=>"error","room"=>$classroom_1,"message"=>$and_di_pwede,"time_out" => $Time_Out1];
+            }  
+
+        }
+        else{
+            $this->validate($request, [
+                'Day1' => 'required',
+                'Time_in1' => 'required',    
+                'ctid1' => 'required',   
+                'hours1' => 'required',
+                'classroom1' => 'required',
+                'Day2' => 'required',
+                'Time_in2' => 'required',    
+                'ctid2' => 'required',   
+                'hours2' => 'required',
+                'classroom2' => 'required',
+            ]);     
+            
+            $total_hours = $request->hours1 * (60*60);
+            $timestamps = strtotime($request->Time_in1) + $total_hours;
+            $Time_Out1 = date('H:i', $timestamps);
+
+            $can_sched = false;
+            $and_di_pwede = '';
+
+            $classroom = DB::select('SELECT * FROM classrooms WHERE ClassroomID = "'.$request->classroom1.'"');
+            $classroomName = $classroom['0']->ClassroomName;
+            $classroomOut = $classroom['0']->ClassroomOut;
+
+            $subject_tagged_schedule = DB::select('SELECT * FROM subject_tagging_schedules WHERE 
+                                        STID <> "'.$st_id.'" AND
+                                        ClassroomID = "'.$request->classroom1.'" AND 
+                                        STSStatus = "Active" AND
+                                        STSDay = "'.$request->Day1.'" ORDER BY STSTimeStart ASC');
+
+            // check if the classroom selected is available
+            if($Time_Out1 > $classroomOut){
+                $can_sched = false;
+            }
+            else{
+
+                // check if no subject tagged in the classroom
+                if(empty($subject_tagged_schedule)){
+
+                    $section_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                            WHERE md5(concat(b.SectionID)) = "'.$request->SectionID.'" AND 
+                                                            b.STID <> "'.$st_id.'" AND
+                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                            b.STStatus = "Active" AND 
+                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                            ');
+
+                    // check if no schedule of section on the same day
+                    if(empty($section_subject_schedule_save)){
+                        $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                b.STID <> "'.$st_id.'" AND
+                                                                a.STSDay = "'.$request->Day1.'" AND 
+                                                                b.STStatus = "Active" AND 
+                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                ');
+                        
+                        // check if the professor is available for the given day
+                        if(empty($professor_subject_schedule_save)){
+                            $can_sched = true;
+                        }
+                        else{
+                            for($i = 0;$i < count($professor_subject_schedule_save);$i++){
+                                $j = $i;
+
+                                // check if the generated start time is available in the professor schedule
+                                if($request->Time_in1 >= $professor_subject_schedule_save[$i]->STSTimeEnd){
+                                    
+                                    $j++;
+
+                                    // check if the schedule subject of professor is empty
+                                    if(!isset($professor_subject_schedule_save[$j])){
+                                        $can_sched = true;
+                                        break 1;
+                                    }// end of check if the schedule subject of professor is empty
+                                    else{
+                                        if($Time_Out1 <= $professor_subject_schedule_save[$j]->STSTimeStart){
+                                            $can_sched = true;
+                                            break 1;
+                                        }
+                                        else{
+                                            $can_sched = false;
+                                            // break;
+                                            $and_di_pwede ='Professor is not Available in Meeting 1';
+                                        }
+                                    }
+                                    
+                                }// end of check if the generated start time is available in the professor schedule
+                                else{
+                                    if($Time_Out1 <= $professor_subject_schedule_save[$i]->STSTimeStart){
+                                        $can_sched = true;
+                                        break 1;
+                                    }
+                                    else{
+                                        $can_sched = false;
+                                        $and_di_pwede ='Professor is not Available in Meeting 1';
+                                        break 1;
+                                    }
+                                    
+                                }
+                            }// end of loop of the subject and schedule that this professor have     
+                        }
+
+                    }
+                    else{
+                        for($i = 0;$i < count($section_subject_schedule_save);$i++){
+                            $j = $i;
+                            // check if the generated start time is available in the professor schedule
+                            if($request->Time_in1 >= $section_subject_schedule_save[$i]->STSTimeEnd){
+                                
+                                $j++;
+
+                                // check if the schedule subject of professor is empty
+                                if(!isset($section_subject_schedule_save[$j])){
+
+
+                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                            b.STID <> "'.$st_id.'" AND
+                                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                                            b.STStatus = "Active" AND 
+                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                            ');
+
+                                    // check if the professor is available for the given day
+                                    if(empty($professor_subject_schedule_save)){
+                                        $can_sched = true;
+                                        break 1;
+                                    }
+                                    else{
+                                        for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                            $jj = $ii;
+
+                                            // check if the generated start time is available in the professor schedule
+                                            if($request->Time_in1 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                
+                                                $jj++;
+
+                                                // check if the schedule subject of professor is empty
+                                                if(!isset($professor_subject_schedule_save[$jj])){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }// end of check if the schedule subject of professor is empty
+                                                else{
+                                                    if($Time_Out1 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched = false;
+                                                        // break;
+                                                        $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                        
+                                                        
+                                                    }
+                                                }
+                                                
+                                            }// end of check if the generated start time is available in the professor schedule
+                                            else{
+                                                if($Time_Out1 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    $can_sched = false;
+                                                    $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                    break 2;
+                                                }
+                                                
+                                            }
+                                        }// end of loop of the subject and schedule that this professor have     
+                                    }
+
+
+                                    // $can_sched = true;
+                                    // break 1;
+                                }// end of check if the schedule subject of professor is empty
+                                else{
+                                    if($Time_Out1 <= $section_subject_schedule_save[$j]->STSTimeStart){
+
+                                        $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND
+                                                                                b.STID <> "'.$st_id.'" AND 
+                                                                                a.STSDay = "'.$request->Day1.'" AND 
+                                                                                b.STStatus = "Active" AND 
+                                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                ');
+
+                                        // check if the professor is available for the given day
+                                        if(empty($professor_subject_schedule_save)){
+                                            $can_sched = true;
+                                            break 1;
+                                        }
+                                        else{
+                                            for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                                $jj = $ii;
+
+                                                // check if the generated start time is available in the professor schedule
+                                                if($request->Time_in1 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                    
+                                                    $jj++;
+
+                                                    // check if the schedule subject of professor is empty
+                                                    if(!isset($professor_subject_schedule_save[$jj])){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }// end of check if the schedule subject of professor is empty
+                                                    else{
+                                                        if($Time_Out1 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                            $can_sched = true;
+                                                            break 2;
+                                                        }
+                                                        else{
+                                                            $can_sched = false;
+                                                            // break;
+                                                            $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                            
+                                                            
+                                                        }
+                                                    }
+                                                    
+                                                }// end of check if the generated start time is available in the professor schedule
+                                                else{
+                                                    if($Time_Out1 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched = false;
+                                                        $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                        break 2;
+                                                    }
+                                                    
+                                                }
+                                            }// end of loop of the subject and schedule that this professor have     
+                                        }
+
+                                        // $can_sched = true;
+                                        // break 1;
+                                    }
+                                    else{
+                                        $can_sched = false;
+                                        // break;
+                                        $and_di_pwede ='Section is not Available in Meeting 1';
+                                    }
+                                }
+                                
+                            }// end of check if the generated start time is available in the professor schedule
+                            else{
+
+                                if($Time_Out1 <= $section_subject_schedule_save[$i]->STSTimeStart){
+                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                            b.STID <> "'.$st_id.'" AND
+                                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                                            b.STStatus = "Active" AND 
+                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                            ');
+
+                                    // check if the professor is available for the given day
+                                    if(empty($professor_subject_schedule_save)){
+                                        $can_sched = true;
+                                        break 1;
+                                    }
+                                    else{
+                                        for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                            $jj = $ii;
+
+                                            // check if the generated start time is available in the professor schedule
+                                            if($request->Time_in1 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                
+                                                $jj++;
+
+                                                // check if the schedule subject of professor is empty
+                                                if(!isset($professor_subject_schedule_save[$jj])){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }// end of check if the schedule subject of professor is empty
+                                                else{
+                                                    if($Time_Out1 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched = false;
+                                                        // break;
+                                                        $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                        
+                                                        
+                                                    }
+                                                }
+                                                
+                                            }// end of check if the generated start time is available in the professor schedule
+                                            else{
+                                                if($Time_Out1 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    $can_sched = false;
+                                                    $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                    break 2;
+                                                }
+                                                
+                                            }
+                                        }// end of loop of the subject and schedule that this professor have     
+                                    }
+                                }
+                                else{
+                                    $can_sched = false;
+                                    $and_di_pwede ='Section is not Available in Meeting 1';
+                                    break 1;
+                                }
+                                
+                                
+                            }
+                        }// end of loop of the subject and schedule that this professor have     
+                    }
+                    
+                }   
+                else{
+                    // loop of the subject that is scheduled in the classroom generated
+                    for($i = 0;$i < count($subject_tagged_schedule);$i++){
+                        $j = $i;
+
+                        // check if the generated start time is available
+                        if($request->Time_in1 >= $subject_tagged_schedule[$i]->STSTimeEnd){
+
+                            $j++;
+
+                            // check if the subject schedule in generate classroom is empty
+                            if(!isset($subject_tagged_schedule[$j])){
+
+                                $section_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                WHERE md5(concat(b.SectionID)) = "'.$request->SectionID.'" AND 
+                                                                b.STID <> "'.$st_id.'" AND
+                                                                a.STSDay = "'.$request->Day1.'" AND 
+                                                                b.STStatus = "Active" AND 
+                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                ');
+
+                                // check if no schedule of section on the same day
+                                if(empty($section_subject_schedule_save)){
+                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                            b.STID <> "'.$st_id.'" AND
+                                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                                            b.STStatus = "Active" AND 
+                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                            ');
+
+                                    // check if the professor is available for the given day
+                                    if(empty($professor_subject_schedule_save)){
+                                        $can_sched = true;
+                                        break 1;
+                                    }
+                                    else{
+                                        for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                            $jj = $ii;
+
+                                            // check if the generated start time is available in the professor schedule
+                                            if($request->Time_in1 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                
+                                                $jj++;
+
+                                                // check if the schedule subject of professor is empty
+                                                if(!isset($professor_subject_schedule_save[$jj])){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }// end of check if the schedule subject of professor is empty
+                                                else{
+                                                    if($Time_Out1 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched = false;
+                                                        // break;
+                                                        $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                        
+                                                        
+                                                    }
+                                                }
+                                                
+                                            }// end of check if the generated start time is available in the professor schedule
+                                            else{
+                                                if($Time_Out1 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    $can_sched = false;
+                                                    //break;
+                                                    $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                }
+                                                
+                                            }
+                                        }// end of loop of the subject and schedule that this professor have     
+                                    }
+
+                                }
+                                else{
+                                    for($ii = 0;$ii < count($section_subject_schedule_save);$ii++){
+                                        $jj = $ii;
+                                        // check if the generated start time is available in the professor schedule
+                                        if($request->Time_in1 >= $section_subject_schedule_save[$ii]->STSTimeEnd){
+                                            
+                                            $jj++;
+
+                                            // check if the schedule subject of professor is empty
+                                            if(!isset($section_subject_schedule_save[$jj])){
+
+
+                                                $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                        FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                        WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND
+                                                                                        b.STID <> "'.$st_id.'" AND 
+                                                                                        a.STSDay = "'.$request->Day1.'" AND 
+                                                                                        b.STStatus = "Active" AND 
+                                                                                        a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                        ');
+
+                                                // check if the professor is available for the given day
+                                                if(empty($professor_subject_schedule_save)){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                        $jjj = $iii;
+
+                                                        // check if the generated start time is available in the professor schedule
+                                                        if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                            
+                                                            $jjj++;
+
+                                                            // check if the schedule subject of professor is empty
+                                                            if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                $can_sched = true;
+                                                                break 3;
+                                                            }// end of check if the schedule subject of professor is empty
+                                                            else{
+                                                                if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    // break;
+                                                                    $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                                    
+                                                                    
+                                                                }
+                                                            }
+                                                            
+                                                        }// end of check if the generated start time is available in the professor schedule
+                                                        else{
+                                                            if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                $can_sched = true;
+                                                                break 3;
+                                                            }
+                                                            else{
+                                                                $can_sched = false;
+                                                                //break;
+                                                                $and_di_pwede ='Professor is not Available int Meeting 1';
+                                                            }
+                                                            
+                                                        }
+                                                    }// end of loop of the subject and schedule that this professor have     
+                                                }
+
+
+                                                // $can_sched = true;
+                                                // break 1;
+                                            }// end of check if the schedule subject of professor is empty
+                                            else{
+                                                if($Time_Out1 <= $section_subject_schedule_save[$jj]->STSTimeStart){
+
+                                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                            b.STID <> "'.$st_id.'" AND
+                                                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                                                            b.STStatus = "Active" AND 
+                                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                            ');
+
+                                                    // check if the professor is available for the given day
+                                                    if(empty($professor_subject_schedule_save)){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                            $jjj = $iii;
+
+                                                            // check if the generated start time is available in the professor schedule
+                                                            if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                                
+                                                                $jjj++;
+
+                                                                // check if the schedule subject of professor is empty
+                                                                if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }// end of check if the schedule subject of professor is empty
+                                                                else{
+                                                                    if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                        $can_sched = true;
+                                                                        break 3;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched = false;
+                                                                        // break;
+                                                                        $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                                        
+                                                                        
+                                                                    }
+                                                                }
+                                                                
+                                                            }// end of check if the generated start time is available in the professor schedule
+                                                            else{
+                                                                if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    //break;
+                                                                    $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                                }
+                                                                
+                                                            }
+                                                        }// end of loop of the subject and schedule that this professor have     
+                                                    }
+
+                                                    // $can_sched = true;
+                                                    // break 1;
+                                                }
+                                                else{
+                                                    $can_sched = false;
+                                                    // break;
+                                                    $and_di_pwede ='Section is not Available in Meeting 1';
+                                                }
+                                            }
+                                            
+                                        }// end of check if the generated start time is available in the professor schedule
+                                        else{
+
+                                            if($Time_Out1 <= $section_subject_schedule_save[$ii]->STSTimeStart){
+                                                $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                        FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                        WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                        b.STID <> "'.$st_id.'" AND
+                                                                                        a.STSDay = "'.$request->Day1.'" AND 
+                                                                                        b.STStatus = "Active" AND 
+                                                                                        a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                        ');
+
+                                                // check if the professor is available for the given day
+                                                if(empty($professor_subject_schedule_save)){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                        $jjj = $iii;
+
+                                                        // check if the generated start time is available in the professor schedule
+                                                        if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                            
+                                                            $jjj++;
+
+                                                            // check if the schedule subject of professor is empty
+                                                            if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                $can_sched = true;
+                                                                break 3;
+                                                            }// end of check if the schedule subject of professor is empty
+                                                            else{
+                                                                if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    // break;
+                                                                    $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                                    
+                                                                    
+                                                                }
+                                                            }
+                                                            
+                                                        }// end of check if the generated start time is available in the professor schedule
+                                                        else{
+                                                            if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                $can_sched = true;
+                                                                break 3;
+                                                            }
+                                                            else{
+                                                                $can_sched = false;
+                                                                //break;
+                                                                $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                            }
+                                                            
+                                                        }
+                                                    }// end of loop of the subject and schedule that this professor have     
+                                                }
+                                            }
+                                            else{
+                                                $can_sched = false;
+                                                //break;
+                                                $and_di_pwede ='Section is not Available in Meeting 1';
+                                            }
+
+                                            
+                                        }
+                                    }// end of loop of the subject and schedule that this professor have     
+                                }
+
+
+                            }// end of check if the subject schedule in generate classroom is empty
+                            else{
+                                if($Time_out1 <= $subject_tagged_schedule[$j]->STSTimeStart){
+
+
+                                    $section_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                    FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                    WHERE md5(concat(b.SectionID)) = "'.$request->SectionID.'" AND 
+                                                                    b.STID <> "'.$st_id.'" AND
+                                                                    a.STSDay = "'.$request->Day1.'" AND 
+                                                                    b.STStatus = "Active" AND 
+                                                                    a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                    ');
+
+                                    // check if no schedule of section on the same day
+                                    if(empty($section_subject_schedule_save)){
+                                        $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                b.STID <> "'.$st_id.'" AND
+                                                                                a.STSDay = "'.$request->Day1.'" AND 
+                                                                                b.STStatus = "Active" AND 
+                                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                ');
+
+                                        // check if the professor is available for the given day
+                                        if(empty($professor_subject_schedule_save)){
+                                            $can_sched = true;
+                                            break 1;
+                                        }
+                                        else{
+                                            for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                                $jj = $ii;
+
+                                                // check if the generated start time is available in the professor schedule
+                                                if($request->Time_in1 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                    
+                                                    $jj++;
+
+                                                    // check if the schedule subject of professor is empty
+                                                    if(!isset($professor_subject_schedule_save[$jj])){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }// end of check if the schedule subject of professor is empty
+                                                    else{
+                                                        if($Time_Out1 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                            $can_sched = true;
+                                                            break 2;
+                                                        }
+                                                        else{
+                                                            $can_sched = false;
+                                                            // break;
+                                                            $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                            
+                                                            
+                                                        }
+                                                    }
+                                                    
+                                                }// end of check if the generated start time is available in the professor schedule
+                                                else{
+                                                    if($Time_Out1 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched = false;
+                                                        //break;
+                                                        $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                    }
+                                                    
+                                                }
+                                            }// end of loop of the subject and schedule that this professor have     
+                                        }
+
+                                    }
+                                    else{
+                                        for($ii = 0;$ii < count($section_subject_schedule_save);$ii++){
+                                            $jj = $ii;
+                                            // check if the generated start time is available in the professor schedule
+                                            if($request->Time_in1 >= $section_subject_schedule_save[$ii]->STSTimeEnd){
+                                                
+                                                $jj++;
+
+                                                // check if the schedule subject of professor is empty
+                                                if(!isset($section_subject_schedule_save[$jj])){
+
+
+                                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                            b.STID <> "'.$st_id.'" AND
+                                                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                                                            b.STStatus = "Active" AND 
+                                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                            ');
+
+                                                    // check if the professor is available for the given day
+                                                    if(empty($professor_subject_schedule_save)){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                            $jjj = $iii;
+
+                                                            // check if the generated start time is available in the professor schedule
+                                                            if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                                
+                                                                $jjj++;
+
+                                                                // check if the schedule subject of professor is empty
+                                                                if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }// end of check if the schedule subject of professor is empty
+                                                                else{
+                                                                    if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                        $can_sched = true;
+                                                                        break 3;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched = false;
+                                                                        // break;
+                                                                        $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                                        
+                                                                        
+                                                                    }
+                                                                }
+                                                                
+                                                            }// end of check if the generated start time is available in the professor schedule
+                                                            else{
+                                                                if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    //break;
+                                                                    $and_di_pwede ='Professor is not Availablee in Meeting 1';
+                                                                }
+                                                                
+                                                            }
+                                                        }// end of loop of the subject and schedule that this professor have     
+                                                    }
+
+
+                                                    // $can_sched = true;
+                                                    // break 1;
+                                                }// end of check if the schedule subject of professor is empty
+                                                else{
+                                                    if($Time_Out1 <= $section_subject_schedule_save[$jj]->STSTimeStart){
+
+                                                        $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                                WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                                a.STSDay = "'.$request->Day1.'" AND 
+                                                                                                b.STID <> "'.$st_id.'" AND
+                                                                                                b.STStatus = "Active" AND 
+                                                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                                ');
+
+                                                        // check if the professor is available for the given day
+                                                        if(empty($professor_subject_schedule_save)){
+                                                            $can_sched = true;
+                                                            break 2;
+                                                        }
+                                                        else{
+                                                            for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                                $jjj = $iii;
+
+                                                                // check if the generated start time is available in the professor schedule
+                                                                if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                                    
+                                                                    $jjj++;
+
+                                                                    // check if the schedule subject of professor is empty
+                                                                    if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                        $can_sched = true;
+                                                                        break 3;
+                                                                    }// end of check if the schedule subject of professor is empty
+                                                                    else{
+                                                                        if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                            $can_sched = true;
+                                                                            break 3;
+                                                                        }
+                                                                        else{
+                                                                            $can_sched = false;
+                                                                            // break;
+                                                                            $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                                            
+                                                                            
+                                                                        }
+                                                                    }
+                                                                    
+                                                                }// end of check if the generated start time is available in the professor schedule
+                                                                else{
+                                                                    if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                        $can_sched = true;
+                                                                        break 3;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched = false;
+                                                                        //break;
+                                                                        $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                                    }
+                                                                    
+                                                                }
+                                                            }// end of loop of the subject and schedule that this professor have     
+                                                        }
+
+                                                        // $can_sched = true;
+                                                        // break 1;
+                                                    }
+                                                    else{
+                                                        $can_sched = false;
+                                                        // break;
+                                                        $and_di_pwede ='Section is not Available in Meeting 1';
+                                                    }
+                                                }
+                                                
+                                            }// end of check if the generated start time is available in the professor schedule
+                                            else{
+
+                                                if($Time_Out1 <= $section_subject_schedule_save[$ii]->STSTimeStart){
+                                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                            b.STID <> "'.$st_id.'" AND
+                                                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                                                            b.STStatus = "Active" AND 
+                                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                            ');
+
+                                                    // check if the professor is available for the given day
+                                                    if(empty($professor_subject_schedule_save)){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                            $jjj = $iii;
+
+                                                            // check if the generated start time is available in the professor schedule
+                                                            if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                                
+                                                                $jjj++;
+
+                                                                // check if the schedule subject of professor is empty
+                                                                if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }// end of check if the schedule subject of professor is empty
+                                                                else{
+                                                                    if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                        $can_sched = true;
+                                                                        break 3;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched = false;
+                                                                        // break;
+                                                                        $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                                        
+                                                                        
+                                                                    }
+                                                                }
+                                                                
+                                                            }// end of check if the generated start time is available in the professor schedule
+                                                            else{
+                                                                if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    //break;
+                                                                    $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                                }
+                                                                
+                                                            }
+                                                        }// end of loop of the subject and schedule that this professor have     
+                                                    }
+                                                }
+                                                else{
+                                                    $can_sched = false;
+                                                    //break;
+                                                    $and_di_pwede ='Section is not Available in Meeeting 1';
+                                                }
+
+                                                
+                                            }
+                                        }// end of loop of the subject and schedule that this professor have     
+                                    }
+
+                                }
+                                else{
+                                    $can_sched = false;
+                                    $and_di_pwede = "No classroom is Available in Meeting 1";
+                                }
+                            }
+                            
+                        }// end of check if the generated start time is available
+                        else{
+                            
+                            if($Time_Out1 <= $subject_tagged_schedule[$i]->STSTimeStart){
+                                $section_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                WHERE md5(concat(b.SectionID)) = "'.$request->SectionID.'" AND 
+                                                                b.STID <> "'.$st_id.'" AND
+                                                                a.STSDay = "'.$request->Day1.'" AND 
+                                                                b.STStatus = "Active" AND 
+                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                ');
+
+                                // check if no schedule of section on the same day
+                                if(empty($section_subject_schedule_save)){
+                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                            b.STID <> "'.$st_id.'" AND
+                                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                                            b.STStatus = "Active" AND 
+                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                            ');
+
+                                    // check if the professor is available for the given day
+                                    if(empty($professor_subject_schedule_save)){
+                                        $can_sched = true;
+                                        break 1;
+                                    }
+                                    else{
+                                        for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                            $jj = $ii;
+
+                                            // check if the generated start time is available in the professor schedule
+                                            if($request->Time_in1 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                
+                                                $jj++;
+
+                                                // check if the schedule subject of professor is empty
+                                                if(!isset($professor_subject_schedule_save[$jj])){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }// end of check if the schedule subject of professor is empty
+                                                else{
+                                                    if($Time_Out1 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched = false;
+                                                        // break;
+                                                        $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                        
+                                                        
+                                                    }
+                                                }
+                                                
+                                            }// end of check if the generated start time is available in the professor schedule
+                                            else{
+                                                if($Time_Out1 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    $can_sched = false;
+                                                    $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                    break 2;
+                                                }
+                                                
+                                            }
+                                        }// end of loop of the subject and schedule that this professor have     
+                                    }
+
+                                }
+                                else{
+                                    for($ii = 0;$ii < count($section_subject_schedule_save);$ii++){
+                                        $jj = $ii;
+                                        // check if the generated start time is available in the professor schedule
+                                        if($request->Time_in1 >= $section_subject_schedule_save[$ii]->STSTimeEnd){
+                                            
+                                            $jj++;
+
+                                            // check if the schedule subject of professor is empty
+                                            if(!isset($section_subject_schedule_save[$jj])){
+
+
+                                                $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                        FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                        WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                        b.STID <> "'.$st_id.'" AND
+                                                                                        a.STSDay = "'.$request->Day1.'" AND 
+                                                                                        b.STStatus = "Active" AND 
+                                                                                        a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                        ');
+
+                                                // check if the professor is available for the given day
+                                                if(empty($professor_subject_schedule_save)){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                        $jjj = $iii;
+
+                                                        // check if the generated start time is available in the professor schedule
+                                                        if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                            
+                                                            $jjj++;
+
+                                                            // check if the schedule subject of professor is empty
+                                                            if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                $can_sched = true;
+                                                                break 3;
+                                                            }// end of check if the schedule subject of professor is empty
+                                                            else{
+                                                                if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    // break;
+                                                                    $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                                    
+                                                                    
+                                                                }
+                                                            }
+                                                            
+                                                        }// end of check if the generated start time is available in the professor schedule
+                                                        else{
+                                                            if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                $can_sched = true;
+                                                                break 3;
+                                                            }
+                                                            else{
+                                                                $can_sched = false;
+                                                                $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                                break 3;
+                                                            }
+                                                            
+                                                        }
+                                                    }// end of loop of the subject and schedule that this professor have     
+                                                }
+
+
+                                                // $can_sched = true;
+                                                // break 1;
+                                            }// end of check if the schedule subject of professor is empty
+                                            else{
+                                                if($Time_Out1 <= $section_subject_schedule_save[$jj]->STSTimeStart){
+
+                                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                            b.STID <> "'.$st_id.'" AND
+                                                                                            a.STSDay = "'.$request->Day1.'" AND 
+                                                                                            b.STStatus = "Active" AND 
+                                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                            ');
+
+                                                    // check if the professor is available for the given day
+                                                    if(empty($professor_subject_schedule_save)){
+                                                        $can_sched = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                            $jjj = $iii;
+
+                                                            // check if the generated start time is available in the professor schedule
+                                                            if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                                
+                                                                $jjj++;
+
+                                                                // check if the schedule subject of professor is empty
+                                                                if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }// end of check if the schedule subject of professor is empty
+                                                                else{
+                                                                    if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                        $can_sched = true;
+                                                                        break 3;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched = false;
+                                                                        // break;
+                                                                        $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                                        
+                                                                        
+                                                                    }
+                                                                }
+                                                                
+                                                            }// end of check if the generated start time is available in the professor schedule
+                                                            else{
+                                                                if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                                    break 3;
+                                                                }
+                                                                
+                                                            }
+                                                        }// end of loop of the subject and schedule that this professor have     
+                                                    }
+
+                                                    // $can_sched = true;
+                                                    // break 1;
+                                                }
+                                                else{
+                                                    $can_sched = false;
+                                                    // break;
+                                                    $and_di_pwede ='Section is not Available in Meeting 1';
+                                                }
+                                            }
+                                            
+                                        }// end of check if the generated start time is available in the professor schedule
+                                        else{
+
+                                            if($Time_Out1 <= $section_subject_schedule_save[$ii]->STSTimeStart){
+                                                $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                        FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                        WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                        b.STID <> "'.$st_id.'" AND
+                                                                                        a.STSDay = "'.$request->Day1.'" AND 
+                                                                                        b.STStatus = "Active" AND 
+                                                                                        a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                        ');
+
+                                                // check if the professor is available for the given day
+                                                if(empty($professor_subject_schedule_save)){
+                                                    $can_sched = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                        $jjj = $iii;
+
+                                                        // check if the generated start time is available in the professor schedule
+                                                        if($request->Time_in1 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                            
+                                                            $jjj++;
+
+                                                            // check if the schedule subject of professor is empty
+                                                            if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                $can_sched = true;
+                                                                break 3;
+                                                            }// end of check if the schedule subject of professor is empty
+                                                            else{
+                                                                if($Time_Out1 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                    $can_sched = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched = false;
+                                                                    // break;
+                                                                    $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                                    
+                                                                    
+                                                                }
+                                                            }
+                                                            
+                                                        }// end of check if the generated start time is available in the professor schedule
+                                                        else{
+                                                            if($Time_Out1 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                $can_sched = true;
+                                                                break 3;
+                                                            }
+                                                            else{
+                                                                $can_sched = false;
+                                                                $and_di_pwede ='Professor is not Available in Meeting 1';
+                                                                break 3;
+                                                            }
+                                                            
+                                                        }
+                                                    }// end of loop of the subject and schedule that this professor have     
+                                                }
+                                            }
+                                            else{
+                                                $can_sched = false;
+                                                $and_di_pwede ='Section is not Available in Meeting 1';
+                                                break 2;
+                                            }
+
+                                            
+                                        }
+                                    }// end of loop of the subject and schedule that this professor have     
+                                }
+                            }
+                            else{
+                                $can_sched = false;
+                                $and_di_pwede = "Classroom is not Available in Meeting 1";
+                                break 1;
+                            }
+                        }
+                    }// end loop of the subject that is scheduled in the classroom generated                        
+                }
+            }
+            
+
+            $total_hours1 = $request->hours2 * (60*60);
+            $timestamps1 = strtotime($request->Time_in2) + $total_hours1;
+            $Time_Out2 = date('H:i', $timestamps1);
+
+            $can_sched_1 = false;
+            $and_di_pwede_1 = '';
+
+            $classroom1 = DB::select('SELECT * FROM classrooms WHERE ClassroomID = "'.$request->classroom2.'"');
+            $classroomName1 = $classroom['0']->ClassroomName;
+            $classroomOut1 = $classroom['0']->ClassroomOut;
+
+            $subject_tagged_schedule1 = DB::select('SELECT * FROM subject_tagging_schedules WHERE 
+                                        STID <> "'.$st_id.'" AND
+                                        ClassroomID = "'.$request->classroom2.'" AND 
+                                        STSStatus = "Active" AND
+                                        STSDay = "'.$request->Day2.'" ORDER BY STSTimeStart ASC');
+            
+
+            // check if the classroom selected is available
+            if($Time_Out2 > $classroomOut1){
+                $can_sched_1 = false;
+            }
+            else{
+
+                // check if no subject tagged in the classroom
+                if(empty($subject_tagged_schedule)){
+
+                    $section_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                            WHERE md5(concat(b.SectionID)) = "'.$request->SectionID.'" AND 
+                                                            b.STID <> "'.$st_id.'" AND
+                                                            a.STSDay = "'.$request->Day2.'" AND 
+                                                            b.STStatus = "Active" AND 
+                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                            ');
+
+                    // check if no schedule of section on the same day
+                    if(empty($section_subject_schedule_save)){
+                        $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                b.STID <> "'.$st_id.'" AND
+                                                                a.STSDay = "'.$request->Day2.'" AND 
+                                                                b.STStatus = "Active" AND 
+                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                ');
+                        
+                        // check if the professor is available for the given day
+                        if(empty($professor_subject_schedule_save)){
+                            $can_sched_1 = true;
+                        }
+                        else{
+                            for($i = 0;$i < count($professor_subject_schedule_save);$i++){
+                                $j = $i;
+
+                                // check if the generated start time is available in the professor schedule
+                                if($request->Time_in2 >= $professor_subject_schedule_save[$i]->STSTimeEnd){
+                                    
+                                    $j++;
+
+                                    // check if the schedule subject of professor is empty
+                                    if(!isset($professor_subject_schedule_save[$j])){
+                                        $can_sched_1 = true;
+                                        break 1;
+                                    }// end of check if the schedule subject of professor is empty
+                                    else{
+                                        if($Time_Out2 <= $professor_subject_schedule_save[$j]->STSTimeStart){
+                                            $can_sched_1 = true;
+                                            break 1;
+                                        }
+                                        else{
+                                            $can_sched_1 = false;
+                                            // break;
+                                            $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                        }
+                                    }
+                                    
+                                }// end of check if the generated start time is available in the professor schedule
+                                else{
+                                    if($Time_Out2 <= $professor_subject_schedule_save[$i]->STSTimeStart){
+                                        $can_sched_1 = true;
+                                        break 1;
+                                    }
+                                    else{
+                                        $can_sched_1 = false;
+                                        $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                        break 1;
+                                    }
+                                    
+                                }
+                            }// end of loop of the subject and schedule that this professor have     
+                        }
+
+                    }
+                    else{
+                        for($i = 0;$i < count($section_subject_schedule_save);$i++){
+                            $j = $i;
+                            // check if the generated start time is available in the professor schedule
+                            if($request->Time_in2 >= $section_subject_schedule_save[$i]->STSTimeEnd){
+                                
+                                $j++;
+
+                                // check if the schedule subject of professor is empty
+                                if(!isset($section_subject_schedule_save[$j])){
+
+
+                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                            b.STID <> "'.$st_id.'" AND
+                                                                            a.STSDay = "'.$request->Day2.'" AND 
+                                                                            b.STStatus = "Active" AND 
+                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                            ');
+
+                                    // check if the professor is available for the given day
+                                    if(empty($professor_subject_schedule_save)){
+                                        $can_sched_1 = true;
+                                        break 1;
+                                    }
+                                    else{
+                                        for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                            $jj = $ii;
+
+                                            // check if the generated start time is available in the professor schedule
+                                            if($request->Time_in2 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                
+                                                $jj++;
+
+                                                // check if the schedule subject of professor is empty
+                                                if(!isset($professor_subject_schedule_save[$jj])){
+                                                    $can_sched_1 = true;
+                                                    break 2;
+                                                }// end of check if the schedule subject of professor is empty
+                                                else{
+                                                    if($Time_Out2 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                        $can_sched_1 = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched_1 = false;
+                                                        // break;
+                                                        $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                        
+                                                        
+                                                    }
+                                                }
+                                                
+                                            }// end of check if the generated start time is available in the professor schedule
+                                            else{
+                                                if($Time_Out2 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                    $can_sched_1 = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    $can_sched_1 = false;
+                                                    $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                    break 2;
+                                                }
+                                                
+                                            }
+                                        }// end of loop of the subject and schedule that this professor have     
+                                    }
+
+
+                                    // $can_sched_1 = true;
+                                    // break 1;
+                                }// end of check if the schedule subject of professor is empty
+                                else{
+                                    if($Time_Out2 <= $section_subject_schedule_save[$j]->STSTimeStart){
+
+                                        $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                b.STID <> "'.$st_id.'" AND
+                                                                                a.STSDay = "'.$request->Day2.'" AND 
+                                                                                b.STStatus = "Active" AND 
+                                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                ');
+
+                                        // check if the professor is available for the given day
+                                        if(empty($professor_subject_schedule_save)){
+                                            $can_sched_1 = true;
+                                            break 1;
+                                        }
+                                        else{
+                                            for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                                $jj = $ii;
+
+                                                // check if the generated start time is available in the professor schedule
+                                                if($request->Time_in2 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                    
+                                                    $jj++;
+
+                                                    // check if the schedule subject of professor is empty
+                                                    if(!isset($professor_subject_schedule_save[$jj])){
+                                                        $can_sched_1 = true;
+                                                        break 2;
+                                                    }// end of check if the schedule subject of professor is empty
+                                                    else{
+                                                        if($Time_Out2 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                            $can_sched_1 = true;
+                                                            break 2;
+                                                        }
+                                                        else{
+                                                            $can_sched_1 = false;
+                                                            // break;
+                                                            $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                            
+                                                            
+                                                        }
+                                                    }
+                                                    
+                                                }// end of check if the generated start time is available in the professor schedule
+                                                else{
+                                                    if($Time_Out2 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                        $can_sched_1 = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched_1 = false;
+                                                        $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                        break 2;
+                                                    }
+                                                    
+                                                }
+                                            }// end of loop of the subject and schedule that this professor have     
+                                        }
+
+                                        // $can_sched_1 = true;
+                                        // break 1;
+                                    }
+                                    else{
+                                        $can_sched_1 = false;
+                                        // break;
+                                        $and_di_pwede_1 ='Section is not Available in Meeting 2';
+                                    }
+                                }
+                                
+                            }// end of check if the generated start time is available in the professor schedule
+                            else{
+
+                                if($Time_Out2 <= $section_subject_schedule_save[$i]->STSTimeStart){
+                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND
+                                                                            b.STID <> "'.$st_id.'" AND 
+                                                                            a.STSDay = "'.$request->Day2.'" AND 
+                                                                            b.STStatus = "Active" AND 
+                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                            ');
+
+                                    // check if the professor is available for the given day
+                                    if(empty($professor_subject_schedule_save)){
+                                        $can_sched_1 = true;
+                                        break 1;
+                                    }
+                                    else{
+                                        for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                            $jj = $ii;
+
+                                            // check if the generated start time is available in the professor schedule
+                                            if($request->Time_in2 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                
+                                                $jj++;
+
+                                                // check if the schedule subject of professor is empty
+                                                if(!isset($professor_subject_schedule_save[$jj])){
+                                                    $can_sched_1 = true;
+                                                    break 2;
+                                                }// end of check if the schedule subject of professor is empty
+                                                else{
+                                                    if($Time_Out2 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                        $can_sched_1 = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched_1 = false;
+                                                        // break;
+                                                        $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                        
+                                                        
+                                                    }
+                                                }
+                                                
+                                            }// end of check if the generated start time is available in the professor schedule
+                                            else{
+                                                if($Time_Out2 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                    $can_sched_1 = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    $can_sched_1 = false;
+                                                    $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                    break 2;
+                                                }
+                                                
+                                            }
+                                        }// end of loop of the subject and schedule that this professor have     
+                                    }
+                                }
+                                else{
+                                    $can_sched_1_1 = false;
+                                    $and_di_pwede_1 ='Section is not Available in Meeting 2';
+                                    break 1;
+                                }
+                                
+                                
+                            }
+                        }// end of loop of the subject and schedule that this professor have     
+                    }
+                    
+                }   
+                else{
+                    // loop of the subject that is scheduled in the classroom generated
+                    for($i = 0;$i < count($subject_tagged_schedule);$i++){
+                        $j = $i;
+
+                        // check if the generated start time is available
+                        if($request->Time_in2 >= $subject_tagged_schedule[$i]->STSTimeEnd){
+
+                            $j++;
+
+                            // check if the subject schedule in generate classroom is empty
+                            if(!isset($subject_tagged_schedule[$j])){
+
+                                $section_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                WHERE md5(concat(b.SectionID)) = "'.$request->SectionID.'" AND 
+                                                                b.STID <> "'.$st_id.'" AND
+                                                                a.STSDay = "'.$request->Day2.'" AND 
+                                                                b.STStatus = "Active" AND 
+                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                ');
+
+                                // check if no schedule of section on the same day
+                                if(empty($section_subject_schedule_save)){
+                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                            b.STID <> "'.$st_id.'" AND
+                                                                            a.STSDay = "'.$request->Day2.'" AND 
+                                                                            b.STStatus = "Active" AND 
+                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                            ');
+
+                                    // check if the professor is available for the given day
+                                    if(empty($professor_subject_schedule_save)){
+                                        $can_sched_1 = true;
+                                        break 1;
+                                    }
+                                    else{
+                                        for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                            $jj = $ii;
+
+                                            // check if the generated start time is available in the professor schedule
+                                            if($request->Time_in2 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                
+                                                $jj++;
+
+                                                // check if the schedule subject of professor is empty
+                                                if(!isset($professor_subject_schedule_save[$jj])){
+                                                    $can_sched_1 = true;
+                                                    break 2;
+                                                }// end of check if the schedule subject of professor is empty
+                                                else{
+                                                    if($Time_Out2 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                        $can_sched_1 = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched_1 = false;
+                                                        // break;
+                                                        $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                        
+                                                        
+                                                    }
+                                                }
+                                                
+                                            }// end of check if the generated start time is available in the professor schedule
+                                            else{
+                                                if($Time_Out2 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                    $can_sched_1 = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    $can_sched_1 = false;
+                                                    //break;
+                                                    $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                }
+                                                
+                                            }
+                                        }// end of loop of the subject and schedule that this professor have     
+                                    }
+
+                                }
+                                else{
+                                    for($ii = 0;$ii < count($section_subject_schedule_save);$ii++){
+                                        $jj = $ii;
+                                        // check if the generated start time is available in the professor schedule
+                                        if($request->Time_in2 >= $section_subject_schedule_save[$ii]->STSTimeEnd){
+                                            
+                                            $jj++;
+
+                                            // check if the schedule subject of professor is empty
+                                            if(!isset($section_subject_schedule_save[$jj])){
+
+
+                                                $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                        FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                        WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                        b.STID <> "'.$st_id.'" AND
+                                                                                        a.STSDay = "'.$request->Day2.'" AND 
+                                                                                        b.STStatus = "Active" AND 
+                                                                                        a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                        ');
+
+                                                // check if the professor is available for the given day
+                                                if(empty($professor_subject_schedule_save)){
+                                                    $can_sched_1 = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                        $jjj = $iii;
+
+                                                        // check if the generated start time is available in the professor schedule
+                                                        if($request->Time_in2 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                            
+                                                            $jjj++;
+
+                                                            // check if the schedule subject of professor is empty
+                                                            if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                $can_sched_1 = true;
+                                                                break 3;
+                                                            }// end of check if the schedule subject of professor is empty
+                                                            else{
+                                                                if($Time_Out2 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                    $can_sched_1 = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched_1 = false;
+                                                                    // break;
+                                                                    $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                                    
+                                                                    
+                                                                }
+                                                            }
+                                                            
+                                                        }// end of check if the generated start time is available in the professor schedule
+                                                        else{
+                                                            if($Time_Out2 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                $can_sched_1 = true;
+                                                                break 3;
+                                                            }
+                                                            else{
+                                                                $can_sched_1 = false;
+                                                                //break;
+                                                                $and_di_pwede_1 ='Professor is not Available int Meeting 2';
+                                                            }
+                                                            
+                                                        }
+                                                    }// end of loop of the subject and schedule that this professor have     
+                                                }
+
+
+                                                // $can_sched_1 = true;
+                                                // break 1;
+                                            }// end of check if the schedule subject of professor is empty
+                                            else{
+                                                if($Time_Out2 <= $section_subject_schedule_save[$jj]->STSTimeStart){
+
+                                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                            b.STID <> "'.$st_id.'" AND
+                                                                                            a.STSDay = "'.$request->Day2.'" AND 
+                                                                                            b.STStatus = "Active" AND 
+                                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                            ');
+
+                                                    // check if the professor is available for the given day
+                                                    if(empty($professor_subject_schedule_save)){
+                                                        $can_sched_1 = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                            $jjj = $iii;
+
+                                                            // check if the generated start time is available in the professor schedule
+                                                            if($request->Time_in2 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                                
+                                                                $jjj++;
+
+                                                                // check if the schedule subject of professor is empty
+                                                                if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                    $can_sched_1 = true;
+                                                                    break 3;
+                                                                }// end of check if the schedule subject of professor is empty
+                                                                else{
+                                                                    if($Time_Out2 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                        $can_sched_1 = true;
+                                                                        break 3;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched_1 = false;
+                                                                        // break;
+                                                                        $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                                        
+                                                                        
+                                                                    }
+                                                                }
+                                                                
+                                                            }// end of check if the generated start time is available in the professor schedule
+                                                            else{
+                                                                if($Time_Out2 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                    $can_sched_1 = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched_1 = false;
+                                                                    //break;
+                                                                    $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                                }
+                                                                
+                                                            }
+                                                        }// end of loop of the subject and schedule that this professor have     
+                                                    }
+
+                                                    // $can_sched_1 = true;
+                                                    // break 1;
+                                                }
+                                                else{
+                                                    $can_sched_1 = false;
+                                                    // break;
+                                                    $and_di_pwede_1 ='Section is not Available in Meeting 2';
+                                                }
+                                            }
+                                            
+                                        }// end of check if the generated start time is available in the professor schedule
+                                        else{
+
+                                            if($Time_Out2 <= $section_subject_schedule_save[$ii]->STSTimeStart){
+                                                $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                        FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                        WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND
+                                                                                        b.STID <> "'.$st_id.'" AND 
+                                                                                        a.STSDay = "'.$request->Day2.'" AND 
+                                                                                        b.STStatus = "Active" AND 
+                                                                                        a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                        ');
+
+                                                // check if the professor is available for the given day
+                                                if(empty($professor_subject_schedule_save)){
+                                                    $can_sched_1 = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                        $jjj = $iii;
+
+                                                        // check if the generated start time is available in the professor schedule
+                                                        if($request->Time_in2 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                            
+                                                            $jjj++;
+
+                                                            // check if the schedule subject of professor is empty
+                                                            if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                $can_sched_1 = true;
+                                                                break 3;
+                                                            }// end of check if the schedule subject of professor is empty
+                                                            else{
+                                                                if($Time_Out2 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                    $can_sched_1 = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched_1 = false;
+                                                                    // break;
+                                                                    $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                                    
+                                                                    
+                                                                }
+                                                            }
+                                                            
+                                                        }// end of check if the generated start time is available in the professor schedule
+                                                        else{
+                                                            if($Time_Out2 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                $can_sched_1 = true;
+                                                                break 3;
+                                                            }
+                                                            else{
+                                                                $can_sched_1 = false;
+                                                                //break;
+                                                                $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                            }
+                                                            
+                                                        }
+                                                    }// end of loop of the subject and schedule that this professor have     
+                                                }
+                                            }
+                                            else{
+                                                $can_sched_1 = false;
+                                                //break;
+                                                $and_di_pwede_1 ='Section is not Available in Meeting 2';
+                                            }
+
+                                            
+                                        }
+                                    }// end of loop of the subject and schedule that this professor have     
+                                }
+
+
+                            }// end of check if the subject schedule in generate classroom is empty
+                            else{
+                                if($Time_out1 <= $subject_tagged_schedule[$j]->STSTimeStart){
+
+
+                                    $section_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                    FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                    WHERE md5(concat(b.SectionID)) = "'.$request->SectionID.'" AND 
+                                                                    b.STID <> "'.$st_id.'" AND
+                                                                    a.STSDay = "'.$request->Day2.'" AND 
+                                                                    b.STStatus = "Active" AND 
+                                                                    a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                    ');
+
+                                    // check if no schedule of section on the same day
+                                    if(empty($section_subject_schedule_save)){
+                                        $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                b.STID <> "'.$st_id.'" AND
+                                                                                a.STSDay = "'.$request->Day2.'" AND 
+                                                                                b.STStatus = "Active" AND 
+                                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                ');
+
+                                        // check if the professor is available for the given day
+                                        if(empty($professor_subject_schedule_save)){
+                                            $can_sched_1 = true;
+                                            break 1;
+                                        }
+                                        else{
+                                            for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                                $jj = $ii;
+
+                                                // check if the generated start time is available in the professor schedule
+                                                if($request->Time_in2 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                    
+                                                    $jj++;
+
+                                                    // check if the schedule subject of professor is empty
+                                                    if(!isset($professor_subject_schedule_save[$jj])){
+                                                        $can_sched_1 = true;
+                                                        break 2;
+                                                    }// end of check if the schedule subject of professor is empty
+                                                    else{
+                                                        if($Time_Out2 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                            $can_sched_1 = true;
+                                                            break 2;
+                                                        }
+                                                        else{
+                                                            $can_sched_1 = false;
+                                                            // break;
+                                                            $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                            
+                                                            
+                                                        }
+                                                    }
+                                                    
+                                                }// end of check if the generated start time is available in the professor schedule
+                                                else{
+                                                    if($Time_Out2 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                        $can_sched_1 = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched_1 = false;
+                                                        //break;
+                                                        $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                    }
+                                                    
+                                                }
+                                            }// end of loop of the subject and schedule that this professor have     
+                                        }
+
+                                    }
+                                    else{
+                                        for($ii = 0;$ii < count($section_subject_schedule_save);$ii++){
+                                            $jj = $ii;
+                                            // check if the generated start time is available in the professor schedule
+                                            if($request->Time_in2 >= $section_subject_schedule_save[$ii]->STSTimeEnd){
+                                                
+                                                $jj++;
+
+                                                // check if the schedule subject of professor is empty
+                                                if(!isset($section_subject_schedule_save[$jj])){
+
+
+                                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                            b.STID <> "'.$st_id.'" AND
+                                                                                            a.STSDay = "'.$request->Day2.'" AND 
+                                                                                            b.STStatus = "Active" AND 
+                                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                            ');
+
+                                                    // check if the professor is available for the given day
+                                                    if(empty($professor_subject_schedule_save)){
+                                                        $can_sched_1 = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                            $jjj = $iii;
+
+                                                            // check if the generated start time is available in the professor schedule
+                                                            if($request->Time_in2 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                                
+                                                                $jjj++;
+
+                                                                // check if the schedule subject of professor is empty
+                                                                if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                    $can_sched_1 = true;
+                                                                    break 3;
+                                                                }// end of check if the schedule subject of professor is empty
+                                                                else{
+                                                                    if($Time_Out2 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                        $can_sched_1 = true;
+                                                                        break 3;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched_1 = false;
+                                                                        // break;
+                                                                        $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                                        
+                                                                        
+                                                                    }
+                                                                }
+                                                                
+                                                            }// end of check if the generated start time is available in the professor schedule
+                                                            else{
+                                                                if($Time_Out2 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                    $can_sched_1 = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched_1 = false;
+                                                                    //break;
+                                                                    $and_di_pwede_1 ='Professor is not Availablee in Meeting 2';
+                                                                }
+                                                                
+                                                            }
+                                                        }// end of loop of the subject and schedule that this professor have     
+                                                    }
+
+
+                                                    // $can_sched_1 = true;
+                                                    // break 1;
+                                                }// end of check if the schedule subject of professor is empty
+                                                else{
+                                                    if($Time_Out2 <= $section_subject_schedule_save[$jj]->STSTimeStart){
+
+                                                        $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                                WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                                b.STID <> "'.$st_id.'" AND
+                                                                                                a.STSDay = "'.$request->Day2.'" AND 
+                                                                                                b.STStatus = "Active" AND 
+                                                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                                ');
+
+                                                        // check if the professor is available for the given day
+                                                        if(empty($professor_subject_schedule_save)){
+                                                            $can_sched_1 = true;
+                                                            break 2;
+                                                        }
+                                                        else{
+                                                            for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                                $jjj = $iii;
+
+                                                                // check if the generated start time is available in the professor schedule
+                                                                if($request->Time_in2 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                                    
+                                                                    $jjj++;
+
+                                                                    // check if the schedule subject of professor is empty
+                                                                    if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                        $can_sched_1 = true;
+                                                                        break 3;
+                                                                    }// end of check if the schedule subject of professor is empty
+                                                                    else{
+                                                                        if($Time_Out2 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                            $can_sched_1 = true;
+                                                                            break 3;
+                                                                        }
+                                                                        else{
+                                                                            $can_sched_1 = false;
+                                                                            // break;
+                                                                            $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                                            
+                                                                            
+                                                                        }
+                                                                    }
+                                                                    
+                                                                }// end of check if the generated start time is available in the professor schedule
+                                                                else{
+                                                                    if($Time_Out2 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                        $can_sched_1 = true;
+                                                                        break 3;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched_1 = false;
+                                                                        //break;
+                                                                        $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                                    }
+                                                                    
+                                                                }
+                                                            }// end of loop of the subject and schedule that this professor have     
+                                                        }
+
+                                                        // $can_sched_1 = true;
+                                                        // break 1;
+                                                    }
+                                                    else{
+                                                        $can_sched_1 = false;
+                                                        // break;
+                                                        $and_di_pwede_1 ='Section is not Available in Meeting 2';
+                                                    }
+                                                }
+                                                
+                                            }// end of check if the generated start time is available in the professor schedule
+                                            else{
+
+                                                if($Time_Out2 <= $section_subject_schedule_save[$ii]->STSTimeStart){
+                                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                            b.STID <> "'.$st_id.'" AND
+                                                                                            a.STSDay = "'.$request->Day2.'" AND 
+                                                                                            b.STStatus = "Active" AND 
+                                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                            ');
+
+                                                    // check if the professor is available for the given day
+                                                    if(empty($professor_subject_schedule_save)){
+                                                        $can_sched_1 = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                            $jjj = $iii;
+
+                                                            // check if the generated start time is available in the professor schedule
+                                                            if($request->Time_in2 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                                
+                                                                $jjj++;
+
+                                                                // check if the schedule subject of professor is empty
+                                                                if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                    $can_sched_1 = true;
+                                                                    break 3;
+                                                                }// end of check if the schedule subject of professor is empty
+                                                                else{
+                                                                    if($Time_Out2 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                        $can_sched_1 = true;
+                                                                        break 3;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched_1 = false;
+                                                                        // break;
+                                                                        $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                                        
+                                                                        
+                                                                    }
+                                                                }
+                                                                
+                                                            }// end of check if the generated start time is available in the professor schedule
+                                                            else{
+                                                                if($Time_Out2 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                    $can_sched_1 = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched_1 = false;
+                                                                    //break;
+                                                                    $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                                }
+                                                                
+                                                            }
+                                                        }// end of loop of the subject and schedule that this professor have     
+                                                    }
+                                                }
+                                                else{
+                                                    $can_sched_1 = false;
+                                                    //break;
+                                                    $and_di_pwede_1 ='Section is not Available in Meeting 2';
+                                                }
+
+                                                
+                                            }
+                                        }// end of loop of the subject and schedule that this professor have     
+                                    }
+
+                                }
+                                else{
+                                    $can_sched_1 = false;
+                                    $and_di_pwede_1 = "No classroom is Available in Meeting 2";
+                                }
+                            }
+                            
+                        }// end of check if the generated start time is available
+                        else{
+                            
+                            if($Time_Out2 <= $subject_tagged_schedule[$i]->STSTimeStart){
+                                $section_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                WHERE md5(concat(b.SectionID)) = "'.$request->SectionID.'" AND 
+                                                                b.STID <> "'.$st_id.'" AND
+                                                                a.STSDay = "'.$request->Day2.'" AND 
+                                                                b.STStatus = "Active" AND 
+                                                                a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                ');
+
+                                // check if no schedule of section on the same day
+                                if(empty($section_subject_schedule_save)){
+                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                            b.STID <> "'.$st_id.'" AND
+                                                                            a.STSDay = "'.$request->Day2.'" AND 
+                                                                            b.STStatus = "Active" AND 
+                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                            ');
+
+                                    // check if the professor is available for the given day
+                                    if(empty($professor_subject_schedule_save)){
+                                        $can_sched_1 = true;
+                                        break 1;
+                                    }
+                                    else{
+                                        for($ii = 0;$ii < count($professor_subject_schedule_save);$ii++){
+                                            $jj = $ii;
+
+                                            // check if the generated start time is available in the professor schedule
+                                            if($request->Time_in2 >= $professor_subject_schedule_save[$ii]->STSTimeEnd){
+                                                
+                                                $jj++;
+
+                                                // check if the schedule subject of professor is empty
+                                                if(!isset($professor_subject_schedule_save[$jj])){
+                                                    $can_sched_1 = true;
+                                                    break 2;
+                                                }// end of check if the schedule subject of professor is empty
+                                                else{
+                                                    if($Time_Out2 <= $professor_subject_schedule_save[$jj]->STSTimeStart){
+                                                        $can_sched_1 = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        $can_sched_1 = false;
+                                                        // break;
+                                                        $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                        
+                                                        
+                                                    }
+                                                }
+                                                
+                                            }// end of check if the generated start time is available in the professor schedule
+                                            else{
+                                                if($Time_Out2 <= $professor_subject_schedule_save[$ii]->STSTimeStart){
+                                                    $can_sched_1 = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    $can_sched_1 = false;
+                                                    $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                    break 2;
+                                                }
+                                                
+                                            }
+                                        }// end of loop of the subject and schedule that this professor have     
+                                    }
+
+                                }
+                                else{
+                                    for($ii = 0;$ii < count($section_subject_schedule_save);$ii++){
+                                        $jj = $ii;
+                                        // check if the generated start time is available in the professor schedule
+                                        if($request->Time_in2 >= $section_subject_schedule_save[$ii]->STSTimeEnd){
+                                            
+                                            $jj++;
+
+                                            // check if the schedule subject of professor is empty
+                                            if(!isset($section_subject_schedule_save[$jj])){
+
+
+                                                $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                        FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                        WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND
+                                                                                        b.STID <> "'.$st_id.'" AND 
+                                                                                        a.STSDay = "'.$request->Day2.'" AND 
+                                                                                        b.STStatus = "Active" AND 
+                                                                                        a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                        ');
+
+                                                // check if the professor is available for the given day
+                                                if(empty($professor_subject_schedule_save)){
+                                                    $can_sched_1 = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                        $jjj = $iii;
+
+                                                        // check if the generated start time is available in the professor schedule
+                                                        if($request->Time_in2 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                            
+                                                            $jjj++;
+
+                                                            // check if the schedule subject of professor is empty
+                                                            if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                $can_sched_1 = true;
+                                                                break 3;
+                                                            }// end of check if the schedule subject of professor is empty
+                                                            else{
+                                                                if($Time_Out2 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                    $can_sched_1 = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched_1 = false;
+                                                                    // break;
+                                                                    $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                                    
+                                                                    
+                                                                }
+                                                            }
+                                                            
+                                                        }// end of check if the generated start time is available in the professor schedule
+                                                        else{
+                                                            if($Time_Out2 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                $can_sched_1 = true;
+                                                                break 3;
+                                                            }
+                                                            else{
+                                                                $can_sched_1 = false;
+                                                                $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                                break 3;
+                                                            }
+                                                            
+                                                        }
+                                                    }// end of loop of the subject and schedule that this professor have     
+                                                }
+
+
+                                                // $can_sched_1 = true;
+                                                // break 1;
+                                            }// end of check if the schedule subject of professor is empty
+                                            else{
+                                                if($Time_Out2 <= $section_subject_schedule_save[$jj]->STSTimeStart){
+
+                                                    $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                            FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                            WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND 
+                                                                                            b.STID <> "'.$st_id.'" AND
+                                                                                            a.STSDay = "'.$request->Day2.'" AND 
+                                                                                            b.STStatus = "Active" AND 
+                                                                                            a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                            ');
+
+                                                    // check if the professor is available for the given day
+                                                    if(empty($professor_subject_schedule_save)){
+                                                        $can_sched_1 = true;
+                                                        break 2;
+                                                    }
+                                                    else{
+                                                        for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                            $jjj = $iii;
+
+                                                            // check if the generated start time is available in the professor schedule
+                                                            if($request->Time_in2 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                                
+                                                                $jjj++;
+
+                                                                // check if the schedule subject of professor is empty
+                                                                if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                    $can_sched_1 = true;
+                                                                    break 3;
+                                                                }// end of check if the schedule subject of professor is empty
+                                                                else{
+                                                                    if($Time_Out2 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                        $can_sched_1 = true;
+                                                                        break 3;
+                                                                    }
+                                                                    else{
+                                                                        $can_sched_1 = false;
+                                                                        // break;
+                                                                        $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                                        
+                                                                        
+                                                                    }
+                                                                }
+                                                                
+                                                            }// end of check if the generated start time is available in the professor schedule
+                                                            else{
+                                                                if($Time_Out2 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                    $can_sched_1 = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched_1 = false;
+                                                                    $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                                    break 3;
+                                                                }
+                                                                
+                                                            }
+                                                        }// end of loop of the subject and schedule that this professor have     
+                                                    }
+
+                                                    // $can_sched_1 = true;
+                                                    // break 1;
+                                                }
+                                                else{
+                                                    $can_sched_1 = false;
+                                                    // break;
+                                                    $and_di_pwede_1 ='Section is not Available in Meeting 2';
+                                                }
+                                            }
+                                            
+                                        }// end of check if the generated start time is available in the professor schedule
+                                        else{
+
+                                            if($Time_Out2 <= $section_subject_schedule_save[$ii]->STSTimeStart){
+                                                $professor_subject_schedule_save = DB::select('SELECT a.STSDay,a.STSTimeStart,a.STSTimeEnd 
+                                                                                        FROM subject_tagging_schedules a INNER JOIN subject_taggings b ON a.STID = b.STID 
+                                                                                        WHERE b.ProfessorID = "'.$request->ProfessorID.'" AND
+                                                                                        b.STID <> "'.$st_id.'" AND 
+                                                                                        a.STSDay = "'.$request->Day2.'" AND 
+                                                                                        b.STStatus = "Active" AND 
+                                                                                        a.STSStatus = "Active" ORDER BY a.STSTimeStart ASC
+                                                                                        ');
+
+                                                // check if the professor is available for the given day
+                                                if(empty($professor_subject_schedule_save)){
+                                                    $can_sched_1 = true;
+                                                    break 2;
+                                                }
+                                                else{
+                                                    for($iii = 0;$iii < count($professor_subject_schedule_save);$iii++){
+                                                        $jjj = $iii;
+
+                                                        // check if the generated start time is available in the professor schedule
+                                                        if($request->Time_in2 >= $professor_subject_schedule_save[$iii]->STSTimeEnd){
+                                                            
+                                                            $jjj++;
+
+                                                            // check if the schedule subject of professor is empty
+                                                            if(!isset($professor_subject_schedule_save[$jjj])){
+                                                                $can_sched_1 = true;
+                                                                break 3;
+                                                            }// end of check if the schedule subject of professor is empty
+                                                            else{
+                                                                if($Time_Out2 <= $professor_subject_schedule_save[$jjj]->STSTimeStart){
+                                                                    $can_sched_1 = true;
+                                                                    break 3;
+                                                                }
+                                                                else{
+                                                                    $can_sched_1 = false;
+                                                                    // break;
+                                                                    $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                                    
+                                                                    
+                                                                }
+                                                            }
+                                                            
+                                                        }// end of check if the generated start time is available in the professor schedule
+                                                        else{
+                                                            if($Time_Out2 <= $professor_subject_schedule_save[$iii]->STSTimeStart){
+                                                                $can_sched_1 = true;
+                                                                break 3;
+                                                            }
+                                                            else{
+                                                                $can_sched_1 = false;
+                                                                $and_di_pwede_1 ='Professor is not Available in Meeting 2';
+                                                                break 3;
+                                                            }
+                                                            
+                                                        }
+                                                    }// end of loop of the subject and schedule that this professor have     
+                                                }
+                                            }
+                                            else{
+                                                $can_sched_1 = false;
+                                                $and_di_pwede_1 ='Section is not Available in Meeting 2';
+                                                break 2;
+                                            }
+
+                                            
+                                        }
+                                    }// end of loop of the subject and schedule that this professor have     
+                                }
+                            }
+                            else{
+                                $can_sched_1 = false;
+                                $and_di_pwede_1 = "Classroom is not Available in Meeting 2";
+                                break 1;
+                            }
+                        }
+                    }// end loop of the subject that is scheduled in the classroom generated                        
+                }
+            }
+                
+
+            if($can_sched == true && $can_sched_1 == true){
+                DB::update('
+                    UPDATE subject_taggings SET
+                        ProfessorID = "'.$request->ProfessorID.'",
+                        STUnits = "'.$request->STUnits.'"
+                        WHERE STID = "'.$st_id.'"
+                ');
+
+                DB::update('
+                    UPDATE subject_tagging_schedules SET
+                        ClassroomID = "'.$request->classroom1.'",
+                        STSHours = "'.$request->hours1.'",
+                        STSTimeStart = "'.$request->Time_in1.'",
+                        STSTimeEnd = "'.$Time_Out1.'",
+                        STSDay = "'.$request->Day1.'"
+                        WHERE STSID = "'.$request->stsid1.'"
+                ');
+
+                DB::update('
+                    UPDATE subject_tagging_schedules SET
+                        ClassroomID = "'.$request->classroom2.'",
+                        STSHours = "'.$request->hours2.'",
+                        STSTimeStart = "'.$request->Time_in2.'",
+                        STSTimeEnd = "'.$Time_Out2.'",
+                        STSDay = "'.$request->Day2.'"
+                        WHERE STSID = "'.$request->stsid2.'"
+                ');
+
+                return ["type"=>"success", "message" => "Schedule generated successfully"];
+            }
+            else{
+                if($can_sched == false){
+                    return ["type"=>"error","message"=>$and_di_pwede];
+                }
+                if($can_sched_1 == false){
+                    return ["type"=>"error","message"=>$and_di_pwede_1];
+                }
+            }  
+
+        }
     }
 }

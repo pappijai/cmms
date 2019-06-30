@@ -34,6 +34,7 @@ Route::get('download_backup/{file_name}', 'API\UserController@download_backup');
 
 
 
+
 // this thing help us not to redirect to not found page if u 
 //refresh the page with a vue components
 Route::get('{path}',"HomeController@index")->where( 'path', '([A-z\d-\/_.]+)?');

@@ -90630,6 +90630,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     data: function data() {
@@ -90882,7 +90891,28 @@ var render = function() {
                         _vm._v(" "),
                         _c("td", [_vm._v(_vm._s(report.SubjectDescription))]),
                         _vm._v(" "),
-                        _vm.month_today >= 5 && _vm.month_today <= 9
+                        _vm.year_today - report.SectionYear > report.CourseYears
+                          ? _c("td", [
+                              _vm._v(
+                                "\n                                    " +
+                                  _vm._s(report.CourseYears) +
+                                  " - " +
+                                  _vm._s(report.SectionName) +
+                                  "\n                                "
+                              )
+                            ])
+                          : _vm.year_today - report.SectionYear ==
+                            report.CourseYears
+                          ? _c("td", [
+                              _vm._v(
+                                "\n                                    " +
+                                  _vm._s(report.CourseYears) +
+                                  " - " +
+                                  _vm._s(report.SectionName) +
+                                  "\n                                "
+                              )
+                            ])
+                          : _vm.month_today >= 5 && _vm.month_today <= 9
                           ? _c("td", [
                               _vm._v(
                                 "\n                                    " +
@@ -91014,6 +91044,21 @@ var render = function() {
                                 [
                                   _vm.year_today - section.SectionYear >
                                   section.CourseYears
+                                    ? _c("p", [
+                                        _vm._v(
+                                          "\n                                    " +
+                                            _vm._s(section.SectionYear) +
+                                            " - " +
+                                            _vm._s(section.CourseCode) +
+                                            " " +
+                                            _vm._s(section.CourseYears) +
+                                            " - " +
+                                            _vm._s(section.SectionName) +
+                                            "\n                                "
+                                        )
+                                      ])
+                                    : _vm.year_today - section.SectionYear ==
+                                      section.CourseYears
                                     ? _c("p", [
                                         _vm._v(
                                           "\n                                    " +
@@ -98573,6 +98618,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     data: function data() {
@@ -98747,6 +98795,17 @@ var render = function() {
                             _vm._v(" "),
                             _vm.year_today - section.SectionYear >
                             section.CourseYears
+                              ? _c("td", [
+                                  _vm._v(
+                                    "\n                                    " +
+                                      _vm._s(section.CourseYears) +
+                                      " - " +
+                                      _vm._s(section.SectionName) +
+                                      "\n                                "
+                                  )
+                                ])
+                              : _vm.year_today - section.SectionYear ==
+                                section.CourseYears
                               ? _c("td", [
                                   _vm._v(
                                     "\n                                    " +
@@ -99505,6 +99564,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     data: function data() {
@@ -99558,6 +99620,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 ctid2: '',
                 smid1: '',
                 smid2: '',
+                stsid1: '',
+                stsid2: '',
                 classroom1: '',
                 classroom2: '',
                 SubjectMeetings: '',
@@ -99780,6 +99844,19 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
             this.editmode = true;
             // this.form.STID = tagged_subject_section.STID;
             // //axios.get('api/subjecttaggingschedules/'+this.form.STID).then(({ data }) => (this.section_tagged_subjects = data));
+            this.form.STID = '';
+            this.form.SubjectID = '';
+            this.form.ProfessorID = '';
+            this.form.SubjectMeetings = '';
+            this.form.STUnits = '';
+            this.form.hours1 = '';
+            this.form.hours2 = '';
+            this.form.ctid1 = '';
+            this.form.ctid2 = '';
+            this.form.Day1 = '';
+            this.form.Day2 = '';
+            this.form.Time_in1 = '';
+            this.form.Time_in2 = '';
             this.form.STID = tagged_subject_section.STID;
             this.form.SubjectID = tagged_subject_section.SubjectID;
             this.form.ProfessorID = tagged_subject_section.ProfessorID;
@@ -99794,51 +99871,55 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         create_tagged_subjects: function create_tagged_subjects() {
             var _this7 = this;
 
-            if (this.getsizeofarray(this.tagged_subject_sections) == 10) {
+            if (this.getsizeofarray(this.tagged_subject_sections) == 10 && this.sem != 'Summer Semester') {
                 alert('maximum of 10 subjects for ' + this.sem);
+            } else if (this.getsizeofarray(this.tagged_subject_sections) == 9 && this.sem == 'Summer Semester') {
+                alert('maximum of 9 subjects for ' + this.sem);
             } else {
-                this.$Progress.start();
-                this.form.post('api/subjecttagging').then(function (_ref12) {
-                    var data = _ref12.data;
-
-
-                    if (data.type == 'success') {
-                        Fire.$emit('AfterCreateSubject');
-                        toast({
-                            type: data.type,
-                            title: data.message
-                        });
-                        _this7.$Progress.finish();
-                        $('#taggedSubjectsSchedule').modal('hide');
-                        // this.form.SubjectID = ''
-                        // this.form.ProfessorID = ''  
-                        // this.form.SubjectMeetings = '';
-                        // this.form.hours1 = '';
-                        // this.form.hours2 = '';
-                        // this.form.Day1 = '';
-                        // this.form.Day2 = '';
-                        // this.form.Time_in1 = '';
-                        // this.form.Time_in2 = '';
-                        // this.form.smid1 = '';
-                        // this.form.smid2 = '';
-                        // this.subject_meetings = {};      
-                    } else {
-                        toast({
-                            type: data.type,
-                            title: data.message
-                        });
-                        _this7.$Progress.finish();
+                var size = 0,
+                    key;
+                for (key in this.tagged_subject_sections) {
+                    if (this.tagged_subject_sections.hasOwnProperty(key)) {
+                        size = size + this.tagged_subject_sections[key].STUnits;
                     }
-                }).catch(function () {
-                    _this7.$Progress.fail();
-                });
+                }
+
+                if (size == 0 || size <= 24) {
+                    this.$Progress.start();
+                    this.form.post('api/subjecttagging').then(function (_ref12) {
+                        var data = _ref12.data;
+
+
+                        if (data.type == 'success') {
+                            Fire.$emit('AfterCreateSubject');
+                            toast({
+                                type: data.type,
+                                title: data.message
+                            });
+                            _this7.$Progress.finish();
+                            $('#taggedSubjectsSchedule').modal('hide');
+                        } else {
+                            toast({
+                                type: data.type,
+                                title: data.message
+                            });
+                            _this7.$Progress.finish();
+                        }
+                    }).catch(function () {
+                        _this7.$Progress.fail();
+                    });
+                } else {
+                    alert('maximum of 24 units for ' + this.sem);
+                }
             }
         },
         update_tagged_subjects: function update_tagged_subjects() {
             var _this8 = this;
 
-            if (this.getsizeofarray(this.tagged_subject_sections) == 10) {
+            if (this.getsizeofarray(this.tagged_subject_sections) == 10 && this.sem != 'Summer Semester') {
                 alert('maximum of 10 subjects for ' + this.sem);
+            } else if (this.getsizeofarray(this.tagged_subject_sections) == 9 && this.sem == 'Summer Semester') {
+                alert('maximum of 9 subjects for ' + this.sem);
             } else {
                 this.$Progress.start();
                 this.form.put('api/update_subjecttagging/' + this.form.STID).then(function (_ref13) {
@@ -99929,31 +100010,51 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 return _this11.two_classrooms = data;
             });
         },
-        get_tagged_subjects_schedule: function get_tagged_subjects_schedule(id) {}
+        get_tagged_subjects_schedule: function get_tagged_subjects_schedule(id) {},
+        get_one_classroom: function get_one_classroom() {
+            var _this12 = this;
+
+            if (this.editmode) {
+                axios.get('api/get_classroom_options/' + this.form.ctid1).then(function (_ref16) {
+                    var data = _ref16.data;
+                    return _this12.one_classrooms = data;
+                });
+            }
+        },
+        get_two_classroom: function get_two_classroom() {
+            var _this13 = this;
+
+            if (this.editmode) {
+                axios.get('api/get_classroom_options/' + this.form.ctid2).then(function (_ref17) {
+                    var data = _ref17.data;
+                    return _this13.two_classrooms = data;
+                });
+            }
+        }
     },
     created: function created() {
-        var _this12 = this;
+        var _this14 = this;
 
         //this.loadSectionAvailable();
 
         Fire.$on('AfterCreateSubject', function () {
-            _this12.loadSubjectSection();
+            _this14.loadSubjectSection();
         });
 
         Fire.$on('AfterDeleteSubject', function () {
-            _this12.loadSubjectSection();
+            _this14.loadSubjectSection();
         });
 
         Fire.$on('AfterCreate', function () {
-            _this12.loadSectionAvailable();
+            _this14.loadSectionAvailable();
         });
 
         Fire.$on('AfterDelete', function () {
-            _this12.loadSectionAvailable();
+            _this14.loadSectionAvailable();
         });
 
         Fire.$on('AfterUpdate', function () {
-            _this12.loadSectionAvailable();
+            _this14.loadSectionAvailable();
         });
     },
     mounted: function mounted() {
@@ -99969,11 +100070,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     watch: {
         // detect all the changes in the table
         available_sections: function available_sections(val) {
-            var _this13 = this;
+            var _this15 = this;
 
             this.dt.destroy();
             this.$nextTick(function () {
-                _this13.dt = $('#section_available_table').DataTable();
+                _this15.dt = $('#section_available_table').DataTable();
             });
         },
 
@@ -99998,7 +100099,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         //     }                
         // },
         tagged_subjects_schedule: function tagged_subjects_schedule(val) {
-            var _this14 = this;
+            var _this16 = this;
 
             if (this.getsizeofarray(this.tagged_subjects_schedule) == 1) {
                 this.form.SubjectMeetings = 1;
@@ -100007,9 +100108,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 this.form.hours1 = this.tagged_subjects_schedule[0].STSHours;
                 this.form.Time_in1 = this.tagged_subjects_schedule[0].STSTimeStart;
                 this.form.classroom1 = this.tagged_subjects_schedule[0].ClassroomID;
-                axios.get('api/get_classroom_options/' + this.form.ctid1).then(function (_ref16) {
-                    var data = _ref16.data;
-                    return _this14.one_classrooms = data;
+                this.form.stsid1 = this.tagged_subjects_schedule[0].STSID;
+                axios.get('api/get_classroom_options/' + this.form.ctid1).then(function (_ref18) {
+                    var data = _ref18.data;
+                    return _this16.one_classrooms = data;
                 });
             } else {
                 if (this.getsizeofarray(this.tagged_subjects_schedule) == 2) {
@@ -100024,13 +100126,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                     this.form.Time_in2 = this.tagged_subjects_schedule[1].STSTimeStart;
                     this.form.classroom1 = this.tagged_subjects_schedule[0].ClassroomID;
                     this.form.classroom2 = this.tagged_subjects_schedule[1].ClassroomID;
-                    axios.get('api/get_classroom_options/' + this.form.ctid1).then(function (_ref17) {
-                        var data = _ref17.data;
-                        return _this14.one_classrooms = data;
+                    this.form.stsid1 = this.tagged_subjects_schedule[0].STSID;
+                    this.form.stsid2 = this.tagged_subjects_schedule[1].STSID;
+                    axios.get('api/get_classroom_options/' + this.form.ctid1).then(function (_ref19) {
+                        var data = _ref19.data;
+                        return _this16.one_classrooms = data;
                     });
-                    axios.get('api/get_classroom_options/' + this.form.ctid2).then(function (_ref18) {
-                        var data = _ref18.data;
-                        return _this14.two_classrooms = data;
+                    axios.get('api/get_classroom_options/' + this.form.ctid2).then(function (_ref20) {
+                        var data = _ref20.data;
+                        return _this16.two_classrooms = data;
                     });
                 }
             }
@@ -100206,10 +100310,14 @@ var render = function() {
                   ]),
                   _vm._v(" "),
                   _c("h5", [
-                    _vm._v(_vm._s(_vm.sem) + " "),
-                    _c("small", { staticClass: "text-red" }, [
-                      _vm._v("(maximum of 10 subjects per sem)")
-                    ])
+                    _vm._v(_vm._s(_vm.sem) + " \n                        "),
+                    _vm.sem == "Summer Semester"
+                      ? _c("small", { staticClass: "text-red" }, [
+                          _vm._v("(maximum of 9 subjects per sem)")
+                        ])
+                      : _c("small", { staticClass: "text-red" }, [
+                          _vm._v("(maximum of 10 subjects per sem)")
+                        ])
                   ]),
                   _vm._v(" "),
                   _c("h5", [
@@ -100687,29 +100795,34 @@ var render = function() {
                                       },
                                       attrs: { name: "ctid1", id: "ctid1" },
                                       on: {
-                                        change: function($event) {
-                                          var $$selectedVal = Array.prototype.filter
-                                            .call(
-                                              $event.target.options,
-                                              function(o) {
-                                                return o.selected
-                                              }
+                                        change: [
+                                          function($event) {
+                                            var $$selectedVal = Array.prototype.filter
+                                              .call(
+                                                $event.target.options,
+                                                function(o) {
+                                                  return o.selected
+                                                }
+                                              )
+                                              .map(function(o) {
+                                                var val =
+                                                  "_value" in o
+                                                    ? o._value
+                                                    : o.value
+                                                return val
+                                              })
+                                            _vm.$set(
+                                              _vm.form,
+                                              "ctid1",
+                                              $event.target.multiple
+                                                ? $$selectedVal
+                                                : $$selectedVal[0]
                                             )
-                                            .map(function(o) {
-                                              var val =
-                                                "_value" in o
-                                                  ? o._value
-                                                  : o.value
-                                              return val
-                                            })
-                                          _vm.$set(
-                                            _vm.form,
-                                            "ctid1",
-                                            $event.target.multiple
-                                              ? $$selectedVal
-                                              : $$selectedVal[0]
-                                          )
-                                        }
+                                          },
+                                          function($event) {
+                                            _vm.get_one_classroom()
+                                          }
+                                        ]
                                       }
                                     },
                                     [
@@ -101072,29 +101185,34 @@ var render = function() {
                                       },
                                       attrs: { name: "ctid2", id: "ctid2" },
                                       on: {
-                                        change: function($event) {
-                                          var $$selectedVal = Array.prototype.filter
-                                            .call(
-                                              $event.target.options,
-                                              function(o) {
-                                                return o.selected
-                                              }
+                                        change: [
+                                          function($event) {
+                                            var $$selectedVal = Array.prototype.filter
+                                              .call(
+                                                $event.target.options,
+                                                function(o) {
+                                                  return o.selected
+                                                }
+                                              )
+                                              .map(function(o) {
+                                                var val =
+                                                  "_value" in o
+                                                    ? o._value
+                                                    : o.value
+                                                return val
+                                              })
+                                            _vm.$set(
+                                              _vm.form,
+                                              "ctid2",
+                                              $event.target.multiple
+                                                ? $$selectedVal
+                                                : $$selectedVal[0]
                                             )
-                                            .map(function(o) {
-                                              var val =
-                                                "_value" in o
-                                                  ? o._value
-                                                  : o.value
-                                              return val
-                                            })
-                                          _vm.$set(
-                                            _vm.form,
-                                            "ctid2",
-                                            $event.target.multiple
-                                              ? $$selectedVal
-                                              : $$selectedVal[0]
-                                          )
-                                        }
+                                          },
+                                          function($event) {
+                                            _vm.get_two_classroom()
+                                          }
+                                        ]
                                       }
                                     },
                                     [

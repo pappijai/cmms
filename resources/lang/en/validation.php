@@ -173,6 +173,8 @@ return [
         'hours2' => 'Total Hours',
         'ctid1' => 'Classroom Type',
         'ctid2' => 'Classroom Type',
+        'classroom1' => 'Classroom',
+        'classroom2' => 'Classroom',
 
     ],
 

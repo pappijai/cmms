@@ -52,19 +52,18 @@
                                                                 {{$item->Schedule}}<br/>
                                                                 ({{$item->ProfessorName}})
                                                             </p>
+                                                            @if($data['month_today'] >= 5 && $data['month_today'] <= 9 && $item->STSTDay = 'Monday')
+                                                                <p v-if="month_today >= 5 && month_today <= 9 && $item->STSDay == 'Monday'">
+                                                                    {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear + 1}} - {{$item->SectionName}}
+                                                                </p>
+                                                            @elseif($item->STSDay == 'Monday')
+                                                                <p v-else-if="$item->STSDay == 'Monday'">
+                                                                    {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear}} - {{$item->SectionName}}
+                                                                </p>
+                                                            @else
+                                                            @endif
                                                         @endif
 
-                                                        @if($data['month_today'] >= 5 && $data['month_today'] <= 9 && $item->STSTDay = 'Monday')
-                                                            <p v-if="month_today >= 5 && month_today <= 9 && $item->STSDay == 'Monday'">
-                                                                {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear + 1}} - {{$item->SectionName}}
-                                                            </p>
-                                                        @elseif($item->STSDay == 'Monday')
-                                                            <p v-else-if="$item->STSDay == 'Monday'">
-                                                                {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear}} - {{$item->SectionName}}
-                                                            </p>
-                                                        @else
-
-                                                        @endif
                                                     </td>
                                                     <td>
                                                         @if($item->STSDay == 'Tuesday')
@@ -73,19 +72,19 @@
                                                                 {{$item->Schedule}}<br/>
                                                                 ({{$item->ProfessorName}})
                                                             </p>
+                                                            @if($data['month_today'] >= 5 && $data['month_today'] <= 9 && $item->STSTDay = 'Tuesday')
+                                                                <p v-if="month_today >= 5 && month_today <= 9 && $item->STSDay == 'Tuesday'">
+                                                                    {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear + 1}} - {{$item->SectionName}}
+                                                                </p>
+                                                            @elseif($item->STSDay == 'Tuesday')
+                                                                <p v-else-if="$item->STSDay == 'Tuesday'">
+                                                                    {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear}} - {{$item->SectionName}}
+                                                                </p>
+                                                            @else
+    
+                                                            @endif
                                                         @endif
 
-                                                        @if($data['month_today'] >= 5 && $data['month_today'] <= 9 && $item->STSTDay = 'Tuesday')
-                                                            <p v-if="month_today >= 5 && month_today <= 9 && $item->STSDay == 'Tuesday'">
-                                                                {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear + 1}} - {{$item->SectionName}}
-                                                            </p>
-                                                        @elseif($item->STSDay == 'Tuesday')
-                                                            <p v-else-if="$item->STSDay == 'Tuesday'">
-                                                                {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear}} - {{$item->SectionName}}
-                                                            </p>
-                                                        @else
-
-                                                        @endif
                                                     </td>
                                                     <td>
                                                         @if($item->STSDay == 'Wednesday')
@@ -94,19 +93,19 @@
                                                                 {{$item->Schedule}}<br/>
                                                                 ({{$item->ProfessorName}})
                                                             </p>
+                                                            @if($data['month_today'] >= 5 && $data['month_today'] <= 9 && $item->STSTDay = 'Wednesday')
+                                                                <p v-if="month_today >= 5 && month_today <= 9 && $item->STSDay == 'Wednesday'">
+                                                                    {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear + 1}} - {{$item->SectionName}}
+                                                                </p>
+                                                            @elseif($item->STSDay == 'Wednesday')
+                                                                <p v-else-if="$item->STSDay == 'Wednesday'">
+                                                                    {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear}} - {{$item->SectionName}}
+                                                                </p>
+                                                            @else
+    
+                                                            @endif
                                                         @endif
 
-                                                        @if($data['month_today'] >= 5 && $data['month_today'] <= 9 && $item->STSTDay = 'Wednesday')
-                                                            <p v-if="month_today >= 5 && month_today <= 9 && $item->STSDay == 'Wednesday'">
-                                                                {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear + 1}} - {{$item->SectionName}}
-                                                            </p>
-                                                        @elseif($item->STSDay == 'Wednesday')
-                                                            <p v-else-if="$item->STSDay == 'Wednesday'">
-                                                                {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear}} - {{$item->SectionName}}
-                                                            </p>
-                                                        @else
-
-                                                        @endif
                                                     </td>
                                                     <td>
                                                         @if($item->STSDay == 'Thursday')
@@ -115,18 +114,18 @@
                                                                 {{$item->Schedule}}<br/>
                                                                 ({{$item->ProfessorName}})
                                                             </p>
-                                                        @endif
-
-                                                        @if($data['month_today'] >= 5 && $data['month_today'] <= 9 && $item->STSTDay = 'Thursday')
-                                                            <p v-if="month_today >= 5 && month_today <= 9 && $item->STSDay == 'Thursday'">
-                                                                {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear + 1}} - {{$item->SectionName}}
-                                                            </p>
-                                                        @elseif($item->STSDay == 'Thursday')
-                                                            <p v-else-if="$item->STSDay == 'Thursday'">
-                                                                {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear}} - {{$item->SectionName}}
-                                                            </p>
-                                                        @else
-
+    
+                                                            @if($data['month_today'] >= 5 && $data['month_today'] <= 9 && $item->STSTDay = 'Thursday')
+                                                                <p v-if="month_today >= 5 && month_today <= 9 && $item->STSDay == 'Thursday'">
+                                                                    {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear + 1}} - {{$item->SectionName}}
+                                                                </p>
+                                                            @elseif($item->STSDay == 'Thursday')
+                                                                <p v-else-if="$item->STSDay == 'Thursday'">
+                                                                    {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear}} - {{$item->SectionName}}
+                                                                </p>
+                                                            @else
+    
+                                                            @endif
                                                         @endif
                                                     </td>
                                                     <td>
@@ -136,19 +135,19 @@
                                                                 {{$item->Schedule}}<br/>
                                                                 ({{$item->ProfessorName}})
                                                             </p>
+                                                            @if($data['month_today'] >= 5 && $data['month_today'] <= 9 && $item->STSTDay = 'Friday')
+                                                                <p v-if="month_today >= 5 && month_today <= 9 && $item->STSDay == 'Friday'">
+                                                                    {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear + 1}} - {{$item->SectionName}}
+                                                                </p>
+                                                            @elseif($item->STSDay == 'Friday')
+                                                                <p v-else-if="$item->STSDay == 'Friday'">
+                                                                    {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear}} - {{$item->SectionName}}
+                                                                </p>
+                                                            @else
+    
+                                                            @endif
                                                         @endif
 
-                                                        @if($data['month_today'] >= 5 && $data['month_today'] <= 9 && $item->STSTDay = 'Friday')
-                                                            <p v-if="month_today >= 5 && month_today <= 9 && $item->STSDay == 'Friday'">
-                                                                {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear + 1}} - {{$item->SectionName}}
-                                                            </p>
-                                                        @elseif($item->STSDay == 'Friday')
-                                                            <p v-else-if="$item->STSDay == 'Friday'">
-                                                                {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear}} - {{$item->SectionName}}
-                                                            </p>
-                                                        @else
-
-                                                        @endif
                                                     </td>
                                                     <td>
                                                         @if($item->STSDay == 'Saturday')
@@ -157,19 +156,19 @@
                                                                 {{$item->Schedule}}<br/>
                                                                 ({{$item->ProfessorName}})
                                                             </p>
+                                                            @if($data['month_today'] >= 5 && $data['month_today'] <= 9 && $item->STSTDay = 'Saturday')
+                                                                <p v-if="month_today >= 5 && month_today <= 9 && $item->STSDay == 'Saturday'">
+                                                                    {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear + 1}} - {{$item->SectionName}}
+                                                                </p>
+                                                            @elseif($item->STSDay == 'Saturday')
+                                                                <p v-else-if="$item->STSDay == 'Saturday'">
+                                                                    {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear}} - {{$item->SectionName}}
+                                                                </p>
+                                                            @else
+    
+                                                            @endif
                                                         @endif
 
-                                                        @if($data['month_today'] >= 5 && $data['month_today'] <= 9 && $item->STSTDay = 'Saturday')
-                                                            <p v-if="month_today >= 5 && month_today <= 9 && $item->STSDay == 'Saturday'">
-                                                                {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear + 1}} - {{$item->SectionName}}
-                                                            </p>
-                                                        @elseif($item->STSDay == 'Saturday')
-                                                            <p v-else-if="$item->STSDay == 'Saturday'">
-                                                                {{$item->CourseCode}} {{$data['year_today'] - $item->SectionYear}} - {{$item->SectionName}}
-                                                            </p>
-                                                        @else
-
-                                                        @endif
                                                                                 
                                                     </td>
                                                 </tr>

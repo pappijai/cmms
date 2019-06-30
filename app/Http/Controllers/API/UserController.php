@@ -356,4 +356,8 @@ class UserController extends Controller
         }
     }
 
+    public function trylang(){
+        return "hey";
+    }
+
 }

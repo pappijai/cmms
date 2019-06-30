@@ -345,7 +345,7 @@ class FloorplanController extends Controller
                     WHERE md5(concat(SectionID)) = "'.$row->SectionID.'"         
                 ');             
             }
-            elseif ($year_today - $row->SectionYear == 0){
+            elseif ($year_today - $row->SectionYear == 0 && $month_today < 4){
                 DB::update('
                 UPDATE sections SET
                     SectionStatus = "Inactive"

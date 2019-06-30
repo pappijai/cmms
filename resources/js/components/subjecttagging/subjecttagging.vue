@@ -55,7 +55,10 @@
                 <div class="card">
                     <div class="card-header bgc-teal text-white">
                         <h5>{{this.form.CourseCode}} {{this.form.STYear}} - {{this.form.SectionName}}</h5>
-                        <h5>{{sem}} <small class="text-red">(maximum of 10 subjects per sem)</small></h5>
+                        <h5>{{sem}} 
+                            <small class="text-red" v-if="sem == 'Summer Semester'">(maximum of 9 subjects per sem)</small>
+                            <small class="text-red" v-else>(maximum of 10 subjects per sem)</small>
+                        </h5>
                         <h5>Sy {{year_from}} - {{year_to}}</h5>
                          <div class="card-tools">
                             <button class="btn btn-success" @click="showaddsubjects()">
@@ -165,7 +168,7 @@
                                         <p>Meeting 1</p>
 
                                         <div class="form-group">
-                                            <select v-model="form.ctid1" name="ctid1" id="ctid1"
+                                            <select @change="get_one_classroom()" v-model="form.ctid1" name="ctid1" id="ctid1"
                                                 class="form-control" :class="{ 'is-invalid': form.errors.has('ctid1') }">
                                                 <option value="">Select Classroom Type</option>
                                                 <option v-for="CType_option in CType_options" :key="CType_option.id" v-bind:value="CType_option.CTID">
@@ -215,7 +218,7 @@
                                         <p>Meeting 2</p>
 
                                         <div class="form-group">
-                                            <select v-model="form.ctid2" name="ctid2" id="ctid2"
+                                            <select @change="get_two_classroom()" v-model="form.ctid2" name="ctid2" id="ctid2"
                                                 class="form-control" :class="{ 'is-invalid': form.errors.has('ctid2') }">
                                                 <option value="">Select Classroom Type</option>
                                                 <option v-for="CType_option in CType_options" :key="CType_option.id" v-bind:value="CType_option.CTID">
@@ -335,6 +338,8 @@
                     ctid2: '',
                     smid1: '',
                     smid2: '',
+                    stsid1: '',
+                    stsid2: '',
                     classroom1: '',
                     classroom2: '',
                     SubjectMeetings: '',
@@ -522,6 +527,19 @@
                 this.editmode = true;
                 // this.form.STID = tagged_subject_section.STID;
                 // //axios.get('api/subjecttaggingschedules/'+this.form.STID).then(({ data }) => (this.section_tagged_subjects = data));
+                this.form.STID = '';
+                this.form.SubjectID = '';
+                this.form.ProfessorID = '';
+                this.form.SubjectMeetings = '';
+                this.form.STUnits = '';
+                this.form.hours1 = '';
+                this.form.hours2 = '';
+                this.form.ctid1 = '';
+                this.form.ctid2 = '';
+                this.form.Day1 = '';
+                this.form.Day2 = '';
+                this.form.Time_in1 = '';
+                this.form.Time_in2 = '';
                 this.form.STID = tagged_subject_section.STID;
                 this.form.SubjectID = tagged_subject_section.SubjectID;
                 this.form.ProfessorID = tagged_subject_section.ProfessorID;
@@ -531,51 +549,58 @@
                 $('#taggedSubjectsSchedule').modal('show');
             },
             create_tagged_subjects(){
-                if(this.getsizeofarray(this.tagged_subject_sections) == 10){
+                if(this.getsizeofarray(this.tagged_subject_sections) == 10 && this.sem != 'Summer Semester'){
                     alert('maximum of 10 subjects for '+this.sem)
                 }
+                else if(this.getsizeofarray(this.tagged_subject_sections) == 9 && this.sem == 'Summer Semester'){
+                    alert('maximum of 9 subjects for '+this.sem)
+                }
                 else{
-                    this.$Progress.start()
-                    this.form.post('api/subjecttagging')
-                    .then(({data}) => {
-    
-                        if(data.type == 'success'){
-                            Fire.$emit('AfterCreateSubject');
-                            toast({
-                                type: data.type,
-                                title: data.message
-                            })              
-                            this.$Progress.finish()
-                            $('#taggedSubjectsSchedule').modal('hide');
-                            // this.form.SubjectID = ''
-                            // this.form.ProfessorID = ''  
-                            // this.form.SubjectMeetings = '';
-                            // this.form.hours1 = '';
-                            // this.form.hours2 = '';
-                            // this.form.Day1 = '';
-                            // this.form.Day2 = '';
-                            // this.form.Time_in1 = '';
-                            // this.form.Time_in2 = '';
-                            // this.form.smid1 = '';
-                            // this.form.smid2 = '';
-                            // this.subject_meetings = {};      
+                    var size = 0, key
+                    for (key in this.tagged_subject_sections) {
+                        if (this.tagged_subject_sections.hasOwnProperty(key)){
+                            size = size + this.tagged_subject_sections[key].STUnits
                         }
-                        else{
-                            toast({
-                                type: data.type,
-                                title: data.message
-                            })              
-                            this.$Progress.finish()
-                        }
-                    })
-                    .catch(() => {
-                        this.$Progress.fail()
-                    })                
+                    }
+
+                    if(size == 0 || size <= 24){
+                        this.$Progress.start()
+                        this.form.post('api/subjecttagging')
+                        .then(({data}) => {
+        
+                            if(data.type == 'success'){
+                                Fire.$emit('AfterCreateSubject');
+                                toast({
+                                    type: data.type,
+                                    title: data.message
+                                })              
+                                this.$Progress.finish()
+                                $('#taggedSubjectsSchedule').modal('hide');
+                            }
+                            else{
+                                toast({
+                                    type: data.type,
+                                    title: data.message
+                                })              
+                                this.$Progress.finish()
+                            }
+                        })
+                        .catch(() => {
+                            this.$Progress.fail()
+                        })                
+
+                    }
+                    else{
+                        alert('maximum of 24 units for '+this.sem)
+                    }
                 }
             },
             update_tagged_subjects(){
-                if(this.getsizeofarray(this.tagged_subject_sections) == 10){
+                if(this.getsizeofarray(this.tagged_subject_sections) == 10 && this.sem != 'Summer Semester'){
                     alert('maximum of 10 subjects for '+this.sem)
+                }
+                else if(this.getsizeofarray(this.tagged_subject_sections) == 9 && this.sem == 'Summer Semester'){
+                    alert('maximum of 9 subjects for '+this.sem)
                 }
                 else{               
                     this.$Progress.start()
@@ -665,6 +690,16 @@
             get_tagged_subjects_schedule(id){
 
             },
+            get_one_classroom(){
+                if(this.editmode){
+                    axios.get('api/get_classroom_options/'+this.form.ctid1).then(({ data }) => (this.one_classrooms = data));
+                }
+            },
+            get_two_classroom(){
+                if(this.editmode){
+                    axios.get('api/get_classroom_options/'+this.form.ctid2).then(({ data }) => (this.two_classrooms = data));
+                }
+            },
         },
         created(){
             //this.loadSectionAvailable();
@@ -735,6 +770,7 @@
                     this.form.hours1 = this.tagged_subjects_schedule[0].STSHours;
                     this.form.Time_in1 = this.tagged_subjects_schedule[0].STSTimeStart;
                     this.form.classroom1 = this.tagged_subjects_schedule[0].ClassroomID;
+                    this.form.stsid1 = this.tagged_subjects_schedule[0].STSID;
                     axios.get('api/get_classroom_options/'+this.form.ctid1).then(({ data }) => (this.one_classrooms = data));
                 }
                 else{
@@ -750,6 +786,8 @@
                         this.form.Time_in2 = this.tagged_subjects_schedule[1].STSTimeStart;
                         this.form.classroom1 = this.tagged_subjects_schedule[0].ClassroomID;
                         this.form.classroom2 = this.tagged_subjects_schedule[1].ClassroomID;
+                        this.form.stsid1 = this.tagged_subjects_schedule[0].STSID;
+                        this.form.stsid2 = this.tagged_subjects_schedule[1].STSID;
                         axios.get('api/get_classroom_options/'+this.form.ctid1).then(({ data }) => (this.one_classrooms = data));
                         axios.get('api/get_classroom_options/'+this.form.ctid2).then(({ data }) => (this.two_classrooms = data));
                     }

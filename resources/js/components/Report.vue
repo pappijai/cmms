@@ -33,7 +33,13 @@
                                     <td>{{report.STSem}}</td>
                                     <td>{{report.SubjectDescription}}</td>
 
-                                    <td v-if="month_today >= 5 && month_today <= 9">
+                                    <td v-if="year_today - report.SectionYear > report.CourseYears">
+                                        {{report.CourseYears}} - {{report.SectionName}}
+                                    </td>
+                                    <td v-else-if="year_today - report.SectionYear == report.CourseYears">
+                                        {{report.CourseYears}} - {{report.SectionName}}
+                                    </td>
+                                    <td v-else-if="month_today >= 5 && month_today <= 9">
                                         {{report.CourseCode}} {{year_today - report.SectionYear + 1}} - {{report.SectionName}}
                                     </td>
                                     <td v-else>
@@ -72,6 +78,9 @@
                                 <option value="All">All</option>
                                 <option v-for="section in sections" :key="section.id" v-bind:value="section.SectionID">
                                     <p v-if="year_today - section.SectionYear > section.CourseYears">
+                                        {{section.SectionYear}} - {{section.CourseCode}} {{section.CourseYears}} - {{section.SectionName}}
+                                    </p>
+                                    <p v-else-if="year_today - section.SectionYear == section.CourseYears">
                                         {{section.SectionYear}} - {{section.CourseCode}} {{section.CourseYears}} - {{section.SectionName}}
                                     </p>
                                     <p v-else-if="month_today >= 5 && month_today <= 9">

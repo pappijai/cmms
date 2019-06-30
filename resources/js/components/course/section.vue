@@ -31,6 +31,9 @@
                                     <td v-if="year_today - section.SectionYear > section.CourseYears">
                                         {{section.CourseYears}} - {{section.SectionName}}
                                     </td>
+                                    <td v-else-if="year_today - section.SectionYear == section.CourseYears">
+                                        {{section.CourseYears}} - {{section.SectionName}}
+                                    </td>
                                     <td v-else-if="month_today >= 5 && month_today <= 9">
                                         {{year_today - section.SectionYear + 1}} - {{section.SectionName}}
                                     </td>

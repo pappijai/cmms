@@ -75,7 +75,7 @@ class ReportController extends Controller
         if($semester == 'All'){
             if($section_id == 'All'){
                 return DB::select('SELECT md5(concat(a.STID)) STID, b.SubjectDescription,f.SectionYear,a.STYearFrom,a.STYearTo,a.STSem,
-                                f.SectionName,c.ProfessorName,g.CourseCode,
+                                f.SectionName,c.ProfessorName,g.CourseCode,g.CourseYears,
                                 GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
                                 FROM subject_taggings a 
                                 INNER JOIN subjects b ON a.SubjectID = b.SubjectID 
@@ -85,14 +85,14 @@ class ReportController extends Controller
                                 INNER JOIN sections f ON a.SectionID = f.SectionID
                                 INNER JOIN courses g ON f.CourseID = g.CourseID
                                 WHERE a.STYearFrom = "'.$year_from.'"
-                                GROUP BY b.SubjectDescription,a.STID,c.ProfessorName,f.SectionYear,f.SectionName,g.CourseCode,a.STYearFrom,a.STYearTo,a.STSem
+                                GROUP BY b.SubjectDescription,a.STID,c.ProfessorName,f.SectionYear,f.SectionName,g.CourseCode,a.STYearFrom,a.STYearTo,a.STSem,g.CourseYears
                                 ORDER BY g.CourseCode,f.SectionYear ASC
                         ');
             }
             else{
 
                 return DB::select('SELECT md5(concat(a.STID)) STID, b.SubjectDescription,f.SectionYear,a.STYearFrom,a.STYearTo,a.STSem,
-                                f.SectionName,c.ProfessorName,g.CourseCode,
+                                f.SectionName,c.ProfessorName,g.CourseCode,g.CourseYears,
                                 GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
                                 FROM subject_taggings a 
                                 INNER JOIN subjects b ON a.SubjectID = b.SubjectID 
@@ -103,7 +103,7 @@ class ReportController extends Controller
                                 INNER JOIN courses g ON f.CourseID = g.CourseID
                                 WHERE a.STYearFrom = "'.$year_from.'" AND
                                 md5(concat(a.SectionID)) = "'.$section_id.'"
-                                GROUP BY b.SubjectDescription,a.STID,c.ProfessorName,f.SectionYear,f.SectionName,g.CourseCode,a.STYearFrom,a.STYearTo,a.STSem
+                                GROUP BY b.SubjectDescription,a.STID,c.ProfessorName,f.SectionYear,f.SectionName,g.CourseCode,a.STYearFrom,a.STYearTo,a.STSem,g.CourseYears
                                 ORDER BY g.CourseCode,f.SectionYear ASC
                         ');
             }
@@ -111,7 +111,7 @@ class ReportController extends Controller
         else{
             if($section_id == 'All'){
                 return DB::select('SELECT md5(concat(a.STID)) STID, b.SubjectDescription,f.SectionYear,a.STYearFrom,a.STYearTo,a.STSem,
-                                f.SectionName,c.ProfessorName,g.CourseCode,
+                                f.SectionName,c.ProfessorName,g.CourseCode,g.CourseYears,
                                 GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
                                 FROM subject_taggings a 
                                 INNER JOIN subjects b ON a.SubjectID = b.SubjectID 
@@ -122,13 +122,13 @@ class ReportController extends Controller
                                 INNER JOIN courses g ON f.CourseID = g.CourseID
                                 WHERE a.STSem = "'.$semester.'" AND
                                 a.STYearFrom = "'.$year_from.'" AND
-                                GROUP BY b.SubjectDescription,a.STID,c.ProfessorName,f.SectionYear,f.SectionName,g.CourseCode,a.STYearFrom,a.STYearTo,a.STSem
+                                GROUP BY b.SubjectDescription,a.STID,c.ProfessorName,f.SectionYear,f.SectionName,g.CourseCode,a.STYearFrom,a.STYearTo,a.STSem,g.CourseYears
                                 ORDER BY g.CourseCode,f.SectionYear ASC
                             ');
             }
             else{
                 return DB::select('SELECT md5(concat(a.STID)) STID, b.SubjectDescription,f.SectionYear,a.STYearFrom,a.STYearTo,a.STSem,
-                                f.SectionName,c.ProfessorName,g.CourseCode,
+                                f.SectionName,c.ProfessorName,g.CourseCode,g.CourseYears,
                                 GROUP_CONCAT(d.STSDay," - ",e.ClassroomCode," - ",d.STSTimeStart," - ",d.STSTimeEnd SEPARATOR " | ") AS Schedule 
                                 FROM subject_taggings a 
                                 INNER JOIN subjects b ON a.SubjectID = b.SubjectID 
@@ -140,7 +140,7 @@ class ReportController extends Controller
                                 WHERE a.STSem = "'.$semester.'" AND
                                 a.STYearFrom = "'.$year_from.'" AND
                                 md5(concat(a.SectionID)) = "'.$section_id.'"
-                                GROUP BY b.SubjectDescription,a.STID,c.ProfessorName,f.SectionYear,f.SectionName,g.CourseCode,a.STYearFrom,a.STYearTo,a.STSem
+                                GROUP BY b.SubjectDescription,a.STID,c.ProfessorName,f.SectionYear,f.SectionName,g.CourseCode,a.STYearFrom,a.STYearTo,a.STSem,g.CourseYears
                                 ORDER BY g.CourseCode,f.SectionYear ASC
                             ');
             }
